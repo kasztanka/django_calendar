@@ -72,6 +72,10 @@ class MyCalendar(models.Model):
     can_read = models.ManyToManyField(
         UserProfile, related_name='calendars_to_read')
     
+    def background_color(self):
+        html_color = "style='background-color: #" + self.color + ";'"
+        return html_color
+    
     def __str__(self):
         return self.name
 
