@@ -1,0 +1,14 @@
+{% extends 'my_calendar/base.html' %}
+{% block content %}
+<p>Registration</p>
+<form method="POST" id="register_form">
+     {% csrf_token %}
+     {{ register_form.as_p}}
+     <select name="timezone">
+        {% for tz in timezones %}
+            <option value="{{ tz }}">{{ tz }}</option>
+        {% endfor %}
+    </select>
+    <button type="submit">Sign up</button>
+</form>
+{% endblock content %}

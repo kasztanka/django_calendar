@@ -52,7 +52,7 @@ class UserProfile(models.Model):
         return events
         
     def __str__(self):
-        return self.user.username + ", timezone: " + timezone
+        return self.user.username + ", timezone: " + self.timezone
 
 
 class MyCalendar(models.Model):
