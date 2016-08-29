@@ -55,7 +55,7 @@ class RegisterViewTest(TestCase):
         
         correct_profile = UserProfile.objects.first()
         other_user = User.objects.create()
-        other_user = UserProfile.objects.create(user=other_user)
+        other_profile = UserProfile.objects.create(user=other_user)
         
         self.assertRedirects(response, '/profile/%s/' % (correct_profile.user.username,))
         
@@ -88,7 +88,8 @@ class RegisterViewTest(TestCase):
     def test_template_extends_after_base(self):
         response = self.client.get('/register')
         self.assertContains(response, "My Calendar")
- 
+
+        
 class RegisterFormTest(TestCase):
     
     def test_valid_data(self):
@@ -104,5 +105,21 @@ class RegisterFormTest(TestCase):
     def test_blank_data(self):
         form = RegisterForm()
         self.assertFalse(form.is_valid())
-        
-        
+    
+    
+class ProfileViewTest(TestCase):
+
+    def setUp(self):
+        correct_user = User.objects.create(username='pretty_woman')
+        self.correct_profile = UserProfile.objects.create(user=correct_user)
+        other_user = User.objects.create()
+        self.other_profile = UserProfile.objects.create(user=other_user)
+    
+    def test_uses_profile_template(self):
+        response = self.client.get('/profile/%s/' % (self.correct_profile.user.username,))
+        self.assertTemplateUsed(response, 'my_calendar/profile.html')
+    
+    def test_passes_correct_profile_to_template(self):
+        response = self.client.get('/profile/%s/' % (self.correct_profile.user.username,))
+        self.assertEqual(response.context['profile'], self.correct_profile)
+    
