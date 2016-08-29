@@ -5,6 +5,7 @@ from django.test import TestCase
 
 from .views import index, register
 from .models import UserProfile
+from .forms import RegisterForm
 
 class IndexTest(TestCase):
     
@@ -25,16 +26,14 @@ class RegisterViewTest(TestCase):
     
     def user_registers(self):
         response = self.client.post(
-            '/register',
-            data={
+            '/register', data={
                 'username': 'John123',
                 'password': 'password',
                 'email': 'example@email.com',
                 'first_name': 'John',
                 'last_name': 'Doe',
                 'timezone': 'UTC'
-                }
-        )
+        })
         return response
     
     def test_register_saves_new_user(self):
@@ -57,16 +56,14 @@ class RegisterViewTest(TestCase):
         
     def test_checks_if_timezone_exists(self):
         response = self.client.post(
-            '/register',
-            data={
+            '/register', data={
                 'username': 'John123',
                 'password': 'password',
                 'email': 'example@email.com',
                 'first_name': 'John',
                 'last_name': 'Doe',
                 'timezone': 'Fake timezone'
-                }
-        )
+        })
         self.assertEqual(response.status_code, 200)
         self.assertTrue('wrong_timezone' in response.context)
         self.assertContains(response, "Wrong timezone was chosen.")
@@ -87,3 +84,20 @@ class RegisterViewTest(TestCase):
         response = self.client.get('/register')
         self.assertContains(response, "My Calendar")
  
+class RegisterFormTest(TestCase):
+    
+    def test_valid_data(self):
+        form = RegisterForm({
+            'username': 'John123',
+            'password': 'password',
+            'email': 'example@email.com',
+            'first_name': 'John',
+            'last_name': 'Doe',
+        })
+        self.assertTrue(form.is_valid())
+    
+    def test_blank_data(self):
+        form = RegisterForm()
+        self.assertFalse(form.is_valid())
+        
+        

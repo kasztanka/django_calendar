@@ -1,4 +1,5 @@
 {% extends 'my_calendar/base.html' %}
 {% block content %}
-<p>Nothing here yet.</p>
+<p>You haven't signed in yet?</p>
+<a id='registration' href="{% url 'my_calendar:register' %}">Register now!</a>
 {% endblock content %}

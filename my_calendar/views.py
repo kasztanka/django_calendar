@@ -1,7 +1,8 @@
 from pytz import common_timezones_set
 
+from django.shortcuts import get_object_or_404, render, redirect
 from django.contrib.auth import authenticate, login, logout
-from django.shortcuts import render, redirect
+from django.contrib.auth.models import User
 
 from .forms import RegisterForm, LoginForm
 from .models import UserProfile
@@ -28,7 +29,7 @@ def register(request):
             profile.save()
             user_obj = authenticate(username=user.username, password=unhashed_password)
             login(request, user_obj)
-            return redirect('my_calendar:index')
+            return redirect('my_calendar:profile', username=user.username)
         else:
             print(register_form.errors)
     else:
@@ -38,3 +39,8 @@ def register(request):
     timezones.sort()
     context['timezones'] = timezones
     return render(request, "my_calendar/register.html", context)
+
+def profile(request, username):
+    user = get_object_or_404(User, username=username)
+    profile = get_object_or_404(UserProfile, user=user)
+    return render(request, 'my_calendar/profile.html', {'profile': profile})
