@@ -15,13 +15,16 @@ def register(request):
     context = {}
     if request.method == "POST":
         register_form = RegisterForm(data=request.POST)
-        if register_form.is_valid():
+        timezone = request.POST.get('timezone', '')
+        if not timezone in common_timezones_set:
+            context['wrong_timezone'] = "Wrong timezone was chosen."
+        elif register_form.is_valid():
             user = register_form.save()
             unhashed_password = user.password
             user.set_password(user.password)
             user.save()
             profile = UserProfile.objects.create(user=user)
-            profile.timezone = request.POST['timezone']
+            profile.timezone = timezone
             profile.save()
             user_obj = authenticate(username=user.username, password=unhashed_password)
             login(request, user_obj)
