@@ -50,9 +50,14 @@ class RegisterViewTest(TestCase):
         user = get_user(self.client)
         self.assertTrue(user.is_authenticated())
                
-    def test_redirects_after_valid_registration(self):
+    def test_redirects_after_valid_registration_to_correct_profile(self):
         response = self.user_registers()
-        self.assertEqual(response.status_code, 302)
+        
+        correct_profile = UserProfile.objects.first()
+        other_user = User.objects.create()
+        other_user = UserProfile.objects.create(user=other_user)
+        
+        self.assertRedirects(response, '/profile/%s/' % (correct_profile.user.username,))
         
     def test_checks_if_timezone_exists(self):
         response = self.client.post(
