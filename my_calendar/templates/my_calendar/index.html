@@ -1,5 +1,10 @@
 {% extends 'my_calendar/base.html' %}
 {% block content %}
+<form method="POST" id="login_form" action="{% url 'my_calendar:user_login' %}">
+    {% csrf_token %}
+    {{ login_form.as_p}}
+    <button type="submit">Sign in</button>
+</form>
 <p>You haven't signed in yet?</p>
 <a id='registration' href="{% url 'my_calendar:register' %}">Register now!</a>
 {% endblock content %}

@@ -9,7 +9,9 @@ from .models import UserProfile
 
 
 def index(request):
-    return render(request, "my_calendar/index.html")
+    context = {}
+    context['login_form'] = LoginForm()
+    return render(request, "my_calendar/index.html", context)
     
     
 def register(request):
@@ -44,3 +46,17 @@ def profile(request, username):
     user = get_object_or_404(User, username=username)
     profile = get_object_or_404(UserProfile, user=user)
     return render(request, 'my_calendar/profile.html', {'profile': profile})
+    
+def user_login(request):
+    if request.method == "POST":
+        username = request.POST['username']
+        password = request.POST['password']
+        user = authenticate(username=username, password=password)
+        if user:
+            login(request, user)
+            return redirect('my_calendar:profile', username=user.username)
+        else:
+            login_form = LoginForm(request.POST)
+    else:
+        login_form = LoginForm()
+    return render(request, 'my_calendar/index.html', {'login_form': login_form})

@@ -2,9 +2,9 @@
 {% block content %}
 <p>Registration</p>
 <form method="POST" id="register_form">
-     {% csrf_token %}
-     {{ register_form.as_p}}
-     <select name="timezone">
+    {% csrf_token %}
+    {{ register_form.as_p}}
+    <select name="timezone">
         {% for tz in timezones %}
             <option value="{{ tz }}">{{ tz }}</option>
         {% endfor %}
