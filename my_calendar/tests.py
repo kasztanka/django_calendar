@@ -1,28 +1,41 @@
+from unittest import skip
+
 from django.core.urlresolvers import resolve
 from django.contrib.auth.models import User
 from django.contrib.auth import get_user
 from django.test import TestCase
 
-from .views import index, register
+from .views import index, register, profile
 from .models import UserProfile
 from .forms import RegisterForm
 
-class IndexTest(TestCase):
+
+class BaseTest(TestCase):
     
-    def test_root_url_resolves_to_index_view(self):
-        found = resolve('/')
-        self.assertEqual(found.func, index)
+    def setUp(self):
+        self.url = '/'
+        self.template = 'my_calendar/index.html'
+        self.function = index
     
-    def test_uses_index_template(self):
-        response = self.client.get('/')
-        self.assertTemplateUsed(response, 'my_calendar/index.html')
+    def test_url_resolves_to_correct_view(self):
+        found = resolve(self.url)
+        self.assertEqual(found.func, self.function)
+    
+    def test_uses_correct_template(self):
+        response = self.client.get(self.url)
+        self.assertTemplateUsed(response, self.template)
         
     def test_template_extends_after_base(self):
-        response = self.client.get('/')
-        self.assertContains(response, "My Calendar")
+        response = self.client.get(self.url)
+        self.assertTemplateUsed(response, 'my_calendar/base.html')
        
        
-class RegisterViewTest(TestCase):
+class RegisterViewTest(BaseTest):
+
+    def setUp(self):
+        self.url = '/register'
+        self.template = 'my_calendar/register.html'
+        self.function = register
     
     def user_registers(self):
         response = self.client.post(
@@ -51,11 +64,13 @@ class RegisterViewTest(TestCase):
         self.assertTrue(user.is_authenticated())
                
     def test_redirects_after_valid_registration_to_correct_profile(self):
-        response = self.user_registers()
-        
-        correct_profile = UserProfile.objects.first()
         other_user = User.objects.create()
         other_profile = UserProfile.objects.create(user=other_user)
+        
+        response = self.user_registers()
+        
+        ## filter returns query set, so we have to take first element
+        correct_profile = UserProfile.objects.filter(user=get_user(self.client))[0]
         
         self.assertRedirects(response, '/profile/%s/' % (correct_profile.user.username,))
         
@@ -80,14 +95,6 @@ class RegisterViewTest(TestCase):
     def test_passes_timezones_when_form_error(self):
         response = self.client.post('/register')
         self.assertTrue('timezones' in response.context)
-    
-    def test_uses_register_template(self):
-        response = self.client.get('/register')
-        self.assertTemplateUsed(response, 'my_calendar/register.html')
-        
-    def test_template_extends_after_base(self):
-        response = self.client.get('/register')
-        self.assertContains(response, "My Calendar")
 
         
 class RegisterFormTest(TestCase):
@@ -107,19 +114,21 @@ class RegisterFormTest(TestCase):
         self.assertFalse(form.is_valid())
     
     
-class ProfileViewTest(TestCase):
+class ProfileViewTest(BaseTest):
 
     def setUp(self):
         correct_user = User.objects.create(username='pretty_woman')
         self.correct_profile = UserProfile.objects.create(user=correct_user)
         other_user = User.objects.create()
         self.other_profile = UserProfile.objects.create(user=other_user)
-    
-    def test_uses_profile_template(self):
-        response = self.client.get('/profile/%s/' % (self.correct_profile.user.username,))
-        self.assertTemplateUsed(response, 'my_calendar/profile.html')
+        self.url = '/profile/%s/' % (self.correct_profile.user.username,)
+        self.template = 'my_calendar/profile.html'
+        self.function = profile
     
     def test_passes_correct_profile_to_template(self):
-        response = self.client.get('/profile/%s/' % (self.correct_profile.user.username,))
+        response = self.client.get(self.url)
         self.assertEqual(response.context['profile'], self.correct_profile)
-    
+ 
+
+if __name__ == '__main__':
+    unittest.main() 

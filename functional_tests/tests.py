@@ -5,8 +5,8 @@ from django.test import LiveServerTestCase
 
 class NewVisitorTest(LiveServerTestCase):
     
-    #def tearDown(self):
-        #self.browser.quit()
+    def tearDown(self):
+        self.browser.quit()
     
     def fill_input(self, id, text):
         input = self.browser.find_element_by_id(id)
@@ -40,5 +40,8 @@ class NewVisitorTest(LiveServerTestCase):
         
         self.assertRegex(self.browser.current_url, '/profile/mary123')
         name = self.browser.find_element_by_tag_name('h2')
-        self.asserEqual(name.text, 'Mary Lou')
-        
+        self.assertEqual(name.text, 'Mary Lou')
+   
+
+if __name__ == '__main__':
+    unittest.main()   
