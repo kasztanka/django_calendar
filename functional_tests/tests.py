@@ -65,7 +65,7 @@ class UserTest(LiveServerTestCase):
         link = self.browser.find_element_by_id('registration')
         link.click()
         self.fill_input('id_username', 'mary123')
-        self.fill_input('id_password', 'Goldeneye')
+        self.fill_input('id_password', 'JingleBellsBatmanSmells')
         self.fill_input('id_email', 'mary@lou.com')
         self.fill_input('id_first_name', 'Mary')
         self.fill_input('id_last_name', 'Lou')
@@ -74,10 +74,12 @@ class UserTest(LiveServerTestCase):
     def test_user_login_and_logout(self):
         self.browser.get(self.live_server_url)
         self.register()
+        time.sleep(2)
         
         # after registration you're logged in
         logout = self.browser.find_element_by_id('logout')
         logout.click()
+        time.sleep(2)
         
         self.fill_input('id_username', 'mary123')
         self.fill_input('id_password', 'JingleBellsBatmanSmells')
@@ -86,14 +88,12 @@ class UserTest(LiveServerTestCase):
         submit.click()
                 
         self.assertRegex(self.browser.current_url, '/profile/mary123')
-        
-        # to make sure that live_server_url stays the same whole time
-        print(self.live_server_url)
+        time.sleep(2)
         
         logout = self.browser.find_element_by_id('logout')
         logout.click()
         
-        self.assertEqual(self.browser.current_url, self.live_server_url)   
+        self.assertEqual(self.browser.current_url, self.live_server_url + '/')
 
         
 if __name__ == '__main__':

@@ -1,5 +1,5 @@
+from django.contrib.auth.models import User, AnonymousUser
 from django.core.urlresolvers import resolve
-from django.contrib.auth.models import User
 from django.contrib.auth import get_user
 from django.test import TestCase
 
@@ -128,5 +128,58 @@ class ProfileViewTest(BaseTest):
         self.assertEqual(response.context['profile'], self.correct_profile)
  
 
+class LoginViewTest(TestCase):
+    
+    def test_user_can_login(self):
+        correct_user = User.objects.create(username='pretty_woman', password='cow')
+        correct_user.set_password(correct_user.password)
+        correct_user.save()
+        correct_profile = UserProfile.objects.create(user=correct_user)
+        correct_profile.save()
+        response = self.client.post(
+            '/login', data={
+            'username': 'pretty_woman',
+            'password': 'cow'
+            }, follow=True)
+        user = get_user(self.client)
+        self.assertEqual(user, correct_user)
+        self.assertContains(response, "Hey, pretty_woman!")
+    
+    def test_passes_login_form_after_wrong_login(self):
+        correct_user = User.objects.create(username='pretty_woman', password='cow')
+        correct_user.set_password(correct_user.password)
+        correct_user.save()
+        correct_profile = UserProfile.objects.create(user=correct_user)
+        correct_profile.save()
+        response = self.client.post(
+            '/login', data={
+            'username': 'pretty_woman',
+            'password': 'bull'
+            })
+        self.assertTrue('login_form' in response.context)
+        
+    def test_passes_login_form(self):
+        response = self.client.get('/login')
+        self.assertTrue('login_form' in response.context)
+        
+class LogoutViewTest(TestCase):
+    
+    def test_user_can_logout(self):
+        self.client.post(
+            '/register', data={
+                'username': 'John123',
+                'password': 'password',
+                'email': 'example@email.com',
+                'first_name': 'John',
+                'last_name': 'Doe',
+                'timezone': 'UTC'
+        })
+        user = get_user(self.client)
+        self.assertNotEqual(user, None)
+        response = self.client.get('/logout')
+        self.assertEqual(response.status_code, 302)
+        user = get_user(self.client)
+        self.assertEqual(user, AnonymousUser())
+ 
 if __name__ == '__main__':
     unittest.main() 

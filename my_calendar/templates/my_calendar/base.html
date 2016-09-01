@@ -10,6 +10,9 @@
         <h1>My Calendar</h1>
         {% if user.is_authenticated %}
             <p>Hey, {{ user.username }}!</p>
+            <a href="{% url 'my_calendar:user_logout' %}">
+                <button id="logout">Log out</button>
+            </a>
         {% endif %}
         {% block content %}
         {% endblock content %}

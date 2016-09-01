@@ -60,3 +60,7 @@ def user_login(request):
     else:
         login_form = LoginForm()
     return render(request, 'my_calendar/index.html', {'login_form': login_form})
+    
+def user_logout(request):
+    logout(request)
+    return redirect('my_calendar:index')
