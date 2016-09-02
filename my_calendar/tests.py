@@ -1,9 +1,11 @@
+import datetime
+
 from django.contrib.auth.models import User, AnonymousUser
 from django.core.urlresolvers import resolve
 from django.contrib.auth import get_user
 from django.test import TestCase
 
-from .views import index, register, profile
+from .views import index, register, profile, month
 from .models import UserProfile
 from .forms import RegisterForm
 
@@ -175,6 +177,24 @@ class LogoutViewTest(TestCase):
         self.assertEqual(response.status_code, 302)
         user = get_user(self.client)
         self.assertEqual(user, AnonymousUser())
+ 
+ 
+class MonthViewTest(BaseTest):
+    
+    def setUp(self):
+        self.url = '/month'
+        self.template = 'my_calendar/month.html'
+        self.function = month
+        
+    def test_passes_days_of_month_in_context(self):
+        response = self.client.get(self.url)
+        self.assertIn('days', response.context)
+        date_ = datetime.datetime.now()
+        first = datetime.date(date_.year, date_.month, 1)
+        some = datetime.date(date_.year, date_.month, 25)
+        self.assertIn(first, response.context['days'])
+        self.assertIn(some, response.context['days'])
+
  
 if __name__ == '__main__':
     unittest.main() 

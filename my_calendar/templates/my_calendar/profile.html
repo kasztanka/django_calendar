@@ -2,5 +2,6 @@
 {% block user_content %}
 <h2>{{ profile.user.first_name}} {{ profile.user.last_name }}</h2>
 <span>{{ profile.user.email }}</span>
-<span>{{ profile.timezone }}</span>
+<span>Timezone: {{ profile.timezone }}</span>
+<a href="{% url 'my_calendar:month' %}" id="timeline">Check out you're timeline!</a>
 {% endblock user_content %}
