@@ -46,6 +46,7 @@ def profile(request, username):
     return render(request, 'my_calendar/profile.html', {'profile': profile})
     
 def user_login(request):
+    context = {}
     if request.method == "POST":
         username = request.POST['username']
         password = request.POST['password']
@@ -54,8 +55,8 @@ def user_login(request):
             login(request, user)
             return redirect('my_calendar:profile', username=user.username)
         else:
-            print('errors with login')
-    return render(request, 'my_calendar/index.html')
+            context['login_errors'] = "Wrong username or password."
+    return render(request, 'my_calendar/index.html', context)
     
 def user_logout(request):
     logout(request)

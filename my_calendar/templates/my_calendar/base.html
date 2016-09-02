@@ -17,6 +17,9 @@
             {% endblock user_content %}
         {% else %}
             {% if not 'register' in request.path %}
+                {% if login_errors %}
+                    <p>{{ login_errors }}</p>
+                {% endif %}
                 <form method="POST" id="login_form" action="{% url 'my_calendar:user_login' %}">
                     {% csrf_token %}
                     <p><label for="id_username">Username:</label>
