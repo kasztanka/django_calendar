@@ -1,6 +1,6 @@
 {% extends 'my_calendar/base.html' %}
-{% block content %}
+{% block user_content %}
 <h2>{{ profile.user.first_name}} {{ profile.user.last_name }}</h2>
 <span>{{ profile.user.email }}</span>
 <span>{{ profile.timezone }}</span>
-{% endblock content %}
+{% endblock user_content %}

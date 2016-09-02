@@ -4,14 +4,12 @@ from django.shortcuts import get_object_or_404, render, redirect
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.models import User
 
-from .forms import RegisterForm, LoginForm
+from .forms import RegisterForm
 from .models import UserProfile
 
 
 def index(request):
-    context = {}
-    context['login_form'] = LoginForm()
-    return render(request, "my_calendar/index.html", context)
+    return render(request, "my_calendar/index.html")
     
     
 def register(request):
@@ -56,10 +54,8 @@ def user_login(request):
             login(request, user)
             return redirect('my_calendar:profile', username=user.username)
         else:
-            login_form = LoginForm(request.POST)
-    else:
-        login_form = LoginForm()
-    return render(request, 'my_calendar/index.html', {'login_form': login_form})
+            print('errors with login')
+    return render(request, 'my_calendar/index.html')
     
 def user_logout(request):
     logout(request)

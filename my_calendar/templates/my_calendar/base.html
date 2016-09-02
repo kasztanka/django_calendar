@@ -13,8 +13,25 @@
             <a href="{% url 'my_calendar:user_logout' %}">
                 <button id="logout">Log out</button>
             </a>
+            {% block user_content %}
+            {% endblock user_content %}
+        {% else %}
+            {% if not 'register' in request.path %}
+                <form method="POST" id="login_form" action="{% url 'my_calendar:user_login' %}">
+                    {% csrf_token %}
+                    <p><label for="id_username">Username:</label>
+                    <input id="id_username" maxlength="150" name="username" type="text" required /></p>
+                    <p><label for="id_password">Password:</label>
+                    <input id="id_password" name="password" type="password" required /></p>
+                    <button type="submit">Sign in</button>
+                </form>
+                <p>You haven't signed up yet?</p>
+                <a id='registration' href="{% url 'my_calendar:register' %}">Register now!</a>
+            {% endif %}
+            {% block content %}
+            {% endblock content %}
         {% endif %}
-        {% block content %}
-        {% endblock content %}
+        {% block for_all %}
+        {% endblock for_all %}
     </body>
 </html>
