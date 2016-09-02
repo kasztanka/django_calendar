@@ -71,7 +71,7 @@ class UserTest(LiveServerTestCase):
         self.fill_input('id_last_name', 'Lou')
         self.browser.find_element_by_tag_name('button').click()
         
-    def test_user_login_and_logout(self):
+    def test_user_login_and_logout_to_the_same_site(self):
         self.browser.get(self.live_server_url)
         self.register()
         time.sleep(2)
@@ -79,7 +79,11 @@ class UserTest(LiveServerTestCase):
         # after registration you're logged in
         logout = self.browser.find_element_by_id('logout')
         logout.click()
+        
+        self.assertRegex(self.browser.current_url, '/profile/mary123')
         time.sleep(2)
+        
+        self.browser.get(self.live_server_url)
         
         self.fill_input('id_username', 'mary123')
         self.fill_input('id_password', 'JingleBellsBatmanSmells')
@@ -87,7 +91,7 @@ class UserTest(LiveServerTestCase):
         submit = self.browser.find_element_by_tag_name('button')
         submit.click()
                 
-        self.assertRegex(self.browser.current_url, '/profile/mary123')
+        self.assertEqual(self.browser.current_url, self.live_server_url + '/')
         time.sleep(2)
         
         logout = self.browser.find_element_by_id('logout')

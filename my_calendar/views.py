@@ -47,17 +47,19 @@ def profile(request, username):
     
 def user_login(request):
     context = {}
+    next_page = request.GET.get("nextpage", "my_calendar:index")
     if request.method == "POST":
         username = request.POST['username']
         password = request.POST['password']
         user = authenticate(username=username, password=password)
         if user:
             login(request, user)
-            return redirect('my_calendar:profile', username=user.username)
+            return redirect(next_page)
         else:
             context['login_errors'] = "Wrong username or password."
     return render(request, 'my_calendar/index.html', context)
     
 def user_logout(request):
     logout(request)
-    return redirect('my_calendar:index')
+    next_page = request.GET.get("nextpage", "my_calendar:index")
+    return redirect(next_page)

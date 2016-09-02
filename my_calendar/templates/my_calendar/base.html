@@ -10,7 +10,7 @@
         <h1>My Calendar</h1>
         {% if user.is_authenticated %}
             <p>Hey, {{ user.username }}!</p>
-            <a href="{% url 'my_calendar:user_logout' %}">
+            <a href="{% url 'my_calendar:user_logout' %}?nextpage={{ request.path }}">
                 <button id="logout">Log out</button>
             </a>
             {% block user_content %}
@@ -20,7 +20,7 @@
                 {% if login_errors %}
                     <p>{{ login_errors }}</p>
                 {% endif %}
-                <form method="POST" id="login_form" action="{% url 'my_calendar:user_login' %}">
+                <form method="POST" id="login_form" action="{% url 'my_calendar:user_login' %}?nextpage={{ request.path }}">
                     {% csrf_token %}
                     <p><label for="id_username">Username:</label>
                     <input id="id_username" maxlength="150" name="username" type="text" required /></p>
