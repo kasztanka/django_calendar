@@ -130,27 +130,24 @@ class ProfileViewTest(BaseTest):
 
 class LoginViewTest(TestCase):
     
+    def setUp(self):
+        self.user = User.objects.create(username='pretty_woman', password='cow')
+        self.user.set_password(self.user.password)
+        self.user.save()
+        profile = UserProfile.objects.create(user=self.user)
+        profile.save()       
+    
     def test_user_can_login(self):
-        correct_user = User.objects.create(username='pretty_woman', password='cow')
-        correct_user.set_password(correct_user.password)
-        correct_user.save()
-        correct_profile = UserProfile.objects.create(user=correct_user)
-        correct_profile.save()
         response = self.client.post(
             '/login', data={
             'username': 'pretty_woman',
             'password': 'cow'
             }, follow=True)
         user = get_user(self.client)
-        self.assertEqual(user, correct_user)
+        self.assertEqual(user, self.user)
         self.assertContains(response, "Hey, pretty_woman!")
     
     def test_passes_erros_after_wrong_login(self):
-        correct_user = User.objects.create(username='pretty_woman', password='cow')
-        correct_user.set_password(correct_user.password)
-        correct_user.save()
-        correct_profile = UserProfile.objects.create(user=correct_user)
-        correct_profile.save()
         response = self.client.post(
             '/login', data={
             'username': 'pretty_woman',
