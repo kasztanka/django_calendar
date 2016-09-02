@@ -1,3 +1,4 @@
+import datetime
 import time
 
 from selenium.webdriver.common.keys import Keys
@@ -71,7 +72,7 @@ class UserTest(LiveServerTestCase):
         self.fill_input('id_last_name', 'Lou')
         self.browser.find_element_by_tag_name('button').click()
         
-    def test_user_login_and_logout_to_the_same_site(self):
+    def test_login_and_logout_to_the_same_site(self):
         self.browser.get(self.live_server_url)
         self.register()
         time.sleep(2)
@@ -99,6 +100,35 @@ class UserTest(LiveServerTestCase):
         
         self.assertEqual(self.browser.current_url, self.live_server_url + '/')
 
+    def test_month_week_day_sites(self):
+        self.browser.get(self.live_server_url)
+        self.register()
+        time.sleep(2)
         
+        timeline = self.browser.find_element_by_id('time_line')
+        timeline.click()
+        
+        self.assertRegex(self.browser.current_url, '/month')
+        page_text = self.browser.find_element_by_tag_name('body').text
+        date_ = datetime.datetime.now()
+        time.sleep(2)
+        self.assertTrue("<td>" + date_.strftime("%d %b") + "</td>" in page_text)
+        
+        week_ = self.browser.find_element_by_id('week')
+        week_.click()
+        self.assertRegex(self.browser.current_url, '/week')
+        page_text = self.browser.find_element_by_tag_name('body').text
+        time.sleep(2)
+        self.assertTrue("<td>" + date_.strftime("%A %m\%d") + "</td>" in page_text)
+        
+        
+        day_ = self.browser.find_element_by_id('day')
+        day_.click()
+        self.assertRegex(self.browser.current_url, '/day')
+        page_text = self.browser.find_element_by_tag_name('body').text
+        time.sleep(2)
+        self.assertTrue("<tr><td>" + date_.strftime("%A %m\%d") + "</td></tr>" in page_text)
+        
+    
 if __name__ == '__main__':
     unittest.main()   
