@@ -1,1 +1,24 @@
 {% extends 'my_calendar/base.html' %}
+{% load modulo %}
+{% block user_content %}
+<table>
+    <tr>
+        <th>Monday</th>
+        <th>Tuesday</th>
+        <th>Wednesday</th>
+        <th>Thursday</th>
+        <th>Friday</th>
+        <th>Saturday</th>
+        <th>Sunday</th>
+    </tr>
+    {% for day in days %}
+        {% if forloop.counter0|modulo:7 == 0 %}
+            <tr>
+        {% endif %}
+        <td>{{ day|date:"d M" }}</td>
+        {% if forloop.counter0|modulo:7 == 6 %}
+            </tr>
+        {% endif %}
+    {% endfor %}
+</table>
+{% endblock %}

@@ -105,29 +105,29 @@ class UserTest(LiveServerTestCase):
         self.register()
         time.sleep(2)
         
-        timeline = self.browser.find_element_by_id('time_line')
+        timeline = self.browser.find_element_by_id('timeline')
         timeline.click()
         
         self.assertRegex(self.browser.current_url, '/month')
-        page_text = self.browser.find_element_by_tag_name('body').text
+        page_text = self.browser.find_element_by_tag_name('body').get_attribute('innerHTML')
         date_ = datetime.datetime.now()
         time.sleep(2)
-        self.assertTrue("<td>" + date_.strftime("%d %b") + "</td>" in page_text)
+        self.assertIn("<td>" + date_.strftime("%d %b") + "</td>", page_text)
         
         week_ = self.browser.find_element_by_id('week')
         week_.click()
         self.assertRegex(self.browser.current_url, '/week')
-        page_text = self.browser.find_element_by_tag_name('body').text
+        page_text = self.browser.find_element_by_tag_name('body').get_attribute('innerHTML')
         time.sleep(2)
-        self.assertTrue("<td>" + date_.strftime("%A %m\%d") + "</td>" in page_text)
+        self.assertIn("<td>" + date_.strftime("%A %m\%d") + "</td>", page_text)
         
         
         day_ = self.browser.find_element_by_id('day')
         day_.click()
         self.assertRegex(self.browser.current_url, '/day')
-        page_text = self.browser.find_element_by_tag_name('body').text
+        page_text = self.browser.find_element_by_tag_name('body').get_attribute('innerHTML')
         time.sleep(2)
-        self.assertTrue("<tr><td>" + date_.strftime("%A %m\%d") + "</td></tr>" in page_text)
+        self.assertIn("<tr><td>" + date_.strftime("%A %m\%d") + "</td></tr>", page_text)
         
     
 if __name__ == '__main__':

@@ -85,8 +85,10 @@ def fill_month(date_):
     while last.weekday() != 6:
         last = last + datetime.timedelta(days=1)
     days = []
-    while first != last:
+    while first:
         days.append(first)
+        if first == last:
+            break
         first = first + datetime.timedelta(days=1)
     return days
 
