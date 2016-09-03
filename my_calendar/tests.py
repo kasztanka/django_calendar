@@ -5,7 +5,7 @@ from django.core.urlresolvers import resolve
 from django.contrib.auth import get_user
 from django.test import TestCase
 
-from .views import index, register, profile, month
+from .views import index, register, profile, month, week
 from .models import UserProfile
 from .forms import RegisterForm
 
@@ -214,7 +214,49 @@ class MonthViewTest(BaseTest):
         self.assertIn(first, response.context['days'])
         self.assertIn(some, response.context['days'])
     
+    def test_passes_date(self):
+        response = self.client.get(self.url)
+        self.assertIn('choosen_date', response.context)
+
+
+class WeekViewTest(BaseTest):
     
+    def setUp(self):
+        self.today = datetime.datetime.now().date()
+        self.base_url = '/week'
+        self.url = self.base_url + '/{}-{}-{}'.format(str(self.today.year), str(self.today.month), str(self.today.day))
+        self.template = 'my_calendar/week.html'
+        self.function = week
+        
+    def test_passes_days_of_week_in_context(self):
+        response = self.client.get(self.url)
+        self.assertIn('days', response.context)
+        previous = self.today - datetime.timedelta(days=1)
+        next = self.today + datetime.timedelta(days=1)
+        self.assertTrue(previous in response.context['days'] or next in response.context['days'])
+
+    def test_passes_correct_days_when_week_given(self):
+        response = self.client.get(self.base_url + '/2015-02-01')
+        first = datetime.date(2015, 1, 26)
+        last = datetime.date(2015, 2, 1)
+        self.assertIn(first, response.context['days'])
+        self.assertIn(last, response.context['days'])
+        self.assertEqual(len(response.context['days']), 7)
     
+    def test_passes_errors_when_incorrect_date(self):
+        response = self.client.get(self.base_url + '/2016-13-01')
+        self.assertIn('date-errors', response.context)
+        
+    def test_passes_today_date_when_wrong_date(self):
+        response = self.client.get(self.base_url + '/2016-13-01')
+        previous = self.today - datetime.timedelta(days=1)
+        next = self.today + datetime.timedelta(days=1)
+        self.assertTrue(previous in response.context['days'] or next in response.context['days'])
+    
+    def test_passes_date(self):
+        response = self.client.get(self.url)
+        self.assertIn('choosen_date', response.context)
+        
+        
 if __name__ == '__main__':
     unittest.main() 

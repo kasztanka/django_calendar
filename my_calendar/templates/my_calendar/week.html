@@ -1,0 +1,13 @@
+{% extends 'my_calendar/base.html' %}
+{% block user_content %}
+<a id="month" href="/month/{{ choosen_date|date:'Y-m-d' }}">Month</a>
+<a id="week" href="/week/{{ choosen_date|date:'Y-m-d' }}">Week</a>
+<a id="day">1 day</a>
+<table>
+    <tr>
+    {% for day in days %}
+        <td>{{ day|date:"l m/d" }}</td>
+    {% endfor %}
+    </tr>
+</table>
+{% endblock %}

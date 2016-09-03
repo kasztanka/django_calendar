@@ -119,7 +119,7 @@ class UserTest(LiveServerTestCase):
         self.assertRegex(self.browser.current_url, '/week')
         page_text = self.browser.find_element_by_tag_name('body').get_attribute('innerHTML')
         time.sleep(2)
-        self.assertIn("<td>" + date_.strftime("%A %m\%d") + "</td>", page_text)
+        self.assertIn("<td>" + date_.strftime("%A %m/%d") + "</td>", page_text)
         
         
         day_ = self.browser.find_element_by_id('day')
@@ -127,7 +127,7 @@ class UserTest(LiveServerTestCase):
         self.assertRegex(self.browser.current_url, '/day')
         page_text = self.browser.find_element_by_tag_name('body').get_attribute('innerHTML')
         time.sleep(2)
-        self.assertIn("<tr><td>" + date_.strftime("%A %m\%d") + "</td></tr>", page_text)
+        self.assertIn("<tr><td>" + date_.strftime("%A %m/%d") + "</td></tr>", page_text)
         
     
 if __name__ == '__main__':

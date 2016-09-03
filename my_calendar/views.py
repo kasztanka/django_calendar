@@ -79,7 +79,7 @@ def fill_month(date_):
     first = datetime.date(date_.year, date_.month, 1)
     while first.weekday():
         first = first - datetime.timedelta(days=1)
-    ## month range returns weekday of the first day and number of days in month
+    ## monthrange returns weekday of the first day and number of days in month
     last_day = monthrange(date_.year, date_.month)[1]
     last = datetime.date(date_.year, date_.month, last_day)
     while last.weekday() != 6:
@@ -101,9 +101,38 @@ def month(request, year, month, day):
         context['date-errors'] = "You enetered wrong date."
     days = fill_month(date_)
     context['days'] = days
+    context['choosen_date'] = date_
     return render(request, 'my_calendar/month.html', context)
     
+def fill_week(date_):
+    '''
+    Function that returns list of days of week for given date.   
+    '''
+    first = date_
+    while first.weekday():
+        first = first - datetime.timedelta(days=1)
+    last = date_
+    while last.weekday() != 6:
+        last = last + datetime.timedelta(days=1)
+    days = []
+    while first:
+        days.append(first)
+        if first == last:
+            break
+        first = first + datetime.timedelta(days=1)
+    return days
     
+def week(request, year, month, day):
+    context = {}
+    try:
+        date_ = datetime.date(int(year), int(month), int(day))
+    except ValueError:
+        date_ = datetime.datetime.now().date()
+        context['date-errors'] = "You enetered wrong date."
+    days = fill_week(date_)
+    context['days'] = days
+    context['choosen_date'] = date_
+    return render(request, 'my_calendar/week.html', context)
     
     
     

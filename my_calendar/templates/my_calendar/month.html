@@ -1,6 +1,9 @@
 {% extends 'my_calendar/base.html' %}
 {% load modulo %}
 {% block user_content %}
+<a id="month" href="/month/{{ choosen_date|date:'Y-m-d' }}">Month</a>
+<a id="week" href="/week/{{ choosen_date|date:'Y-m-d' }}">Week</a>
+<a id="day">1 day</a>
 <table>
     <tr>
         <th>Monday</th>
