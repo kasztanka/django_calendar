@@ -71,7 +71,7 @@ class RegisterViewTest(BaseTest):
         ## filter returns query set, so we have to take first element
         correct_profile = UserProfile.objects.filter(user=get_user(self.client))[0]
         
-        self.assertRedirects(response, '/profile/%s' % (correct_profile.user.username,))
+        self.assertRedirects(response, '/profile/{}'.format(correct_profile.user.username))
         
     def test_checks_if_timezone_exists(self):
         response = self.client.post(
@@ -120,7 +120,7 @@ class ProfileViewTest(BaseTest):
         self.correct_profile = UserProfile.objects.create(user=correct_user)
         other_user = User.objects.create()
         self.other_profile = UserProfile.objects.create(user=other_user)
-        self.url = '/profile/%s' % (self.correct_profile.user.username,)
+        self.url = '/profile/{}'.format(self.correct_profile.user.username)
         self.template = 'my_calendar/profile.html'
         self.function = profile
     
@@ -183,7 +183,7 @@ class MonthViewTest(BaseTest):
     def setUp(self):
         self.today = datetime.datetime.now().date()
         self.base_url = '/month'
-        self.url = self.base_url + '/%s-%s-%s' % (str(self.today.year), str(self.today.month), str(self.today.day))
+        self.url = self.base_url + '/{}-{}-{}'.format(str(self.today.year), str(self.today.month), str(self.today.day))
         self.template = 'my_calendar/month.html'
         self.function = month
         
