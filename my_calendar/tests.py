@@ -55,8 +55,7 @@ class RegisterViewTest(BaseTest):
         self.assertEqual(UserProfile.objects.count(), 1)
         user_ = UserProfile.objects.first()
         self.assertEqual(user_.user.username, 'John123')
-        self.assertEqual(user_.timezone, 'UTC')
-        
+        self.assertEqual(user_.timezone, 'UTC')       
     
     def test_user_logged_in_after_registration(self):
         self.user_registers()
@@ -182,19 +181,40 @@ class LogoutViewTest(TestCase):
 class MonthViewTest(BaseTest):
     
     def setUp(self):
-        self.url = '/month'
+        self.today = datetime.datetime.now().date()
+        self.base_url = '/month'
+        self.url = self.base_url + '/%s-%s-%s' % (str(self.today.year), str(self.today.month), str(self.today.day))
         self.template = 'my_calendar/month.html'
         self.function = month
         
     def test_passes_days_of_month_in_context(self):
         response = self.client.get(self.url)
         self.assertIn('days', response.context)
-        date_ = datetime.datetime.now()
-        first = datetime.date(date_.year, date_.month, 1)
-        some = datetime.date(date_.year, date_.month, 25)
+        first = datetime.date(self.today.year, self.today.month, 1)
+        some = datetime.date(self.today.year, self.today.month, 25)
         self.assertIn(first, response.context['days'])
         self.assertIn(some, response.context['days'])
 
- 
+    def test_passes_correct_days_when_month_given(self):
+        response = self.client.get(self.base_url + '/2015-02-01')
+        first = datetime.date(2015, 1, 26)
+        last = datetime.date(2015, 3, 1)
+        self.assertIn(first, response.context['days'])
+        self.assertIn(last, response.context['days'])
+        self.assertEqual(len(response.context['days']), 35)
+    
+    def test_passes_errors_when_incorrect_date(self):
+        response = self.client.get(self.base_url + '/2016-13-01')
+        self.assertIn('date-errors', response.context)
+        
+    def test_passes_today_date_when_wrong_date(self):
+        response = self.client.get(self.base_url + '/2016-13-01')
+        first = datetime.date(self.today.year, self.today.month, 1)
+        some = datetime.date(self.today.year, self.today.month, 25)
+        self.assertIn(first, response.context['days'])
+        self.assertIn(some, response.context['days'])
+    
+    
+    
 if __name__ == '__main__':
     unittest.main() 

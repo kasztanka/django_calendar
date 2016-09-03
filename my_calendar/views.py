@@ -92,9 +92,13 @@ def fill_month(date_):
         first = first + datetime.timedelta(days=1)
     return days
 
-def month(request):
+def month(request, year, month, day):
     context = {}
-    date_ = datetime.datetime.now().date()
+    try:
+        date_ = datetime.date(int(year), int(month), int(day))
+    except ValueError:
+        date_ = datetime.datetime.now().date()
+        context['date-errors'] = "You enetered wrong date."
     days = fill_month(date_)
     context['days'] = days
     return render(request, 'my_calendar/month.html', context)
