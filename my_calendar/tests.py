@@ -5,7 +5,7 @@ from django.core.urlresolvers import resolve
 from django.contrib.auth import get_user
 from django.test import TestCase
 
-from .views import index, register, profile, month, week
+from .views import index, register, profile, month, week, day
 from .models import UserProfile
 from .forms import RegisterForm
 
@@ -257,6 +257,27 @@ class WeekViewTest(BaseTest):
         response = self.client.get(self.url)
         self.assertIn('choosen_date', response.context)
         
+
+class DayViewTest(BaseTest):
+    
+    def setUp(self):
+        self.today = datetime.datetime.now().date()
+        self.base_url = '/day'
+        self.url = self.base_url + '/{}-{}-{}'.format(str(self.today.year), str(self.today.month), str(self.today.day))
+        self.template = 'my_calendar/day.html'
+        self.function = day
+        
+    def test_passes_errors_when_incorrect_date(self):
+        response = self.client.get(self.base_url + '/2016-13-01')
+        self.assertIn('date-errors', response.context)
+        
+    def test_passes_today_date_when_wrong_date(self):
+        response = self.client.get(self.base_url + '/2016-13-01')
+        self.assertEqual(self.today, response.context['choosen_date'])
+    
+    def test_passes_date(self):
+        response = self.client.get(self.url)
+        self.assertIn('choosen_date', response.context)
         
 if __name__ == '__main__':
     unittest.main() 

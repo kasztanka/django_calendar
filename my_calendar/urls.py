@@ -11,4 +11,5 @@ urlpatterns = [
     url(r'logout$', views.user_logout, name='user_logout'),
     url(r'month/(?P<year>\d+)-(?P<month>\d+)-(?P<day>\d+)$', views.month, name='month'),
     url(r'week/(?P<year>\d+)-(?P<month>\d+)-(?P<day>\d+)$', views.week, name='week'),
+    url(r'day/(?P<year>\d+)-(?P<month>\d+)-(?P<day>\d+)$', views.day, name='day'),
 ]

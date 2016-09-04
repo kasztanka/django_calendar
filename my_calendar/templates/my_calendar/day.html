@@ -5,9 +5,7 @@
 <a id="day" href="/day/{{ choosen_date|date:'Y-m-d' }}">1 day</a>
 <table>
     <tr>
-    {% for day in days %}
-        <td>{{ day|date:"l m/d" }}</td>
-    {% endfor %}
+        <td>{{ choosen_date|date:"l m/d" }}</td>
     </tr>
 </table>
 {% endblock %}

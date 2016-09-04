@@ -134,5 +134,15 @@ def week(request, year, month, day):
     context['choosen_date'] = date_
     return render(request, 'my_calendar/week.html', context)
     
+def day(request, year, month, day):
+    context = {}
+    try:
+        date_ = datetime.date(int(year), int(month), int(day))
+    except ValueError:
+        date_ = datetime.datetime.now().date()
+        context['date-errors'] = "You enetered wrong date."
+    context['choosen_date'] = date_
+    return render(request, 'my_calendar/day.html', context)
+    
     
     
