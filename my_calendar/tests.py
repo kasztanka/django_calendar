@@ -178,22 +178,53 @@ class LogoutViewTest(TestCase):
         self.assertEqual(user, AnonymousUser())
  
  
-class MonthViewTest(BaseTest):
+class DayViewTest(BaseTest):
+    
+    def setUp(self):
+        self.today = datetime.datetime.now().date()
+        self.base_url = '/day'
+        self.date_url()
+        self.template = 'my_calendar/day.html'
+        self.function = day
+        
+    def date_url(self):
+        self.url = self.base_url + '/{}-{}-{}'.format(
+            str(self.today.year), str(self.today.month), str(self.today.day))
+    
+    def passes_days_if_date_is_today(self, response):
+        self.assertEqual(self.today, response.context['choosen_date'])
+
+    def test_passes_errors_when_incorrect_date(self):
+        response = self.client.get(self.base_url + '/2016-13-01')
+        self.assertIn('date-errors', response.context)
+        
+    def test_passes_today_when_wrong_date(self):
+        response = self.client.get(self.base_url + '/2016-13-01')
+        self.passes_days_if_date_is_today(response)
+    
+    def test_passes_date(self):
+        response = self.client.get(self.url)
+        self.assertIn('choosen_date', response.context)
+        
+ 
+class MonthViewTest(DayViewTest):
     
     def setUp(self):
         self.today = datetime.datetime.now().date()
         self.base_url = '/month'
-        self.url = self.base_url + '/{}-{}-{}'.format(str(self.today.year), str(self.today.month), str(self.today.day))
+        self.date_url()
         self.template = 'my_calendar/month.html'
         self.function = month
         
-    def test_passes_days_of_month_in_context(self):
-        response = self.client.get(self.url)
-        self.assertIn('days', response.context)
+    def passes_days_if_date_is_today(self, response):
         first = datetime.date(self.today.year, self.today.month, 1)
         some = datetime.date(self.today.year, self.today.month, 25)
         self.assertIn(first, response.context['days'])
         self.assertIn(some, response.context['days'])
+        
+    def test_passes_days_of_month_in_context(self):
+        response = self.client.get(self.url)
+        self.passes_days_if_date_is_today(response)
 
     def test_passes_correct_days_when_month_given(self):
         response = self.client.get(self.base_url + '/2015-02-01')
@@ -202,38 +233,25 @@ class MonthViewTest(BaseTest):
         self.assertIn(first, response.context['days'])
         self.assertIn(last, response.context['days'])
         self.assertEqual(len(response.context['days']), 35)
-    
-    def test_passes_errors_when_incorrect_date(self):
-        response = self.client.get(self.base_url + '/2016-13-01')
-        self.assertIn('date-errors', response.context)
-        
-    def test_passes_today_date_when_wrong_date(self):
-        response = self.client.get(self.base_url + '/2016-13-01')
-        first = datetime.date(self.today.year, self.today.month, 1)
-        some = datetime.date(self.today.year, self.today.month, 25)
-        self.assertIn(first, response.context['days'])
-        self.assertIn(some, response.context['days'])
-    
-    def test_passes_date(self):
-        response = self.client.get(self.url)
-        self.assertIn('choosen_date', response.context)
 
-
-class WeekViewTest(BaseTest):
+class WeekViewTest(DayViewTest):
     
     def setUp(self):
         self.today = datetime.datetime.now().date()
         self.base_url = '/week'
-        self.url = self.base_url + '/{}-{}-{}'.format(str(self.today.year), str(self.today.month), str(self.today.day))
+        self.date_url()
         self.template = 'my_calendar/week.html'
         self.function = week
         
-    def test_passes_days_of_week_in_context(self):
-        response = self.client.get(self.url)
-        self.assertIn('days', response.context)
+    def passes_days_if_date_is_today(self, response):    
         previous = self.today - datetime.timedelta(days=1)
         next = self.today + datetime.timedelta(days=1)
-        self.assertTrue(previous in response.context['days'] or next in response.context['days'])
+        self.assertTrue(previous in response.context['days']
+            or next in response.context['days'])
+            
+    def test_passes_days_of_week_in_context(self):
+        response = self.client.get(self.url)
+        self.passes_days_if_date_is_today(response)
 
     def test_passes_correct_days_when_week_given(self):
         response = self.client.get(self.base_url + '/2015-02-01')
@@ -243,41 +261,6 @@ class WeekViewTest(BaseTest):
         self.assertIn(last, response.context['days'])
         self.assertEqual(len(response.context['days']), 7)
     
-    def test_passes_errors_when_incorrect_date(self):
-        response = self.client.get(self.base_url + '/2016-13-01')
-        self.assertIn('date-errors', response.context)
-        
-    def test_passes_today_date_when_wrong_date(self):
-        response = self.client.get(self.base_url + '/2016-13-01')
-        previous = self.today - datetime.timedelta(days=1)
-        next = self.today + datetime.timedelta(days=1)
-        self.assertTrue(previous in response.context['days'] or next in response.context['days'])
-    
-    def test_passes_date(self):
-        response = self.client.get(self.url)
-        self.assertIn('choosen_date', response.context)
-        
-
-class DayViewTest(BaseTest):
-    
-    def setUp(self):
-        self.today = datetime.datetime.now().date()
-        self.base_url = '/day'
-        self.url = self.base_url + '/{}-{}-{}'.format(str(self.today.year), str(self.today.month), str(self.today.day))
-        self.template = 'my_calendar/day.html'
-        self.function = day
-        
-    def test_passes_errors_when_incorrect_date(self):
-        response = self.client.get(self.base_url + '/2016-13-01')
-        self.assertIn('date-errors', response.context)
-        
-    def test_passes_today_date_when_wrong_date(self):
-        response = self.client.get(self.base_url + '/2016-13-01')
-        self.assertEqual(self.today, response.context['choosen_date'])
-    
-    def test_passes_date(self):
-        response = self.client.get(self.url)
-        self.assertIn('choosen_date', response.context)
         
 if __name__ == '__main__':
     unittest.main() 
