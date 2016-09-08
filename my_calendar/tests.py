@@ -5,8 +5,8 @@ from django.core.urlresolvers import resolve
 from django.contrib.auth import get_user
 from django.test import TestCase
 
-from .views import index, register, profile, month, week, day
-from .models import UserProfile
+from .views import index, register, profile, month, week, day, new_calendar, calendar_view
+from .models import UserProfile, MyCalendar
 from .forms import RegisterForm
 
 
@@ -261,6 +261,116 @@ class WeekViewTest(DayViewTest):
         self.assertIn(last, response.context['days'])
         self.assertEqual(len(response.context['days']), 7)
     
+
+class NewCalendarTest(BaseTest):
+    
+    def setUp(self):
+        self.url = '/calendar/new'
+        self.template = 'my_calendar/new_calendar.html'
+        self.function = new_calendar
+    
+    def test_saves_calendar(self):
+        self.client.post(
+            '/register', data={
+                'username': 'John123',
+                'password': 'password',
+                'email': 'example@email.com',
+                'first_name': 'John',
+                'last_name': 'Doe',
+                'timezone': 'UTC'
+        })
+        self.client.post(
+            '/calendar/new', data={
+                'name': 'Pretty face',
+                'color': '#FF0000',
+        })
+        self.assertEqual(MyCalendar.objects.count(), 1)
+        
+    def test_cannot_save_empty_calendar(self):
+        self.client.post(
+            '/register', data={
+                'username': 'John123',
+                'password': 'password',
+                'email': 'example@email.com',
+                'first_name': 'John',
+                'last_name': 'Doe',
+                'timezone': 'UTC'
+        })
+        response = self.client.post(
+            '/calendar/new', data={
+                'name': '',
+                'color': '#FF0000',
+        })
+        self.assertEqual(MyCalendar.objects.count(), 0)
+        self.assertIn('errors', response.context)
+        
+    def test_checks_color_regex(self):
+        self.client.post(
+            '/register', data={
+                'username': 'John123',
+                'password': 'password',
+                'email': 'example@email.com',
+                'first_name': 'John',
+                'last_name': 'Doe',
+                'timezone': 'UTC'
+        })
+        response = self.client.post(
+            '/calendar/new', data={
+                'name': 'Name',
+                'color': '#FF000',
+        })
+        self.assertIn('errors', response.context)
+        response = self.client.post(
+            '/calendar/new', data={
+                'name': 'Name',
+                'color': '#FF0ZZZ',
+        })
+        self.assertIn('errors', response.context)
+        response = self.client.post(
+            '/calendar/new', data={
+                'name': 'Name',
+                'color': '2FFE000',
+        })
+        self.assertIn('errors', response.context)
+        self.assertEqual(MyCalendar.objects.count(), 0)
+        
+    def test_redirects_after_saving_calendar(self):
+        self.client.post(
+            '/register', data={
+                'username': 'John123',
+                'password': 'password',
+                'email': 'example@email.com',
+                'first_name': 'John',
+                'last_name': 'Doe',
+                'timezone': 'UTC'
+        })
+        response = self.client.post(
+            '/calendar/new', data={
+                'name': 'Pretty face',
+                'color': '#FF0000',
+        })
+        calendar_ = MyCalendar.objects.first()
+        self.assertRedirects(response, '/calendar/{}'.format(calendar_.pk))
+        
+        
+class CalendarViewTest(BaseTest):
+
+    def setUp(self):
+        self.client.post(
+            '/register', data={
+                'username': 'John123',
+                'password': 'password',
+                'email': 'example@email.com',
+                'first_name': 'John',
+                'last_name': 'Doe',
+                'timezone': 'UTC'
+        })
+        profile = UserProfile.objects.get(user=get_user(self.client))
+        self.calendar = MyCalendar.objects.create(owner=profile, name="Cindirella", color="E81AD4")
+        self.url = '/calendar/1'
+        self.template = 'my_calendar/calendar.html'
+        self.function = calendar_view
+        
         
 if __name__ == '__main__':
     unittest.main() 

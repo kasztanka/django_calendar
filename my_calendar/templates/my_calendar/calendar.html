@@ -1,0 +1,43 @@
+{% extends 'my_calendar/base.html' %}
+{% block user_content %}
+<div style="background-color:{{ calendar.color }}">Kolor kalendarza</div>
+<h2>{{ calendar.name }}</h2>
+<button onclick="FormDisplay();return false;" id="edit_calendar">Edit this calendar</button>
+<form method="POST" id="calendar_form">
+    {% csrf_token %}
+    <p><label for="id_name">Name:</label>
+    <input id="id_name" maxlength="100" name="name" type="text" required /></p>
+    <p><label for="id_color">Choose color:</label>
+    {% for color in colors %}
+        <div style="background-color: #{{ color }}; height:20px; width:20px;" class="colors" name="#{{ color }}"></div>
+    {% endfor %}
+    <input id="id_color" name="color" type="hidden"/></p>
+    <button type="submit" id="save_calendar">Save calendar</button>
+</form>
+<script>
+    var form = document.getElementById("calendar_form");
+    form.style.display = 'none';
+    function FormDisplay() {
+        if (form.style.display !== 'none') {
+            form.style.display = 'none';
+        }
+        else {
+            form.style.display = 'block';
+        }
+    };
+    var colors = document.getElementsByClassName("colors");
+    var previous = document.getElementsByName("{{ calendar.color }}")[0];
+    previous.className += " active";
+    input = document.getElementById("id_color");
+    input.value = colors[0].getAttribute("name");
+    
+    for (var i = 0; i < colors.length; i++) {
+        colors[i].onclick = function(){
+            old = document.getElementsByClassName("active")[0];
+            old.className = "colors";
+            this.className += " active";
+            input.value = this.getAttribute("name");
+        };
+    }
+</script>
+{% endblock user_content %}

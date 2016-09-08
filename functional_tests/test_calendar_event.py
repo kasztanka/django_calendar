@@ -14,8 +14,8 @@ class CalendarEventTest(FunctionalTest):
         button = self.browser.find_element_by_id("add_calendar")
         button.click()
         
-        self.fill_input("title", "First calendar! Wowowow!")
-        colors = self.browser.find_elements_by_class("colors")
+        self.fill_input("id_name", "First calendar! Wowowow!")
+        colors = self.browser.find_elements_by_class_name("colors")
         colors[2].click()
         time.sleep(2)
         
@@ -23,12 +23,12 @@ class CalendarEventTest(FunctionalTest):
         submit.click()
         
         calendar_url = self.browser.current_url
-        self.assertRegex(url, '/calendar/')
+        self.assertRegex(calendar_url, '/calendar/\d+')
         
         edition = self.browser.find_element_by_id("edit_calendar")
         edition.click()
-        self.fill_input("title", "Stupid title. Had to changed it. Color too.")
-        colors = self.browser.find_elements_by_class("colors")
+        self.fill_input("id_name", "Stupid name. Had to changed it. Color too.")
+        colors = self.browser.find_elements_by_class_name("colors")
         colors[1].click()
         time.sleep(2)
         
@@ -55,7 +55,7 @@ class CalendarEventTest(FunctionalTest):
         submit.click()
         
         event_url = self.browser.current_url
-        self.assertRegex(url, '/event/')
+        self.assertRegex(event_url, '/event/\d+')
         
         edition = self.browser.find_element_by_id("edit_event")
         edition.click()

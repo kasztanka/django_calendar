@@ -1,5 +1,6 @@
 from calendar import monthrange
 import datetime
+import re
 
 from pytz import common_timezones_set
 
@@ -7,9 +8,8 @@ from django.shortcuts import get_object_or_404, render, redirect
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.models import User
 
+from .models import UserProfile, MyCalendar
 from .forms import RegisterForm
-from .models import UserProfile
-
 
 def index(request):
     return render(request, "my_calendar/index.html")
@@ -144,5 +144,48 @@ def day(request, year, month, day):
     context['choosen_date'] = date_
     return render(request, 'my_calendar/day.html', context)
     
+
+def new_calendar(request):
+    context = {}
+    if request.method == "POST":
+        pattern = re.compile("^#[A-Fa-f0-9]{6}$")
+        if not request.user.is_authenticated:
+            context['errors'] = "Only users can create a calendar."
+        elif not request.POST['name']:
+            context['errors'] = "Name of calendar is required."
+        elif not pattern.match(request.POST['color']):
+            context['errors'] = "Color has to be hexadecimal with hash at the beginning."
+        else:
+            owner = UserProfile.objects.get(user=request.user)
+            name = request.POST['name']
+            color = request.POST['color']
+            calendar_ = MyCalendar.objects.create(owner=owner, name=name, color=color)
+            return redirect('my_calendar:calendar_view', cal_pk=calendar_.pk)
+    context['colors'] = COLORS
+    return render(request, 'my_calendar/new_calendar.html', context)
     
+def calendar_view(request, cal_pk):
+    context = {}
+    calendar_ = MyCalendar.objects.get(pk=cal_pk)
+    if request.method == "POST":
+        pattern = re.compile("^#[A-Fa-f0-9]{6}$")
+        if not request.user.is_authenticated:
+            context['errors'] = "Only users can create a calendar."
+        elif not request.POST['name']:
+            context['errors'] = "Name of calendar is required."
+        elif not pattern.match(request.POST['color']):
+            context['errors'] = "Color has to be hexadecimal with hash at the beginning."
+        else:
+            calendar_.name = request.POST['name']
+            calendar_.color = request.POST['color']
+            calendar_.save()
+    context['calendar'] = calendar_
+    context['colors'] = COLORS
+    return render(request, 'my_calendar/calendar.html', context)
     
+COLORS = (
+    "E81AD4",
+    "8F00FF",
+    "6214CC",
+    "464AFF",
+)
