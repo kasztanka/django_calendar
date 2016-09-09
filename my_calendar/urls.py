@@ -12,6 +12,6 @@ urlpatterns = [
     url(r'month/(?P<year>\d+)-(?P<month>\d+)-(?P<day>\d+)$', views.month, name='month'),
     url(r'week/(?P<year>\d+)-(?P<month>\d+)-(?P<day>\d+)$', views.week, name='week'),
     url(r'day/(?P<year>\d+)-(?P<month>\d+)-(?P<day>\d+)$', views.day, name='day'),
-    url(r'^calendar/new$', views.new_calendar, name='new_calendar'),
+    url(r'^calendar/new$', views.calendar_view, name='new_calendar'),
     url(r'^calendar/(?P<cal_pk>\d+)$', views.calendar_view, name='calendar_view'),
 ]

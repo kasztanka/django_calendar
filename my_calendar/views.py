@@ -145,43 +145,40 @@ def day(request, year, month, day):
     return render(request, 'my_calendar/day.html', context)
     
 
-def new_calendar(request):
+def calendar_view(request, cal_pk=None):
     context = {}
+    context['colors'] = COLORS
     if request.method == "POST":
         pattern = re.compile("^#[A-Fa-f0-9]{6}$")
         if not request.user.is_authenticated:
-            context['errors'] = "Only users can create a calendar."
+            context['errors'] = "Only users can create and edit a calendar."
         elif not request.POST['name']:
             context['errors'] = "Name of calendar is required."
         elif not pattern.match(request.POST['color']):
             context['errors'] = "Color has to be hexadecimal with hash at the beginning."
         else:
-            owner = UserProfile.objects.get(user=request.user)
-            name = request.POST['name']
-            color = request.POST['color']
-            calendar_ = MyCalendar.objects.create(owner=owner, name=name, color=color)
+            # editing
+            if cal_pk != None:
+                calendar_ = MyCalendar.objects.get(pk=cal_pk)
+                calendar_.name = request.POST['name']
+                calendar_.color = request.POST['color']
+                calendar_.save()
+            # creating new calendar
+            else:
+                owner = UserProfile.objects.get(user=request.user)
+                name = request.POST['name']
+                color = request.POST['color']
+                calendar_ = MyCalendar.objects.create(owner=owner, name=name, color=color)
+            context['calendar'] = calendar_
+            # redirect to make url look better
+            # e.g. if I make a new calendar browser will redirect to 'calendar/1'
+            # and not 'calendar/new' which is a page for making new calendars
             return redirect('my_calendar:calendar_view', cal_pk=calendar_.pk)
-    context['colors'] = COLORS
+    if cal_pk != None:
+        calendar_ = MyCalendar.objects.get(pk=cal_pk)
+        context['calendar'] = calendar_
+        return render(request, 'my_calendar/calendar.html', context)
     return render(request, 'my_calendar/new_calendar.html', context)
-    
-def calendar_view(request, cal_pk):
-    context = {}
-    calendar_ = MyCalendar.objects.get(pk=cal_pk)
-    if request.method == "POST":
-        pattern = re.compile("^#[A-Fa-f0-9]{6}$")
-        if not request.user.is_authenticated:
-            context['errors'] = "Only users can create a calendar."
-        elif not request.POST['name']:
-            context['errors'] = "Name of calendar is required."
-        elif not pattern.match(request.POST['color']):
-            context['errors'] = "Color has to be hexadecimal with hash at the beginning."
-        else:
-            calendar_.name = request.POST['name']
-            calendar_.color = request.POST['color']
-            calendar_.save()
-    context['calendar'] = calendar_
-    context['colors'] = COLORS
-    return render(request, 'my_calendar/calendar.html', context)
     
 COLORS = (
     "E81AD4",
