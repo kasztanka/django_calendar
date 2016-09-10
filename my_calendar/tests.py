@@ -29,14 +29,6 @@ class BaseTest(TestCase):
         response = self.client.get(self.url)
         self.assertTemplateUsed(response, 'my_calendar/base.html')
        
-       
-class RegisterViewTest(BaseTest):
-
-    def setUp(self):
-        self.url = '/register'
-        self.template = 'my_calendar/register.html'
-        self.function = register
-    
     def user_registers(self):
         response = self.client.post(
             '/register', data={
@@ -48,6 +40,13 @@ class RegisterViewTest(BaseTest):
                 'timezone': 'UTC'
         })
         return response
+        
+class RegisterViewTest(BaseTest):
+
+    def setUp(self):
+        self.url = '/register'
+        self.template = 'my_calendar/register.html'
+        self.function = register    
     
     def test_register_saves_new_user(self):
         self.user_registers()
@@ -265,15 +264,7 @@ class WeekViewTest(DayViewTest):
 class CalendarViewTest(BaseTest):
 
     def setUp(self):
-        self.client.post(
-            '/register', data={
-                'username': 'John123',
-                'password': 'password',
-                'email': 'example@email.com',
-                'first_name': 'John',
-                'last_name': 'Doe',
-                'timezone': 'UTC'
-        })
+        self.user_registers()
         profile = UserProfile.objects.get(user=get_user(self.client))
         self.calendar = MyCalendar.objects.create(owner=profile, name="Cindirella", color="E81AD4")
         self.url = '/calendar/1'
@@ -336,15 +327,7 @@ class CalendarViewTest(BaseTest):
 class NewCalendarTest(CalendarViewTest):
     
     def setUp(self):
-        self.client.post(
-            '/register', data={
-                'username': 'John123',
-                'password': 'password',
-                'email': 'example@email.com',
-                'first_name': 'John',
-                'last_name': 'Doe',
-                'timezone': 'UTC'
-        })
+        self.user_registers()
         self.url = '/calendar/new'
         self.template = 'my_calendar/new_calendar.html'
         self.function = calendar_view
