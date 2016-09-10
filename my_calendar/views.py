@@ -44,9 +44,13 @@ def register(request):
     return render(request, "my_calendar/register.html", context)
 
 def profile(request, username):
+    context = {}
     user = get_object_or_404(User, username=username)
     profile = get_object_or_404(UserProfile, user=user)
-    return render(request, 'my_calendar/profile.html', {'profile': profile})
+    context['profile'] = profile
+    calendars = profile.get_own_calendars()
+    context['calendars'] = calendars
+    return render(request, 'my_calendar/profile.html', context)
     
 def user_login(request):
     context = {}

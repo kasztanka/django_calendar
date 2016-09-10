@@ -16,13 +16,16 @@
 </form>
 <script>
     var form = document.getElementById("calendar_form");
+    var button = document.getElementById("edit_calendar");
     form.style.display = 'none';
     function FormDisplay() {
         if (form.style.display !== 'none') {
             form.style.display = 'none';
+            button.innerHTML = "Edit this calendar"
         }
         else {
             form.style.display = 'block';
+            button.innerHTML = "Hide edition"
         }
     };
     var colors = document.getElementsByClassName("colors");
