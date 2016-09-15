@@ -1,13 +1,15 @@
 import datetime
+import pytz
 
 from django.contrib.auth.models import User, AnonymousUser
 from django.core.urlresolvers import resolve
 from django.contrib.auth import get_user
 from django.test import TestCase
 
-from .views import index, register, profile, month, week, day, calendar_view
-from .models import UserProfile, MyCalendar
-from .forms import RegisterForm
+from .views import (index, register, profile, month, week, day,
+    calendar_view, event_view)
+from .models import UserProfile, MyCalendar, Event, Guest, EventCustomSettings
+from .forms import RegisterForm, EventForm
 
 
 class BaseTest(TestCase):
@@ -68,9 +70,11 @@ class RegisterViewTest(BaseTest):
         response = self.user_registers()
         
         ## filter returns query set, so we have to take first element
-        correct_profile = UserProfile.objects.filter(user=get_user(self.client))[0]
+        correct_profile = UserProfile.objects.filter(
+            user=get_user(self.client))[0]
         
-        self.assertRedirects(response, '/profile/{}'.format(correct_profile.user.username))
+        self.assertRedirects(response, '/profile/{}'.format(
+            correct_profile.user.username))
         
     def test_checks_if_timezone_exists(self):
         response = self.client.post(
@@ -266,7 +270,8 @@ class CalendarViewTest(BaseTest):
     def setUp(self):
         self.user_registers()
         profile = UserProfile.objects.get(user=get_user(self.client))
-        self.calendar = MyCalendar.objects.create(owner=profile, name="Cindirella", color="E81AD4")
+        self.calendar = MyCalendar.objects.create(owner=profile,
+            name="Cindirella", color="E81AD4")
         self.url = '/calendar/1'
         self.template = 'my_calendar/calendar.html'
         self.function = calendar_view
@@ -341,6 +346,185 @@ class NewCalendarTest(CalendarViewTest):
         self.assertEqual(MyCalendar.objects.count(), 0)
         self.assertIn('errors', response.context)
         
+
+class EventViewTest(BaseTest):
+    
+    def setUp(self):
+        self.user_registers()
+        profile = UserProfile.objects.get(user=get_user(self.client))
+        self.calendar = MyCalendar.objects.create(owner=profile,
+            name="Cindirella", color="E81AD4")
+        self.event = Event.objects.create(calendar=self.calendar)
+        self.guest = Guest.objects.create(event=self.event, user=profile)
+        self.settings = EventCustomSettings.objects.create(
+            guest=self.guest, title='Radio Gaga', desc='Radio Blabla',
+            timezone='UTC', start=datetime.datetime.now(),
+            end=datetime.datetime.now() + datetime.timedelta(minutes=30),
+            all_day=True)
+        self.url = '/event/1'
+        self.template = 'my_calendar/event.html'
+        self.function = event_view
+    
+    def test_saves_event(self):
+        self.client.post(
+            self.url, data={
+                'title': 'Episode 9',
+                'desc': 'Silence of slums',
+                'all_day':  True,
+                'start_hour': '15:19',
+                'start_date': '12/13/2016',
+                'end_hour': '16:13',
+                'end_date': '12/13/2016',
+                'timezone': 'UTC',
+                'state': '1',
+        })
+        self.assertEqual(Event.objects.count(), 1)
+        event = Event.objects.first().get_owner_settings()
+        self.assertEqual(event.title, 'Episode 9')
+        self.assertEqual(event.start, datetime.datetime(2016, 12, 13, 15, 19,
+            tzinfo=pytz.utc))
+        self.assertEqual(event.end, datetime.datetime(2016, 12, 13, 16, 13,
+            tzinfo=pytz.utc))
+        self.assertEqual(event.guest.state, 1)
+        
+    def test_cannot_save_event_with_empty_title_or_dates(self):
+        title = Event.objects.first().get_owner_settings().title
+        response = self.client.post(
+            self.url, data={
+                'title': '',
+                'desc': '',
+                'all_day':  True,
+                'start_hour': '',
+                'start_date': '',
+                'end_hour': '',
+                'end_date': '',
+                'timezone': 'UTC',
+                'state': '1',
+        })
+        event = Event.objects.first().get_owner_settings()
+        self.assertEqual(event.title, title)
+        self.assertEqual(Event.objects.count(), 1)
+        self.assertIn('title', response.context['event_form'].errors)
+        self.assertIn('start_hour', response.context['event_form'].errors)
+        self.assertIn('start_date', response.context['event_form'].errors)
+        self.assertIn('end_hour', response.context['event_form'].errors)
+        self.assertIn('end_date', response.context['event_form'].errors)
+              
+    def test_redirects_after_saving_event(self):
+        response = self.client.post(
+            self.url, data={
+                'title': 'Episode 9',
+                'desc': 'Silence of slums',
+                'all_day':  True,
+                'start_hour': '15:19',
+                'start_date': '12/13/2016',
+                'end_hour': '13:13',
+                'end_date': '12/13/2016',
+                'timezone': 'UTC',
+                'state': '1',
+        })
+        event = Event.objects.first()
+        self.assertRedirects(response, '/event/{}'.format(event.pk))
+        
+
+class NewEventTest(BaseTest):
+
+    def setUp(self):
+        self.user_registers()
+        profile = UserProfile.objects.get(user=get_user(self.client))
+        self.calendar = MyCalendar.objects.create(owner=profile,
+            name="Cindirella", color="E81AD4")
+        self.url = '/event/new/1'
+        self.template = 'my_calendar/new_event.html'
+        self.function = event_view
+        
+    def test_saves_event(self):
+        self.client.post(
+            self.url, data={
+                'title': 'Episode 9',
+                'desc': 'Silence of slums',
+                'all_day':  True,
+                'start_hour': '15:19',
+                'start_date': '12/13/2016',
+                'end_hour': '16:13',
+                'end_date': '12/13/2016',
+                'timezone': 'UTC',
+                'state': '1',
+        })
+        self.assertEqual(Event.objects.count(), 1)
+        title = Event.objects.first().get_owner_settings().title
+        self.assertEqual(title, 'Episode 9')
+        
+    def test_cannot_save_event_with_empty_title(self):
+        response = self.client.post(
+            self.url, data={
+                'title': '',
+                'desc': 'Silence of slums',
+                'all_day':  True,
+                'start_hour': '15:19',
+                'start_date': '12/13/2016',
+                'end_hour': '16:13',
+                'end_date': '12/13/2016',
+                'timezone': 'UTC',
+                'state': '1',
+        })
+        self.assertEqual(Event.objects.count(), 0)
+        self.assertIn('title', response.context['event_form'].errors)
+              
+    def test_redirects_after_saving_event(self):
+        response = self.client.post(
+            self.url, data={
+                'title': 'Episode 9',
+                'desc': 'Silence of slums',
+                'all_day':  True,
+                'start_hour': '15:19',
+                'start_date': '12/13/2016',
+                'end_hour': '16:13',
+                'end_date': '12/13/2016',
+                'timezone': 'UTC',
+                'state': '1',
+        })
+        event = Event.objects.first()
+        self.assertRedirects(response, '/event/{}'.format(event.pk))
+ 
+class EventFormTest(TestCase):
+    
+    def test_datetime_inputs_have_css_classes(self):
+        form = EventForm()
+        self.assertIn('class="datepicker" id="id_start_date"', form.as_p())
+        self.assertIn('class="time" id="id_start_hour"', form.as_p())
+        self.assertIn('class="datepicker" id="id_end_date"', form.as_p())
+        self.assertIn('class="time" id="id_end_hour"', form.as_p())
+
+    def test_valid_data(self):
+        form = EventForm({
+            'title': 'Episode 9',
+            'desc': 'Silence of slums',
+            'all_day':  True,
+            'start_hour': '15:19',
+            'start_date': '12/13/2016',
+            'end_hour': '16:13',
+            'end_date': '12/13/2016',
+            'timezone': 'UTC'
+        })
+        self.assertTrue(form.is_valid())
+
+    def test_blank_title(self):
+        form = EventForm()
+        self.assertFalse(form.is_valid())
+        
+    def test_no_description_is_valid(self):
+        form = EventForm({
+            'title': 'Episode 9',
+            'desc': '',
+            'all_day':  True,
+            'start_hour': '15:19',
+            'start_date': '12/13/2016',
+            'end_hour': '16:13',
+            'end_date': '12/13/2016',
+            'timezone': 'UTC'
+        })
+        self.assertTrue(form.is_valid())
         
 if __name__ == '__main__':
     unittest.main() 

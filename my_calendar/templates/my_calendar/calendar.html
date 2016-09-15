@@ -14,6 +14,7 @@
     <input id="id_color" name="color" type="hidden"/></p>
     <button type="submit" id="save_calendar">Save calendar</button>
 </form>
+<a id="add_event" href="{% url 'my_calendar:new_event' cal_pk=calendar.pk %}">Add event</a>
 <script>
     var form = document.getElementById("calendar_form");
     var button = document.getElementById("edit_calendar");

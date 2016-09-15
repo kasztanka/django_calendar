@@ -1,0 +1,32 @@
+{% extends 'my_calendar/base.html' %}
+{% block user_content %}
+<h2>{{ event.title }}</h2>
+<p>{{ event.desc }}</p>
+<p>{{ event.all_day }}</p>
+<p>{{ event.timezone }}</p>
+<p>{{ event.start }}</p>
+<p>{{ event.end }}</p>
+<p>Owner state: {{ state }}</p>
+<button onclick="FormDisplay();return false;" id="edit_event">Edit this calendar</button>
+<form method="POST" id="event_form">
+    {% csrf_token %}
+    {{ event_form.as_p }}
+    {{ state_form.as_p }}
+    <button type="submit" id="save_event">Save event</button>
+</form>
+<script>
+    var form = document.getElementById("event_form");
+    var button = document.getElementById("edit_event");
+    form.style.display = 'none';
+    function FormDisplay() {
+        if (form.style.display !== 'none') {
+            form.style.display = 'none';
+            button.innerHTML = "Edit this event"
+        }
+        else {
+            form.style.display = 'block';
+            button.innerHTML = "Hide edition"
+        }
+    };
+</script>
+{% endblock user_content %}

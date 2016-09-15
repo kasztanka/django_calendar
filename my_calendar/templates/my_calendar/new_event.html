@@ -1,0 +1,9 @@
+{% extends 'my_calendar/base.html' %}
+{% block user_content %}
+<form method="POST" id="event_form">
+    {% csrf_token %}
+    {{ event_form.as_p }}
+    {{ state_form.as_p }}
+    <button type="submit" id="save_event">Save event</button>
+</form>
+{% endblock user_content %}

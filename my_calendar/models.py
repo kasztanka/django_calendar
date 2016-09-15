@@ -87,11 +87,12 @@ class Event(models.Model):
         """
         Method can be used to get owner's settings.
         """
-        return EventCustomSettings.object.filter(
+        guest = Guest.objects.filter(
             event=self
-        ).filter(
+        ).get(
             user=self.calendar.owner
         )
+        return EventCustomSettings.objects.get(guest=guest)
 
 
 class Guest(models.Model):

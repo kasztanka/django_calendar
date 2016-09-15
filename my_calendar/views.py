@@ -8,12 +8,12 @@ from django.shortcuts import get_object_or_404, render, redirect
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.models import User
 
-from .models import UserProfile, MyCalendar
-from .forms import RegisterForm
+from .models import UserProfile, MyCalendar, Event, Guest, EventCustomSettings
+from .forms import RegisterForm, EventForm, StateForm
+
 
 def index(request):
     return render(request, "my_calendar/index.html")
-    
     
 def register(request):
     context = {}
@@ -30,7 +30,8 @@ def register(request):
             profile = UserProfile.objects.create(user=user)
             profile.timezone = timezone
             profile.save()
-            user_obj = authenticate(username=user.username, password=unhashed_password)
+            user_obj = authenticate(username=user.username,
+                password=unhashed_password)
             login(request, user_obj)
             return redirect('my_calendar:profile', username=user.username)
         else:
@@ -159,7 +160,8 @@ def calendar_view(request, cal_pk=None):
         elif not request.POST['name']:
             context['errors'] = "Name of calendar is required."
         elif not pattern.match(request.POST['color']):
-            context['errors'] = "Color has to be hexadecimal with hash at the beginning."
+            context['errors'] = ("Color has to be hexadecimal with hash "
+                + "at the beginning.")
         else:
             # editing
             if cal_pk != None:
@@ -172,14 +174,16 @@ def calendar_view(request, cal_pk=None):
                 owner = UserProfile.objects.get(user=request.user)
                 name = request.POST['name']
                 color = request.POST['color']
-                calendar_ = MyCalendar.objects.create(owner=owner, name=name, color=color)
+                calendar_ = MyCalendar.objects.create(owner=owner, name=name,
+                    color=color)
             context['calendar'] = calendar_
             # redirect to make url look better
-            # e.g. if I make a new calendar browser will redirect to 'calendar/1'
+            # e.g. if I make a new calendar,
+            # browser will redirect to 'calendar/1'
             # and not 'calendar/new' which is a page for making new calendars
             return redirect('my_calendar:calendar_view', cal_pk=calendar_.pk)
     if cal_pk != None:
-        calendar_ = MyCalendar.objects.get(pk=cal_pk)
+        calendar_ = get_object_or_404(MyCalendar, pk=cal_pk)
         context['calendar'] = calendar_
         return render(request, 'my_calendar/calendar.html', context)
     return render(request, 'my_calendar/new_calendar.html', context)
@@ -190,3 +194,55 @@ COLORS = (
     "6214CC",
     "464AFF",
 )
+
+def event_view(request, cal_pk=None, event_pk=None):
+    context = {}
+    if request.method == "POST":
+        event_form = EventForm(data=request.POST)
+        state_form = StateForm(data=request.POST)
+        if event_form.is_valid() and state_form.is_valid():
+            if event_pk != None:
+                event = get_object_or_404(Event, pk=event_pk)
+                settings = event.get_owner_settings()
+                guest = settings.guest
+                state_form = StateForm(data=request.POST, instance=guest)
+                state_form.save()
+                event_form = EventForm(data=request.POST, instance=settings)
+                settings = event_form.save(commit=False)
+                start = datetime.datetime.strptime(request.POST['start_date']
+                    + ' ' + request.POST['start_hour'], '%m/%d/%Y %H:%M')
+                settings.start = start
+                end = datetime.datetime.strptime(request.POST['end_date']
+                    + ' ' + request.POST['end_hour'], '%m/%d/%Y %H:%M')
+                settings.end = end
+                settings.save()
+            else:
+                calendar_ = get_object_or_404(MyCalendar, pk=cal_pk)
+                event = Event.objects.create(calendar=calendar_)
+                guest = state_form.save(commit=False)
+                guest.event = event
+                guest.user = calendar_.owner
+                # what if creator of event is not calendar.owner?
+                guest.save()
+                event_custom_settings = event_form.save(commit=False)
+                start = datetime.datetime.strptime(request.POST['start_date']
+                    + ' ' + request.POST['start_hour'], '%m/%d/%Y %H:%M')
+                event_custom_settings.start = start
+                end = datetime.datetime.strptime(request.POST['end_date']
+                    + ' ' + request.POST['end_hour'], '%m/%d/%Y %H:%M')
+                event_custom_settings.end = end
+                event_custom_settings.guest = guest
+                event_custom_settings.save()
+            return redirect('my_calendar:event_view', event_pk=event.pk)
+    else:
+        event_form = EventForm()
+        state_form = StateForm()
+    context['event_form'] = event_form
+    context['state_form'] = state_form
+    if event_pk != None:
+        event = get_object_or_404(Event, pk=event_pk)
+        context['event'] = event.get_owner_settings()
+        guest = Guest.objects.get(user=event.calendar.owner, event=event)
+        context['state'] = guest.get_state_display()
+        return render(request, 'my_calendar/event.html', context)
+    return render(request, 'my_calendar/new_event.html', context)

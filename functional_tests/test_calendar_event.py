@@ -41,16 +41,16 @@ class CalendarEventTest(FunctionalTest):
         button.click()
         
         self.fill_input("id_title", "A little party never killed nobody.")
-        self.fill_input("id_description", "You're very welcome.")
+        self.fill_input("id_desc", "You're very welcome.")
         select = self.browser.find_element_by_tag_name('select')
         for option in select.find_elements_by_tag_name('option'):
             if option.text == "Europe/Warsaw":
                 option.click()
                 break
         self.fill_input("id_start_hour", "20:05")
-        self.fill_input("id_start_date", "2016.10.10")
+        self.fill_input("id_start_date", "10/10/2016")
         self.fill_input("id_end_hour", "12:00")
-        self.fill_input("id_end_date", "2016.10.11")
+        self.fill_input("id_end_date", "11/10/2016")
         submit = self.browser.find_element_by_id("save_event")
         submit.click()
         
@@ -59,15 +59,19 @@ class CalendarEventTest(FunctionalTest):
         
         edition = self.browser.find_element_by_id("edit_event")
         edition.click()
-        self.fill_input("id_description", "Come to my place to celebrate my birthday!")
-        all_day = self.browser.find_element_by_id("all_day")
+        # fields should be filled in
+        self.browser.find_element_by_id("id_desc").clear()
+        self.fill_input("id_desc", "Come to my place for my birthday!")
+        all_day = self.browser.find_element_by_id("id_all_day")
         all_day.click()
         # expected to fail, not sure how to check if input disabled right now
         self.fill_input("id_start_hour", "20:15")
         submit = self.browser.find_element_by_id("save_event")
         submit.click()
         
-        self.assertEqual(event_url, self.browser.current_url)     
+        page_text = self.browser.find_element_by_tag_name(
+            'body').get_attribute('innerHTML')
+        self.assertIn("Come to my place for my birthday!", page_text)     
         
 
 if __name__ == '__main__':
