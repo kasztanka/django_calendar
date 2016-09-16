@@ -502,7 +502,7 @@ class EventFormTest(TestCase):
         form = EventForm({
             'title': 'Episode 9',
             'desc': 'Bla',
-            'all_day':  True,
+            'all_day':  False,
             'start_hour': '16:19',
             'start_date': '12/13/2016',
             'end_hour': '16:13',
@@ -510,7 +510,34 @@ class EventFormTest(TestCase):
             'timezone': '374'
         })
         self.assertFalse(form.is_valid())
+        self.assertIn('end_date', form.errors)
     
+    def test_hours_skipped_in_validation_when_all_day_event(self):
+        form = EventForm({
+            'title': 'Episode 9',
+            'desc': 'Bla',
+            'all_day':  True,
+            'start_hour': '16:19',
+            'start_date': '12/13/2016',
+            'end_hour': '16:13',
+            'end_date': '12/13/2016',
+            'timezone': '374'
+        })
+        self.assertTrue(form.is_valid())
+    
+    def test_validation_works_when_hours_skipped(self):
+        form = EventForm({
+            'title': 'Episode 9',
+            'desc': 'Bla',
+            'all_day':  True,
+            'start_hour': '16:19',
+            'start_date': '12/13/2016',
+            'end_hour': '16:13',
+            'end_date': '12/11/2016',
+            'timezone': '374'
+        })
+        self.assertFalse(form.is_valid())
+        self.assertIn('end_date', form.errors)
         
 if __name__ == '__main__':
     unittest.main() 

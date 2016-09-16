@@ -26,9 +26,6 @@ class EventForm(forms.ModelForm):
     class Meta:
         model = EventCustomSettings
         fields = ('title', 'desc', 'all_day', 'timezone')
-        #widgets = {
-        #    'timezone': forms.Select(choices=TIMEZONES)
-        #}
         labels = {
             'desc': 'Description',
         }
@@ -55,7 +52,11 @@ class EventForm(forms.ModelForm):
         end = datetime.datetime.strptime(self.data['end_date']
             + ' ' + self.data['end_hour'], '%m/%d/%Y %H:%M')
         
-        if start > end:
+        if self.data['all_day']:
+            if start.date() > end.date():
+                self._errors['end_date'] = ['The event must end after its beginning.']
+                return False
+        elif start > end:
             self._errors['end_date'] = ['The event must end after its beginning.']
             return False
         return True
