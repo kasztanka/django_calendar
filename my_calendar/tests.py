@@ -427,7 +427,7 @@ class EventViewTest(BaseTest):
         self.assertRedirects(response, '/event/{}'.format(event.pk))
         
 
-class NewEventTest(BaseTest):
+class NewEventTest(EventViewTest):
 
     def setUp(self):
         self.user_registers()
@@ -438,54 +438,26 @@ class NewEventTest(BaseTest):
         self.template = 'my_calendar/new_event.html'
         self.function = event_view
         
-    def test_saves_event(self):
-        self.client.post(
-            self.url, data={
-                'title': 'Episode 9',
-                'desc': 'Silence of slums',
-                'all_day':  True,
-                'start_hour': '15:19',
-                'start_date': '12/13/2016',
-                'end_hour': '16:13',
-                'end_date': '12/13/2016',
-                'timezone': 'UTC',
-                'state': '1',
-        })
-        self.assertEqual(Event.objects.count(), 1)
-        title = Event.objects.first().get_owner_settings().title
-        self.assertEqual(title, 'Episode 9')
-        
-    def test_cannot_save_event_with_empty_title(self):
+    def test_cannot_save_event_with_empty_title_or_dates(self):
         response = self.client.post(
             self.url, data={
                 'title': '',
                 'desc': 'Silence of slums',
                 'all_day':  True,
-                'start_hour': '15:19',
-                'start_date': '12/13/2016',
-                'end_hour': '16:13',
-                'end_date': '12/13/2016',
+                'start_hour': '',
+                'start_date': '',
+                'end_hour': '',
+                'end_date': '',
                 'timezone': 'UTC',
                 'state': '1',
         })
         self.assertEqual(Event.objects.count(), 0)
         self.assertIn('title', response.context['event_form'].errors)
+        self.assertIn('start_hour', response.context['event_form'].errors)
+        self.assertIn('start_date', response.context['event_form'].errors)
+        self.assertIn('end_hour', response.context['event_form'].errors)
+        self.assertIn('end_date', response.context['event_form'].errors)
               
-    def test_redirects_after_saving_event(self):
-        response = self.client.post(
-            self.url, data={
-                'title': 'Episode 9',
-                'desc': 'Silence of slums',
-                'all_day':  True,
-                'start_hour': '15:19',
-                'start_date': '12/13/2016',
-                'end_hour': '16:13',
-                'end_date': '12/13/2016',
-                'timezone': 'UTC',
-                'state': '1',
-        })
-        event = Event.objects.first()
-        self.assertRedirects(response, '/event/{}'.format(event.pk))
  
 class EventFormTest(TestCase):
     
