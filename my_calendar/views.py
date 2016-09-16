@@ -203,6 +203,8 @@ def event_view(request, cal_pk=None, event_pk=None):
         guest = settings.guest
     else:
         settings = EventCustomSettings()
+        settings.start = datetime.datetime.now()
+        settings.end = datetime.datetime.now() + datetime.timedelta(minutes=30)
         guest = Guest()
     event_form = EventForm(data=request.POST or None, instance=settings,
         start=settings.start, end=settings.end)

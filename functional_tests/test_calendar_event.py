@@ -58,10 +58,8 @@ class CalendarEventTest(FunctionalTest):
         all_day.click()
         # changing hour or timezone should be disabled
         with self.assertRaises(InvalidElementStateException):
-            self.browser.find_element_by_id("id_start_hour").clear()
             self.fill_input("id_start_hour", "20:15")
         with self.assertRaises(InvalidElementStateException):
-            self.browser.find_element_by_id("id_end_hour").clear()
             self.fill_input("id_end_hour", "20:25")
         select = self.browser.find_element_by_tag_name('select')
         self.assertFalse(select.is_enabled())
@@ -78,18 +76,14 @@ class CalendarEventTest(FunctionalTest):
         
         edition = self.browser.find_element_by_id("edit_event")
         edition.click()
-        # fields should be filled in
-        self.browser.find_element_by_id("id_desc").clear()
         self.fill_input("id_desc", "Come to my place for my birthday!")
         
         all_day = self.browser.find_element_by_id("id_all_day")
         all_day.click()
         # changing hour or timezone should be disabled
         with self.assertRaises(InvalidElementStateException):
-            self.browser.find_element_by_id("id_start_hour").clear()
             self.fill_input("id_start_hour", "20:15")
         with self.assertRaises(InvalidElementStateException):
-            self.browser.find_element_by_id("id_end_hour").clear()
             self.fill_input("id_end_hour", "20:25")
         select = self.browser.find_element_by_tag_name('select')
         self.assertFalse(select.is_enabled())

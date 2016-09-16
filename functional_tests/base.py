@@ -17,7 +17,9 @@ class FunctionalTest(LiveServerTestCase):
     
     def fill_input(self, id, text):
         input = self.browser.find_element_by_id(id)
+        input.clear()
         input.send_keys(text)
+        
     
     def register(self):
         link = self.browser.find_element_by_id('registration')
