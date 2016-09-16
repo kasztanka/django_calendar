@@ -66,12 +66,14 @@ class CalendarEventTest(FunctionalTest):
         all_day.click()
         # expected to fail, not sure how to check if input disabled right now
         self.fill_input("id_start_hour", "20:15")
+        time.sleep(4)
         submit = self.browser.find_element_by_id("save_event")
         submit.click()
         
         page_text = self.browser.find_element_by_tag_name(
             'body').get_attribute('innerHTML')
-        self.assertIn("Come to my place for my birthday!", page_text)     
+        self.assertIn("<p>Come to my place for my birthday!</p>", page_text)
+        time.sleep(10)
         
 
 if __name__ == '__main__':

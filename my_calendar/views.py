@@ -197,19 +197,21 @@ COLORS = (
 
 def event_view(request, cal_pk=None, event_pk=None):
     context = {}
+    if event_pk != None:
+        event = get_object_or_404(Event, pk=event_pk)
+        settings = event.get_owner_settings()
+        guest = settings.guest
+    else:
+        settings = EventCustomSettings()
+        guest = Guest()
+    event_form = EventForm(data=request.POST or None, instance=settings,
+        start=settings.start, end=settings.end)
+    state_form = StateForm(data=request.POST or None, instance=guest)
     if request.method == "POST":
-        event_form = EventForm(data=request.POST)
-        state_form = StateForm(data=request.POST)
         if event_form.is_valid() and state_form.is_valid():
             if event_pk != None:
-                event = get_object_or_404(Event, pk=event_pk)
-                settings = event.get_owner_settings()
-                guest = settings.guest
-                state_form = StateForm(data=request.POST, instance=guest)
                 state_form.save()
-                event_form = EventForm(data=request.POST, instance=settings)
-                settings = event_form.save(commit=False)
-                settings.save()
+                event_form.save()
             else:
                 calendar_ = get_object_or_404(MyCalendar, pk=cal_pk)
                 event = Event.objects.create(calendar=calendar_)
@@ -222,9 +224,6 @@ def event_view(request, cal_pk=None, event_pk=None):
                 event_custom_settings.guest = guest
                 event_custom_settings.save()
             return redirect('my_calendar:event_view', event_pk=event.pk)
-    else:
-        event_form = EventForm()
-        state_form = StateForm()
     context['event_form'] = event_form
     context['state_form'] = state_form
     if event_pk != None:
