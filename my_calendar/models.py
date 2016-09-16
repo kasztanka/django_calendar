@@ -141,7 +141,7 @@ class EventCustomSettings(models.Model):
     """
     guest = models.ForeignKey(Guest, on_delete=models.CASCADE)
     title = models.CharField(max_length=100)
-    desc = models.CharField(max_length=1000, default="")
+    desc = models.CharField(max_length=1000, default="", blank=True)
     timezone = models.CharField(max_length=50)
     start = models.DateTimeField()
     end = models.DateTimeField()
