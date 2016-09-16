@@ -1,4 +1,5 @@
 from pytz import common_timezones_set
+import datetime
 
 from django.contrib.auth.models import User
 from django import forms
@@ -35,6 +36,18 @@ class EventForm(forms.ModelForm):
         labels = {
             'desc': 'Description',
         }
+    
+    def save(self, commit=True):
+        instance = super(EventForm, self).save(commit=False)
+        start = datetime.datetime.strptime(self.data['start_date']
+            + ' ' + self.data['start_hour'], '%m/%d/%Y %H:%M')
+        instance.start = start
+        end = datetime.datetime.strptime(self.data['end_date']
+            + ' ' + self.data['end_hour'], '%m/%d/%Y %H:%M')
+        instance.end = end
+        if commit:
+            instance.save()
+        return instance
         
         
 class StateForm(forms.ModelForm):

@@ -209,12 +209,6 @@ def event_view(request, cal_pk=None, event_pk=None):
                 state_form.save()
                 event_form = EventForm(data=request.POST, instance=settings)
                 settings = event_form.save(commit=False)
-                start = datetime.datetime.strptime(request.POST['start_date']
-                    + ' ' + request.POST['start_hour'], '%m/%d/%Y %H:%M')
-                settings.start = start
-                end = datetime.datetime.strptime(request.POST['end_date']
-                    + ' ' + request.POST['end_hour'], '%m/%d/%Y %H:%M')
-                settings.end = end
                 settings.save()
             else:
                 calendar_ = get_object_or_404(MyCalendar, pk=cal_pk)
@@ -225,12 +219,6 @@ def event_view(request, cal_pk=None, event_pk=None):
                 # what if creator of event is not calendar.owner?
                 guest.save()
                 event_custom_settings = event_form.save(commit=False)
-                start = datetime.datetime.strptime(request.POST['start_date']
-                    + ' ' + request.POST['start_hour'], '%m/%d/%Y %H:%M')
-                event_custom_settings.start = start
-                end = datetime.datetime.strptime(request.POST['end_date']
-                    + ' ' + request.POST['end_hour'], '%m/%d/%Y %H:%M')
-                event_custom_settings.end = end
                 event_custom_settings.guest = guest
                 event_custom_settings.save()
             return redirect('my_calendar:event_view', event_pk=event.pk)
