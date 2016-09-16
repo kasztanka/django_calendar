@@ -56,6 +56,9 @@ class CalendarEventTest(FunctionalTest):
         
         event_url = self.browser.current_url
         self.assertRegex(event_url, '/event/\d+')
+        page_text = self.browser.find_element_by_tag_name(
+            'body').get_attribute('innerHTML')
+        self.assertIn("<p>Europe/Warsaw</p>", page_text)
         
         edition = self.browser.find_element_by_id("edit_event")
         edition.click()

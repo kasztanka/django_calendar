@@ -1,3 +1,5 @@
+from pytz import common_timezones_set
+
 from django.contrib.auth.models import User
 from django.db import models
 
@@ -142,7 +144,10 @@ class EventCustomSettings(models.Model):
     guest = models.ForeignKey(Guest, on_delete=models.CASCADE)
     title = models.CharField(max_length=100)
     desc = models.CharField(max_length=1000, default="", blank=True)
-    timezone = models.CharField(max_length=50)
+    TIMEZONES = list(common_timezones_set)
+    TIMEZONES.sort()
+    TIMEZONES = ((i + 1, tz) for i, tz in enumerate(TIMEZONES))
+    timezone = models.IntegerField(choices=TIMEZONES, default=1)
     start = models.DateTimeField()
     end = models.DateTimeField()
     all_day = models.BooleanField()

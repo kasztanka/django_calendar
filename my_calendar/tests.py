@@ -171,7 +171,7 @@ class LogoutViewTest(TestCase):
                 'email': 'example@email.com',
                 'first_name': 'John',
                 'last_name': 'Doe',
-                'timezone': 'UTC'
+                'timezone': '374'
         })
         user = get_user(self.client)
         self.assertNotEqual(user, None)
@@ -358,7 +358,7 @@ class EventViewTest(BaseTest):
         self.guest = Guest.objects.create(event=self.event, user=profile)
         self.settings = EventCustomSettings.objects.create(
             guest=self.guest, title='Radio Gaga', desc='Radio Blabla',
-            timezone='UTC', start=datetime.datetime.now(),
+            timezone='374', start=datetime.datetime.now(),
             end=datetime.datetime.now() + datetime.timedelta(minutes=30),
             all_day=True)
         self.url = '/event/1'
@@ -375,7 +375,7 @@ class EventViewTest(BaseTest):
                 'start_date': '12/13/2016',
                 'end_hour': '16:13',
                 'end_date': '12/13/2016',
-                'timezone': 'UTC',
+                'timezone': '374',
                 'state': '1',
         })
         self.assertEqual(Event.objects.count(), 1)
@@ -398,7 +398,7 @@ class EventViewTest(BaseTest):
                 'start_date': '',
                 'end_hour': '',
                 'end_date': '',
-                'timezone': 'UTC',
+                'timezone': '374',
                 'state': '1',
         })
         event = Event.objects.first().get_owner_settings()
@@ -420,7 +420,7 @@ class EventViewTest(BaseTest):
                 'start_date': '12/13/2016',
                 'end_hour': '16:13',
                 'end_date': '12/13/2016',
-                'timezone': 'UTC',
+                'timezone': '374',
                 'state': '1',
         })
         event = Event.objects.first()
@@ -448,7 +448,7 @@ class NewEventTest(EventViewTest):
                 'start_date': '',
                 'end_hour': '',
                 'end_date': '',
-                'timezone': 'UTC',
+                'timezone': '374',
                 'state': '1',
         })
         self.assertEqual(Event.objects.count(), 0)
@@ -477,7 +477,7 @@ class EventFormTest(TestCase):
             'start_date': '12/13/2016',
             'end_hour': '16:13',
             'end_date': '12/13/2016',
-            'timezone': 'UTC'
+            'timezone': '374'
         })
         self.assertTrue(form.is_valid())
 
@@ -494,7 +494,7 @@ class EventFormTest(TestCase):
             'start_date': '12/13/2016',
             'end_hour': '16:13',
             'end_date': '12/13/2016',
-            'timezone': 'UTC'
+            'timezone': '374'
         })
         self.assertTrue(form.is_valid())
         
@@ -507,7 +507,7 @@ class EventFormTest(TestCase):
             'start_date': '12/13/2016',
             'end_hour': '16:13',
             'end_date': '12/13/2016',
-            'timezone': 'UTC'
+            'timezone': '374'
         })
         self.assertFalse(form.is_valid())
     

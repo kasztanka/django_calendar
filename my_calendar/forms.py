@@ -1,4 +1,3 @@
-from pytz import common_timezones_set
 import datetime
 
 from django.contrib.auth.models import User
@@ -6,9 +5,6 @@ from django import forms
 
 from .models import EventCustomSettings, Guest
 
-TIMEZONES = list(common_timezones_set)
-TIMEZONES.sort()
-TIMEZONES = ((str(i + 1), tz) for i, tz in enumerate(TIMEZONES))
 
 class RegisterForm(forms.ModelForm):
     password = forms.CharField(widget=forms.PasswordInput())
@@ -30,9 +26,9 @@ class EventForm(forms.ModelForm):
     class Meta:
         model = EventCustomSettings
         fields = ('title', 'desc', 'all_day', 'timezone')
-        widgets = {
-            'timezone': forms.Select(choices=TIMEZONES)
-        }
+        #widgets = {
+        #    'timezone': forms.Select(choices=TIMEZONES)
+        #}
         labels = {
             'desc': 'Description',
         }
