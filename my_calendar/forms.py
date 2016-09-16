@@ -36,6 +36,21 @@ class EventForm(forms.ModelForm):
         labels = {
             'desc': 'Description',
         }
+        
+    def is_valid(self):
+        valid = super(EventForm, self).is_valid()
+        if not valid:
+            return valid
+        
+        start = datetime.datetime.strptime(self.data['start_date']
+            + ' ' + self.data['start_hour'], '%m/%d/%Y %H:%M')
+        end = datetime.datetime.strptime(self.data['end_date']
+            + ' ' + self.data['end_hour'], '%m/%d/%Y %H:%M')
+        
+        if start > end:
+            self._errors['end_date'] = ['The event must end after its beginning.']
+            return False
+        return True
     
     def save(self, commit=True):
         instance = super(EventForm, self).save(commit=False)

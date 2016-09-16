@@ -418,7 +418,7 @@ class EventViewTest(BaseTest):
                 'all_day':  True,
                 'start_hour': '15:19',
                 'start_date': '12/13/2016',
-                'end_hour': '13:13',
+                'end_hour': '16:13',
                 'end_date': '12/13/2016',
                 'timezone': 'UTC',
                 'state': '1',
@@ -497,6 +497,20 @@ class EventFormTest(TestCase):
             'timezone': 'UTC'
         })
         self.assertTrue(form.is_valid())
+        
+    def test_end_before_start_not_valid(self):
+        form = EventForm({
+            'title': 'Episode 9',
+            'desc': 'Bla',
+            'all_day':  True,
+            'start_hour': '16:19',
+            'start_date': '12/13/2016',
+            'end_hour': '16:13',
+            'end_date': '12/13/2016',
+            'timezone': 'UTC'
+        })
+        self.assertFalse(form.is_valid())
+    
         
 if __name__ == '__main__':
     unittest.main() 
