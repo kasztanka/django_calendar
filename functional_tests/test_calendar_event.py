@@ -1,6 +1,8 @@
 import time
 
 from selenium import webdriver
+from selenium.common.exceptions import (InvalidElementStateException,
+    InvalidSelectorException)
 
 from .base import FunctionalTest
 
@@ -51,6 +53,20 @@ class CalendarEventTest(FunctionalTest):
         self.fill_input("id_start_date", "10/10/2016")
         self.fill_input("id_end_hour", "12:00")
         self.fill_input("id_end_date", "11/10/2016")
+        
+        all_day = self.browser.find_element_by_id("id_all_day")
+        all_day.click()
+        # changing hour or timezone should be disabled
+        with self.assertRaises(InvalidElementStateException):
+            self.browser.find_element_by_id("id_start_hour").clear()
+            self.fill_input("id_start_hour", "20:15")
+        with self.assertRaises(InvalidElementStateException):
+            self.browser.find_element_by_id("id_end_hour").clear()
+            self.fill_input("id_end_hour", "20:25")
+        select = self.browser.find_element_by_tag_name('select')
+        self.assertFalse(select.is_enabled())
+        all_day.click()
+        
         submit = self.browser.find_element_by_id("save_event")
         submit.click()
         
@@ -65,18 +81,27 @@ class CalendarEventTest(FunctionalTest):
         # fields should be filled in
         self.browser.find_element_by_id("id_desc").clear()
         self.fill_input("id_desc", "Come to my place for my birthday!")
+        
         all_day = self.browser.find_element_by_id("id_all_day")
         all_day.click()
-        # expected to fail, not sure how to check if input disabled right now
-        self.fill_input("id_start_hour", "20:15")
-        time.sleep(4)
+        # changing hour or timezone should be disabled
+        with self.assertRaises(InvalidElementStateException):
+            self.browser.find_element_by_id("id_start_hour").clear()
+            self.fill_input("id_start_hour", "20:15")
+        with self.assertRaises(InvalidElementStateException):
+            self.browser.find_element_by_id("id_end_hour").clear()
+            self.fill_input("id_end_hour", "20:25")
+        select = self.browser.find_element_by_tag_name('select')
+        self.assertFalse(select.is_enabled())
+        time.sleep(2)
+        
         submit = self.browser.find_element_by_id("save_event")
         submit.click()
+        time.sleep(2)
         
         page_text = self.browser.find_element_by_tag_name(
             'body').get_attribute('innerHTML')
         self.assertIn("<p>Come to my place for my birthday!</p>", page_text)
-        time.sleep(10)
         
 
 if __name__ == '__main__':
