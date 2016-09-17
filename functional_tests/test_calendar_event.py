@@ -4,7 +4,7 @@ from selenium import webdriver
 from selenium.common.exceptions import (InvalidElementStateException,
     InvalidSelectorException)
 
-from .base import FunctionalTest
+from functional_tests.base import FunctionalTest
 
 
 class CalendarEventTest(FunctionalTest):

@@ -502,7 +502,6 @@ class EventFormTest(TestCase):
         form = EventForm({
             'title': 'Episode 9',
             'desc': 'Bla',
-            'all_day':  False,
             'start_hour': '16:19',
             'start_date': '12/13/2016',
             'end_hour': '16:13',

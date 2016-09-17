@@ -52,7 +52,7 @@ class EventForm(forms.ModelForm):
         end = datetime.datetime.strptime(self.data['end_date']
             + ' ' + self.data['end_hour'], '%m/%d/%Y %H:%M')
         
-        if self.data['all_day']:
+        if self.data.get('all_day', False):
             if start.date() > end.date():
                 self._errors['end_date'] = ['The event must end after its beginning.']
                 return False

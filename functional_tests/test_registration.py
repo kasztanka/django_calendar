@@ -2,7 +2,7 @@ import time
 
 from selenium import webdriver
 
-from .base import FunctionalTest
+from functional_tests.base import FunctionalTest
 
 class RegistrationTest(FunctionalTest):
     
