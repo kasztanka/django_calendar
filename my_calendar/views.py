@@ -1,5 +1,6 @@
 from calendar import monthrange
 import datetime
+import pytz
 import re
 
 from pytz import common_timezones_set
@@ -201,13 +202,19 @@ def event_view(request, cal_pk=None, event_pk=None):
         event = get_object_or_404(Event, pk=event_pk)
         settings = event.get_owner_settings()
         guest = settings.guest
+        timezone = pytz.timezone(settings.get_timezone_display())
     else:
         settings = EventCustomSettings()
-        settings.start = datetime.datetime.now()
-        settings.end = datetime.datetime.now() + datetime.timedelta(minutes=30)
+        settings.start = pytz.utc.localize(datetime.datetime.utcnow())
+        settings.end = settings.start + datetime.timedelta(minutes=30)
         guest = Guest()
+        if request.user.is_authenticated():
+            profile = get_object_or_404(UserProfile, user=request.user)
+            timezone = pytz.timezone(profile.timezone)
+        else:
+            timezone = pytz.utc
     event_form = EventForm(data=request.POST or None, instance=settings,
-        start=settings.start, end=settings.end)
+        start=settings.start, end=settings.end, timezone=timezone)
     state_form = StateForm(data=request.POST or None, instance=guest)
     if request.method == "POST":
         if event_form.is_valid() and state_form.is_valid():

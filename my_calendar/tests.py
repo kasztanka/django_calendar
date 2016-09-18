@@ -39,7 +39,7 @@ class BaseTest(TestCase):
                 'email': 'example@email.com',
                 'first_name': 'John',
                 'last_name': 'Doe',
-                'timezone': 'UTC'
+                'timezone': 'Europe/Warsaw'
         })
         return response
         
@@ -56,7 +56,7 @@ class RegisterViewTest(BaseTest):
         self.assertEqual(UserProfile.objects.count(), 1)
         user_ = UserProfile.objects.first()
         self.assertEqual(user_.user.username, 'John123')
-        self.assertEqual(user_.timezone, 'UTC')       
+        self.assertEqual(user_.timezone, 'Europe/Warsaw')       
     
     def test_user_logged_in_after_registration(self):
         self.user_registers()
@@ -356,11 +356,11 @@ class EventViewTest(BaseTest):
             name="Cindirella", color="E81AD4")
         self.event = Event.objects.create(calendar=self.calendar)
         self.guest = Guest.objects.create(event=self.event, user=profile)
+        self.start = pytz.utc.localize(datetime.datetime.utcnow())
+        self.end = self.start + datetime.timedelta(minutes=30)
         self.settings = EventCustomSettings.objects.create(
             guest=self.guest, title='Radio Gaga', desc='Radio Blabla',
-            timezone='374', start=datetime.datetime.now(),
-            end=datetime.datetime.now() + datetime.timedelta(minutes=30),
-            all_day=True)
+            timezone=374, start=self.start, end=self.end, all_day=True)
         self.url = '/event/1'
         self.template = 'my_calendar/event.html'
         self.function = event_view
@@ -370,7 +370,7 @@ class EventViewTest(BaseTest):
             self.url, data={
                 'title': 'Episode 9',
                 'desc': 'Silence of slums',
-                'all_day':  True,
+                'all_day': True,
                 'start_hour': '15:19',
                 'start_date': '12/13/2016',
                 'end_hour': '16:13',
@@ -381,10 +381,6 @@ class EventViewTest(BaseTest):
         self.assertEqual(Event.objects.count(), 1)
         event = Event.objects.first().get_owner_settings()
         self.assertEqual(event.title, 'Episode 9')
-        self.assertEqual(event.start, datetime.datetime(2016, 12, 13, 15, 19,
-            tzinfo=pytz.utc))
-        self.assertEqual(event.end, datetime.datetime(2016, 12, 13, 16, 13,
-            tzinfo=pytz.utc))
         self.assertEqual(event.guest.state, 1)
         
     def test_cannot_save_event_with_empty_title_or_dates(self):
@@ -393,7 +389,7 @@ class EventViewTest(BaseTest):
             self.url, data={
                 'title': '',
                 'desc': '',
-                'all_day':  True,
+                'all_day': True,
                 'start_hour': '',
                 'start_date': '',
                 'end_hour': '',
@@ -415,7 +411,7 @@ class EventViewTest(BaseTest):
             self.url, data={
                 'title': 'Episode 9',
                 'desc': 'Silence of slums',
-                'all_day':  True,
+                'all_day': True,
                 'start_hour': '15:19',
                 'start_date': '12/13/2016',
                 'end_hour': '16:13',
@@ -426,24 +422,63 @@ class EventViewTest(BaseTest):
         event = Event.objects.first()
         self.assertRedirects(response, '/event/{}'.format(event.pk))
         
+    def test_saves_correct_date_and_hour(self):
+        response = self.client.post(
+            self.url, data={
+                'title': 'Episode 9',
+                'desc': 'Silence of slums',
+                'all_day': True,
+                'start_hour': '15:19',
+                'start_date': '12/13/2016',
+                'end_hour': '16:13',
+                'end_date': '12/13/2016',
+                'timezone': '374',
+                'state': '1',
+            }, follow=True)
+        europe = pytz.timezone('Europe/Warsaw')
+        utc = pytz.timezone('UTC')
+        start = datetime.datetime(2016, 12, 13, 15, 19)
+        start = europe.localize(start).astimezone(utc)
+        end = datetime.datetime(2016, 12, 13, 16, 13)
+        end = europe.localize(end).astimezone(utc)
+        event = Event.objects.first().get_owner_settings()
+        self.assertContains(response, '15:19')
+        self.assertEqual(event.start, start)
+        self.assertContains(response, '16:13')
+        self.assertEqual(event.end, end)
+        
+    def test_passes_correct_initial_timezone_and_datetime(self):
+        response = self.client.get(self.url)
+        form = response.context['event_form']
+        timezone = pytz.timezone(self.settings.get_timezone_display())
+        start = self.start.astimezone(timezone)
+        end = self.end.astimezone(timezone)
+        self.assertEqual(form.initial['start_date'], start.strftime('%m/%d/%Y'))
+        self.assertEqual(form.initial['start_hour'], start.strftime('%H:%M'))
+        self.assertEqual(form.initial['end_date'], end.strftime('%m/%d/%Y'))
+        self.assertEqual(form.initial['end_hour'], end.strftime('%H:%M'))
+        self.assertEqual(self.settings.timezone, form.initial['timezone'])
+        
 
 class NewEventTest(EventViewTest):
 
     def setUp(self):
         self.user_registers()
-        profile = UserProfile.objects.get(user=get_user(self.client))
-        self.calendar = MyCalendar.objects.create(owner=profile,
+        self.profile = UserProfile.objects.get(user=get_user(self.client))
+        self.calendar = MyCalendar.objects.create(owner=self.profile,
             name="Cindirella", color="E81AD4")
         self.url = '/event/new/1'
         self.template = 'my_calendar/new_event.html'
         self.function = event_view
+        self.start = pytz.utc.localize(datetime.datetime.utcnow())
+        self.end = self.start + datetime.timedelta(minutes=30)
         
     def test_cannot_save_event_with_empty_title_or_dates(self):
         response = self.client.post(
             self.url, data={
                 'title': '',
                 'desc': 'Silence of slums',
-                'all_day':  True,
+                'all_day': True,
                 'start_hour': '',
                 'start_date': '',
                 'end_hour': '',
@@ -457,7 +492,20 @@ class NewEventTest(EventViewTest):
         self.assertIn('start_date', response.context['event_form'].errors)
         self.assertIn('end_hour', response.context['event_form'].errors)
         self.assertIn('end_date', response.context['event_form'].errors)
-              
+        
+    def test_passes_correct_initial_timezone_and_datetime(self):
+        response = self.client.get(self.url)
+        form = response.context['event_form']
+        user_timezone = self.profile.timezone
+        start = self.start.astimezone(pytz.timezone(user_timezone))
+        end = self.end.astimezone(pytz.timezone(user_timezone))
+        self.assertEqual(form.initial['start_date'], start.strftime('%m/%d/%Y'))
+        self.assertEqual(form.initial['start_hour'], start.strftime('%H:%M'))
+        self.assertEqual(form.initial['end_date'], end.strftime('%m/%d/%Y'))
+        self.assertEqual(form.initial['end_hour'], end.strftime('%H:%M'))
+        event = EventCustomSettings(timezone=form.initial['timezone'])
+        self.assertEqual(user_timezone, event.get_timezone_display())
+ 
  
 class EventFormTest(TestCase):
     
@@ -472,12 +520,12 @@ class EventFormTest(TestCase):
         form = EventForm({
             'title': 'Episode 9',
             'desc': 'Silence of slums',
-            'all_day':  True,
+            'all_day': True,
             'start_hour': '15:19',
             'start_date': '12/13/2016',
             'end_hour': '16:13',
             'end_date': '12/13/2016',
-            'timezone': '374'
+            'timezone': '374',
         })
         self.assertTrue(form.is_valid())
 
@@ -489,7 +537,7 @@ class EventFormTest(TestCase):
         form = EventForm({
             'title': 'Episode 9',
             'desc': '',
-            'all_day':  True,
+            'all_day': True,
             'start_hour': '15:19',
             'start_date': '12/13/2016',
             'end_hour': '16:13',
@@ -515,7 +563,7 @@ class EventFormTest(TestCase):
         form = EventForm({
             'title': 'Episode 9',
             'desc': 'Bla',
-            'all_day':  True,
+            'all_day': True,
             'start_hour': '16:19',
             'start_date': '12/13/2016',
             'end_hour': '16:13',
@@ -528,7 +576,7 @@ class EventFormTest(TestCase):
         form = EventForm({
             'title': 'Episode 9',
             'desc': 'Bla',
-            'all_day':  True,
+            'all_day': True,
             'start_hour': '16:19',
             'start_date': '12/13/2016',
             'end_hour': '16:13',
@@ -537,6 +585,41 @@ class EventFormTest(TestCase):
         })
         self.assertFalse(form.is_valid())
         self.assertIn('end_date', form.errors)
+    
+    def test_inital_datetime_correct_when_timezone_given(self):
+        event = EventCustomSettings()
+        europe = pytz.timezone('Europe/Warsaw')
+        start = europe.localize(datetime.datetime.now())
+        end = europe.localize(datetime.datetime.now()
+            + datetime.timedelta(minutes=30))
+        form = EventForm(instance=event, start=start.astimezone(pytz.utc),
+            end=end.astimezone(pytz.utc), timezone=europe)
+        self.assertEqual(form.initial['start_date'], start.strftime('%m/%d/%Y'))
+        self.assertEqual(form.initial['start_hour'], start.strftime('%H:%M'))
+        self.assertEqual(form.initial['end_date'], end.strftime('%m/%d/%Y'))
+        self.assertEqual(form.initial['end_hour'], end.strftime('%H:%M'))
+        
+    def test_checks_timezone(self):
+        tz_len = len(pytz.common_timezones_set)
+        form = EventForm({
+            'title': 'Episode 9',
+            'desc': 'Bla',
+            'all_day': True,
+            'start_hour': '16:19',
+            'start_date': '12/13/2016',
+            'end_hour': '16:13',
+            'end_date': '12/14/2016',
+            'timezone': str(tz_len + 10),
+        })
+        self.assertFalse(form.is_valid())
+
+        
+class EventCustomSettingsTest(TestCase):
+    
+    def test_default_timezone_utc(self):
+        event = EventCustomSettings()
+        self.assertEqual(event.get_timezone_display(), str(pytz.utc)) 
+        
         
 if __name__ == '__main__':
     unittest.main() 

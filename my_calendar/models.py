@@ -147,7 +147,8 @@ class EventCustomSettings(models.Model):
     TIMEZONES = list(common_timezones_set)
     TIMEZONES.sort()
     TIMEZONES = ((i + 1, tz) for i, tz in enumerate(TIMEZONES))
-    timezone = models.IntegerField(choices=TIMEZONES, default=1)
+    # 436 is UTC
+    timezone = models.IntegerField(choices=TIMEZONES, default=436)
     start = models.DateTimeField()
     end = models.DateTimeField()
     all_day = models.BooleanField()
