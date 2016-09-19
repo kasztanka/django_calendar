@@ -20,7 +20,7 @@
     <body>
         <h1>My Calendar</h1>
         {% if user.is_authenticated %}
-            <p>Hey, {{ user.username }}!</p>
+            <a href="{% url 'my_calendar:profile' username=user.username %}"><p>Hey, {{ user.username }}!</p></a>
             <a href="{% url 'my_calendar:user_logout' %}?nextpage={{ request.path }}">
                 <button id="logout">Log out</button>
             </a>

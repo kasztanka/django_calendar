@@ -181,6 +181,8 @@ def calendar_view(request, cal_pk=None):
     if cal_pk != None:
         calendar_ = get_object_or_404(MyCalendar, pk=cal_pk)
         context['calendar'] = calendar_
+        events = Event.objects.filter(calendar=calendar_)
+        context['events'] = events
         return render(request, 'my_calendar/calendar.html', context)
     return render(request, 'my_calendar/new_calendar.html', context)
     

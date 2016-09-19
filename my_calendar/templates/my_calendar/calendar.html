@@ -15,6 +15,13 @@
     <button type="submit" id="save_calendar">Save calendar</button>
 </form>
 <a id="add_event" href="{% url 'my_calendar:new_event' cal_pk=calendar.pk %}">Add event</a>
+<div id="events">
+{% for ev in events %}
+    <a href="{% url 'my_calendar:event_view' event_pk=ev.pk %}">{{ ev.get_owner_settings.title }}</a>
+{% empty %}
+    <p>You don't have any events in this calendar yet.</p>
+{% endfor %}
+</div>
 <script>
     var form = document.getElementById("calendar_form");
     var button = document.getElementById("edit_calendar");

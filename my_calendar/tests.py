@@ -254,17 +254,14 @@ class WeekViewTest(DayViewTest):
         self.assertIn(first, response.context['days'])
         self.assertIn(last, response.context['days'])
         self.assertEqual(len(response.context['days']), 7)   
-     
-    
-class CalendarViewTest(BaseTest):
+         
 
+class NewCalendarTest(BaseTest):
+    
     def setUp(self):
         self.user_registers()
-        profile = UserProfile.objects.get(user=get_user(self.client))
-        self.calendar = MyCalendar.objects.create(owner=profile,
-            name="Cindirella", color="E81AD4")
-        self.url = '/calendar/1'
-        self.template = 'my_calendar/calendar.html'
+        self.url = '/calendar/new'
+        self.template = 'my_calendar/new_calendar.html'
         self.function = calendar_view
         
     def test_saves_calendar(self):
@@ -275,17 +272,14 @@ class CalendarViewTest(BaseTest):
         })
         self.assertEqual(MyCalendar.objects.count(), 1)
         self.assertEqual(MyCalendar.objects.first().name, 'Pretty face')
-        
+    
     def test_cannot_save_empty_calendar(self):
-        name = MyCalendar.objects.first().name
         response = self.client.post(
             self.url, data={
                 'name': '',
                 'color': '#FF0000',
         })
-        calendar_ = MyCalendar.objects.first()
-        self.assertEqual(calendar_.name, name)
-        self.assertEqual(MyCalendar.objects.count(), 1)
+        self.assertEqual(MyCalendar.objects.count(), 0)
         self.assertIn('errors', response.context)
         
     def test_checks_color_regex(self):
@@ -318,25 +312,39 @@ class CalendarViewTest(BaseTest):
         })
         calendar_ = MyCalendar.objects.first()
         self.assertRedirects(response, '/calendar/{}'.format(calendar_.pk))
+        
     
+class CalendarViewTest(NewCalendarTest):
 
-class NewCalendarTest(CalendarViewTest):
-    
     def setUp(self):
         self.user_registers()
-        self.url = '/calendar/new'
-        self.template = 'my_calendar/new_calendar.html'
+        self.profile = UserProfile.objects.get(user=get_user(self.client))
+        self.calendar = MyCalendar.objects.create(owner=self.profile,
+            name="Cindirella", color="E81AD4")
+        self.url = '/calendar/1'
+        self.template = 'my_calendar/calendar.html'
         self.function = calendar_view
-    
+        
     def test_cannot_save_empty_calendar(self):
+        name = MyCalendar.objects.first().name
         response = self.client.post(
             self.url, data={
                 'name': '',
                 'color': '#FF0000',
         })
-        self.assertEqual(MyCalendar.objects.count(), 0)
+        calendar_ = MyCalendar.objects.first()
+        self.assertEqual(calendar_.name, name)
+        self.assertEqual(MyCalendar.objects.count(), 1)
         self.assertIn('errors', response.context)
         
+    def test_passes_events_that_belong_to_calendar(self):
+        event = Event.objects.create(calendar=self.calendar)
+        second_calendar = MyCalendar.objects.create(owner=self.profile)
+        other_event = Event.objects.create(calendar=second_calendar)
+        response = self.client.get(self.url)
+        self.assertIn(event, response.context['events'])
+        self.assertFalse(other_event in response.context['events'])
+
 
 class EventViewTest(BaseTest):
     
