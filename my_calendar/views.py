@@ -3,14 +3,12 @@ import datetime
 import pytz
 import re
 
-from pytz import common_timezones_set
-
 from django.shortcuts import get_object_or_404, render, redirect
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.models import User
 
 from .models import UserProfile, MyCalendar, Event, Guest, EventCustomSettings
-from .forms import RegisterForm, EventForm, StateForm
+from .forms import RegisterForm, EventForm, StateForm, ProfileForm
 
 
 def index(request):
@@ -20,16 +18,14 @@ def register(request):
     context = {}
     if request.method == "POST":
         register_form = RegisterForm(data=request.POST)
-        timezone = request.POST.get('timezone', '')
-        if not timezone in common_timezones_set:
-            context['wrong_timezone'] = "Wrong timezone was chosen."
-        elif register_form.is_valid():
+        profile_form = ProfileForm(data=request.POST)
+        if register_form.is_valid() and profile_form.is_valid():
             user = register_form.save()
             unhashed_password = user.password
             user.set_password(user.password)
             user.save()
-            profile = UserProfile.objects.create(user=user)
-            profile.timezone = timezone
+            profile = profile_form.save(commit=False)
+            profile.user = user
             profile.save()
             user_obj = authenticate(username=user.username,
                 password=unhashed_password)
@@ -39,10 +35,9 @@ def register(request):
             print(register_form.errors)
     else:
         register_form = RegisterForm()
+        profile_form = ProfileForm()
     context['register_form'] = register_form
-    timezones = list(common_timezones_set)
-    timezones.sort()
-    context['timezones'] = timezones
+    context['profile_form'] = profile_form
     return render(request, "my_calendar/register.html", context)
 
 def profile(request, username):
@@ -202,7 +197,10 @@ def event_view(request, cal_pk=None, event_pk=None):
         event = get_object_or_404(Event, pk=event_pk)
         settings = event.get_owner_settings()
         guest = settings.guest
-        timezone = pytz.timezone(settings.get_timezone_display())
+        timezone = {
+            'tz': pytz.timezone(settings.get_timezone_display()),
+            'number': settings.timezone,
+        }
     else:
         settings = EventCustomSettings()
         settings.start = pytz.utc.localize(datetime.datetime.utcnow())
@@ -210,9 +208,15 @@ def event_view(request, cal_pk=None, event_pk=None):
         guest = Guest()
         if request.user.is_authenticated():
             profile = get_object_or_404(UserProfile, user=request.user)
-            timezone = pytz.timezone(profile.timezone)
+            timezone = {
+                'tz': pytz.timezone(profile.get_timezone_display()),
+                'number': profile.timezone,
+            }
         else:
-            timezone = pytz.utc
+            timezone = {
+                'tz': pytz.utc,
+                'number': 436,
+            }
     event_form = EventForm(data=request.POST or None, instance=settings,
         start=settings.start, end=settings.end, timezone=timezone)
     state_form = StateForm(data=request.POST or None, instance=guest)

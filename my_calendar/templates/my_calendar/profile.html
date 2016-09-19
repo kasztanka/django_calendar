@@ -3,8 +3,8 @@
 {% block user_content %}
 <h2>{{ profile.user.first_name}} {{ profile.user.last_name }}</h2>
 <p>{{ profile.user.email }}</p>
-<p>Timezone: {{ profile.timezone }}</p>
-{% timezone profile.timezone %}
+<p>Timezone: {{ profile.get_timezone_display }}</p>
+{% timezone profile.get_timezone_display %}
 {% now "Y" as current_year %}
 {% now "m" as current_month %}
 {% now "d" as current_day %}

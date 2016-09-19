@@ -3,15 +3,8 @@
 <p>Registration</p>
 <form method="POST" id="register_form">
     {% csrf_token %}
-    {{ register_form.as_p}}
-    <select name="timezone">
-        {% for tz in timezones %}
-            <option value="{{ tz }}">{{ tz }}</option>
-        {% endfor %}
-    </select>
-    {% if wrong_timezone %}
-        <p>{{ wrong_timezone }}</p>
-    {% endif %}
+    {{ register_form.as_p }}
+    {{ profile_form.as_p }}
     <button type="submit">Sign up</button>
 </form>
 {% endblock content %}

@@ -10,7 +10,11 @@ class UserProfile(models.Model):
     Added timezone.
     """
     user = models.OneToOneField(User)
-    timezone = models.CharField(max_length=50)
+    TIMEZONES = list(common_timezones_set)
+    TIMEZONES.sort()
+    TIMEZONES = ((i + 1, tz) for i, tz in enumerate(TIMEZONES))
+    # 436 is UTC
+    timezone = models.IntegerField(choices=TIMEZONES, default=436)
     
     def get_own_calendars(self):
         """
@@ -54,7 +58,7 @@ class UserProfile(models.Model):
         return events
         
     def __str__(self):
-        return self.user.username + ", timezone: " + self.timezone
+        return self.user.username + ", timezone: " + self.get_timezone_display()
 
 
 class MyCalendar(models.Model):

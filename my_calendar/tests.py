@@ -39,7 +39,7 @@ class BaseTest(TestCase):
                 'email': 'example@email.com',
                 'first_name': 'John',
                 'last_name': 'Doe',
-                'timezone': 'Europe/Warsaw'
+                'timezone': '374', # 374 is 'Europe/Warsaw'
         })
         return response
         
@@ -56,7 +56,7 @@ class RegisterViewTest(BaseTest):
         self.assertEqual(UserProfile.objects.count(), 1)
         user_ = UserProfile.objects.first()
         self.assertEqual(user_.user.username, 'John123')
-        self.assertEqual(user_.timezone, 'Europe/Warsaw')       
+        self.assertEqual(user_.timezone, 374)       
     
     def test_user_logged_in_after_registration(self):
         self.user_registers()
@@ -87,18 +87,9 @@ class RegisterViewTest(BaseTest):
                 'timezone': 'Fake timezone'
         })
         self.assertEqual(response.status_code, 200)
-        self.assertTrue('wrong_timezone' in response.context)
         self.assertContains(response, "Wrong timezone was chosen.")
     
-    def test_passes_timezones(self):
-        response = self.client.get('/register')
-        self.assertTrue('timezones' in response.context)
-        
-    def test_passes_timezones_when_form_error(self):
-        response = self.client.post('/register')
-        self.assertTrue('timezones' in response.context)
-
-        
+            
 class RegisterFormTest(TestCase):
     
     def test_valid_data(self):
@@ -496,7 +487,7 @@ class NewEventTest(EventViewTest):
     def test_passes_correct_initial_timezone_and_datetime(self):
         response = self.client.get(self.url)
         form = response.context['event_form']
-        user_timezone = self.profile.timezone
+        user_timezone = self.profile.get_timezone_display()
         start = self.start.astimezone(pytz.timezone(user_timezone))
         end = self.end.astimezone(pytz.timezone(user_timezone))
         self.assertEqual(form.initial['start_date'], start.strftime('%m/%d/%Y'))
@@ -589,15 +580,20 @@ class EventFormTest(TestCase):
     def test_inital_datetime_correct_when_timezone_given(self):
         event = EventCustomSettings()
         europe = pytz.timezone('Europe/Warsaw')
+        timezone = {
+            'tz': europe,
+            'number': 374,
+        }
         start = europe.localize(datetime.datetime.now())
         end = europe.localize(datetime.datetime.now()
             + datetime.timedelta(minutes=30))
         form = EventForm(instance=event, start=start.astimezone(pytz.utc),
-            end=end.astimezone(pytz.utc), timezone=europe)
+            end=end.astimezone(pytz.utc), timezone=timezone)
         self.assertEqual(form.initial['start_date'], start.strftime('%m/%d/%Y'))
         self.assertEqual(form.initial['start_hour'], start.strftime('%H:%M'))
         self.assertEqual(form.initial['end_date'], end.strftime('%m/%d/%Y'))
         self.assertEqual(form.initial['end_hour'], end.strftime('%H:%M'))
+        self.assertEqual(form.initial['timezone'], timezone['number'])
         
     def test_checks_timezone(self):
         tz_len = len(pytz.common_timezones_set)
@@ -612,7 +608,8 @@ class EventFormTest(TestCase):
             'timezone': str(tz_len + 10),
         })
         self.assertFalse(form.is_valid())
-
+        self.assertIn("Wrong timezone was chosen.", form.errors['timezone'])
+    
         
 class EventCustomSettingsTest(TestCase):
     
