@@ -14,11 +14,15 @@
         <th>Saturday</th>
         <th>Sunday</th>
     </tr>
-    {% for day in days %}
+    {% for dict_ in days %}
         {% if forloop.counter0|modulo:7 == 0 %}
             <tr>
         {% endif %}
-        <td>{{ day|date:"d M" }}</td>
+        <td>{{ dict_.day|date:"d M" }}
+        {% for event in dict_.events %}
+        <div>{{ event.title }}<div/>
+        {% endfor %}
+        </td>
         {% if forloop.counter0|modulo:7 == 6 %}
             </tr>
         {% endif %}

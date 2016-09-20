@@ -7,5 +7,10 @@
     <tr>
         <td>{{ choosen_date|date:"l m/d" }}</td>
     </tr>
+    {% for i in range %}
+    <tr>
+        <td>{{ i }}:00</td>
+    </tr>
+    {% endfor %}
 </table>
 {% endblock %}

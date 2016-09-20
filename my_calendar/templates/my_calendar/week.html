@@ -9,5 +9,10 @@
         <td>{{ day|date:"l m/d" }}</td>
     {% endfor %}
     </tr>
+    {% for i in range %}
+    <tr>
+        <td>{{ i }}:00</td>
+    </tr>
+    {% endfor %}
 </table>
 {% endblock %}

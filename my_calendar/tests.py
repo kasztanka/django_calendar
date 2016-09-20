@@ -200,6 +200,34 @@ class DayViewTest(BaseTest):
         response = self.client.get(self.url)
         self.assertIn('choosen_date', response.context)
         
+    def test_passes_dict_with_data_about_events(self):
+        self.user_registers()
+        profile = UserProfile.objects.get(user=get_user(self.client))
+        calendar = MyCalendar.objects.create(owner=profile)
+        start = datetime.datetime.combine(self.today, datetime.time(13, 30))
+        start = pytz.utc.localize(start)
+        end = start + datetime.timedelta(minutes=30)
+        event = Event.objects.create(calendar=calendar)
+        guest = Guest.objects.create(event=event, user=profile)
+        settings = EventCustomSettings.objects.create(guest=guest,
+            start=start, end=end, all_day=False)
+        response = self.client.get(self.url)
+        for dict_ in response.context['days']:
+            if dict_['day'] == self.today:
+                dict_ = dict_['events'][0]
+                break
+        self.assertEqual(event, dict_['event'])
+        self.assertEqual(settings.title, dict_['title'])
+        self.assertEqual(settings.start, dict_['start'])
+        self.assertEqual(settings.end, dict_['end'])
+        self.assertEqual(settings.all_day, dict_['all_day'])
+        height = (end - start).total_seconds() / (24 * 60 * 60)
+        beginning = datetime.datetime.combine(self.today, datetime.time(0))
+        beginning = pytz.utc.localize(beginning)
+        top = (start - beginning).total_seconds() / (24 * 60 * 60) 
+        self.assertEqual(height, dict_['height'])
+        self.assertEqual(top, dict_['top'])
+        
  
 class MonthViewTest(DayViewTest):
     

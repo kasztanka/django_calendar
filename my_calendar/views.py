@@ -1,4 +1,3 @@
-from calendar import monthrange
 import datetime
 import pytz
 import re
@@ -9,6 +8,8 @@ from django.contrib.auth.models import User
 
 from .models import UserProfile, MyCalendar, Event, Guest, EventCustomSettings
 from .forms import RegisterForm, EventForm, StateForm, ProfileForm
+from .additional_functions import (COLORS, fill_month, fill_week,
+    get_events_from_days)
 
 
 def index(request):
@@ -67,31 +68,6 @@ def user_logout(request):
     logout(request)
     next_page = request.GET.get("nextpage", "my_calendar:index")
     return redirect(next_page)
-    
-def fill_month(date_):
-    '''
-    Function that returns list of days of month for given date
-    plus the days that fill the month to the full weeks, e.g.:
-        -> if first day of month is tuesday,
-        the function will also return a last day of the previous month
-        -> if last day of month is friday,
-        the function will also return two first days of the next month    
-    '''
-    first = datetime.date(date_.year, date_.month, 1)
-    while first.weekday():
-        first = first - datetime.timedelta(days=1)
-    ## monthrange returns weekday of the first day and number of days in month
-    last_day = monthrange(date_.year, date_.month)[1]
-    last = datetime.date(date_.year, date_.month, last_day)
-    while last.weekday() != 6:
-        last = last + datetime.timedelta(days=1)
-    days = []
-    while first:
-        days.append(first)
-        if first == last:
-            break
-        first = first + datetime.timedelta(days=1)
-    return days
 
 def month(request, year, month, day):
     context = {}
@@ -101,27 +77,15 @@ def month(request, year, month, day):
         date_ = datetime.datetime.now().date()
         context['date-errors'] = "You enetered wrong date."
     days = fill_month(date_)
-    context['days'] = days
+    if request.user.is_authenticated():
+        profile = get_object_or_404(UserProfile, user=request.user)
+        events = profile.get_events()
+        timezone = pytz.timezone(profile.get_timezone_display())
+        context['days'] = get_events_from_days(days, events, timezone)
+    else:
+        context['days'] = days
     context['choosen_date'] = date_
     return render(request, 'my_calendar/month.html', context)
-    
-def fill_week(date_):
-    '''
-    Function that returns list of days of week for given date.   
-    '''
-    first = date_
-    while first.weekday():
-        first = first - datetime.timedelta(days=1)
-    last = date_
-    while last.weekday() != 6:
-        last = last + datetime.timedelta(days=1)
-    days = []
-    while first:
-        days.append(first)
-        if first == last:
-            break
-        first = first + datetime.timedelta(days=1)
-    return days
     
 def week(request, year, month, day):
     context = {}
@@ -131,8 +95,15 @@ def week(request, year, month, day):
         date_ = datetime.datetime.now().date()
         context['date-errors'] = "You enetered wrong date."
     days = fill_week(date_)
-    context['days'] = days
+    if request.user.is_authenticated():
+        profile = get_object_or_404(UserProfile, user=request.user)
+        events = profile.get_events()
+        timezone = pytz.timezone(profile.get_timezone_display())
+        context['days'] = get_events_from_days(days, events, timezone)
+    else:
+        context['days'] = days
     context['choosen_date'] = date_
+    context['range'] = range(24)
     return render(request, 'my_calendar/week.html', context)
     
 def day(request, year, month, day):
@@ -143,9 +114,14 @@ def day(request, year, month, day):
         date_ = datetime.datetime.now().date()
         context['date-errors'] = "You enetered wrong date."
     context['choosen_date'] = date_
+    if request.user.is_authenticated():
+        profile = get_object_or_404(UserProfile, user=request.user)
+        events = profile.get_events()
+        timezone = pytz.timezone(profile.get_timezone_display())
+        context['days'] = get_events_from_days([date_], events, timezone)
+    context['range'] = range(24)
     return render(request, 'my_calendar/day.html', context)
     
-
 def calendar_view(request, cal_pk=None):
     context = {}
     context['colors'] = COLORS
@@ -185,13 +161,6 @@ def calendar_view(request, cal_pk=None):
         context['events'] = events
         return render(request, 'my_calendar/calendar.html', context)
     return render(request, 'my_calendar/new_calendar.html', context)
-    
-COLORS = (
-    "E81AD4",
-    "8F00FF",
-    "6214CC",
-    "464AFF",
-)
 
 def event_view(request, cal_pk=None, event_pk=None):
     context = {}
