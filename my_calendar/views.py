@@ -75,7 +75,7 @@ def month(request, year, month, day):
         date_ = datetime.date(int(year), int(month), int(day))
     except ValueError:
         date_ = datetime.datetime.now().date()
-        context['date-errors'] = "You enetered wrong date."
+        context['date_errors'] = "You enetered wrong date."
     days = fill_month(date_)
     if request.user.is_authenticated():
         profile = get_object_or_404(UserProfile, user=request.user)
@@ -93,7 +93,7 @@ def week(request, year, month, day):
         date_ = datetime.date(int(year), int(month), int(day))
     except ValueError:
         date_ = datetime.datetime.now().date()
-        context['date-errors'] = "You enetered wrong date."
+        context['date_errors'] = "You enetered wrong date."
     days = fill_week(date_)
     if request.user.is_authenticated():
         profile = get_object_or_404(UserProfile, user=request.user)
@@ -112,7 +112,7 @@ def day(request, year, month, day):
         date_ = datetime.date(int(year), int(month), int(day))
     except ValueError:
         date_ = datetime.datetime.now().date()
-        context['date-errors'] = "You enetered wrong date."
+        context['date_errors'] = "You enetered wrong date."
     context['choosen_date'] = date_
     if request.user.is_authenticated():
         profile = get_object_or_404(UserProfile, user=request.user)
