@@ -52,12 +52,17 @@ def fill_week(date_):
     return days
     
 def event_dict(event, settings, start, end):
-    seconds_in_day = 86400
-    height = (end - start).total_seconds() / seconds_in_day
-    start_seconds = (start.time().hour * 3600
-        + start.time().minute * 60
-        + start.time().second)
-    top = start_seconds / seconds_in_day
+    minutes_in_day = 1440
+    end_hour = end.hour
+    # if end_hour would be 0
+    # then events that end on midnight and after it, would have no height
+    if end_hour == 0:
+        end_hour = 24
+    height = ((end_hour - start.hour) * 60
+        + (end.minute - start.minute)) / minutes_in_day
+    start_seconds = (start.time().hour * 60
+        + start.time().minute)
+    top = start_seconds / minutes_in_day
     dict = {
         'pk': event.pk,
         'title': settings.title,
@@ -81,7 +86,7 @@ def get_events_from_days(days, user_events, timezone):
         events = []
         for ev in user_events:
             settings = ev.get_owner_settings()
-            if settings.start < end and settings.end >= start:
+            if settings.start < end and settings.end > start:
                 event = event_dict(ev, settings,
                     max(timezone.normalize(settings.start), start),
                     min(timezone.normalize(settings.end), end))
