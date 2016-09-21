@@ -59,13 +59,14 @@ def event_dict(event, settings, start, end):
         + start.time().second)
     top = start_seconds / seconds_in_day
     dict = {
-        'event': event,
+        'pk': event.pk,
         'title': settings.title,
         'start': settings.start,
         'end': settings.end,
         'all_day': settings.all_day,
         'height': height,
         'top': top,
+        'color': event.calendar.color,
     }
     return dict
     
@@ -82,8 +83,8 @@ def get_events_from_days(days, user_events, timezone):
             settings = ev.get_owner_settings()
             if settings.start < end and settings.end >= start:
                 event = event_dict(ev, settings,
-                    max(settings.start, start),
-                    min(settings.end, end))
+                    max(timezone.normalize(settings.start), start),
+                    min(timezone.normalize(settings.end), end))
                 events.append(event)
         dict_['events'] = events
         final_days.append(dict_)

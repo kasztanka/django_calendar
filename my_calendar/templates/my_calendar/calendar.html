@@ -1,6 +1,6 @@
 {% extends 'my_calendar/base.html' %}
 {% block user_content %}
-<div style="background-color:{{ calendar.color }}">Kolor kalendarza</div>
+<div style="background-color:{{ calendar.color }};">Kolor kalendarza</div>
 <h2>{{ calendar.name }}</h2>
 <button onclick="FormDisplay();return false;" id="edit_calendar">Edit this calendar</button>
 <form method="POST" id="calendar_form">

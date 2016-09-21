@@ -3,14 +3,39 @@
 <a id="month" href="/month/{{ choosen_date|date:'Y-m-d' }}">Month</a>
 <a id="week" href="/week/{{ choosen_date|date:'Y-m-d' }}">Week</a>
 <a id="day" href="/day/{{ choosen_date|date:'Y-m-d' }}">1 day</a>
-<table>
-    <tr>
-        <td>{{ choosen_date|date:"l m/d" }}</td>
-    </tr>
-    {% for i in range %}
-    <tr>
-        <td>{{ i }}:00</td>
-    </tr>
+<div id="timeline" style="width:100%">
+    <div id="header">
+        <div>{{ choosen_date|date:"l m/d" }}</div>
+    </div>
+    <div id="bottom" style="float:left; width:100%; display:table;">
+        <div id="hours" style="display:table-cell;">
+        {% for i in range %}
+        <div>{{ i }}:00</div>
+        {% endfor %}
+        </div>
+        <div id="events" style="position:relative; display:table-cell;width:95%">
+            {% for dict_ in days %}
+                {% for event in dict_.events %}
+                <a href="{% url 'my_calendar:event_view' event_pk=event.pk %}">
+                    <div class="event" id="event-{{ event.pk }}"
+                        style="position:absolute;
+                        height:calc({{ event.height }} * 100%);
+                        background-color:{{ event.color }};">
+                        {{ event.title }}</div>
+                </a>
+                {% endfor %}
+            {% endfor %}
+        </div>
+    </div>
+</div>
+<script>
+var outer_height = $("#events").height();
+var event;
+{% for dict_ in days %}
+    {% for event in dict_.events %}
+        event = document.getElementById("event-{{ event.pk }}");
+        event.style.top = outer_height * {{ event.top }} + "px";
     {% endfor %}
-</table>
+{% endfor %}
+</script>
 {% endblock %}

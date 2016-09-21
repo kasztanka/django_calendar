@@ -19,9 +19,12 @@
             <tr>
         {% endif %}
         <td>{{ dict_.day|date:"d M" }}
+        <div>
         {% for event in dict_.events %}
-        <div>{{ event.title }}<div/>
+        <a href="{% url 'my_calendar:event_view' event_pk=event.pk %}">
+            <div style="background-color:{{ event.color }};">{{ event.title }}</div></a>
         {% endfor %}
+        </div>
         </td>
         {% if forloop.counter0|modulo:7 == 6 %}
             </tr>
