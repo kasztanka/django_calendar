@@ -122,81 +122,73 @@ def day(request, year, month, day):
     context['range'] = range(24)
     return render(request, 'my_calendar/day.html', context)
     
-def calendar_view(request, cal_pk=None):
+def new_calendar(request):
     context = {}
-    context['colors'] = COLORS
-    if request.method == "POST":
-        pattern = re.compile("^#[A-Fa-f0-9]{6}$")
-        if not request.user.is_authenticated:
-            context['errors'] = "Only users can create and edit a calendar."
-        elif not request.POST['name']:
-            context['errors'] = "Name of calendar is required."
-        elif not pattern.match(request.POST['color']):
-            context['errors'] = ("Color has to be hexadecimal with hash "
-                + "at the beginning.")
-        else:
-            # editing
-            if cal_pk != None:
-                calendar_ = MyCalendar.objects.get(pk=cal_pk)
-                calendar_.name = request.POST['name']
-                calendar_.color = request.POST['color']
-                calendar_.save()
-            # creating new calendar
+    if request.user.is_authenticated():
+        context['colors'] = COLORS
+        if request.method == "POST":
+            pattern = re.compile("^#[A-Fa-f0-9]{6}$")
+            if not request.user.is_authenticated:
+                context['errors'] = "Only users can create a calendar."
+            elif not request.POST['name']:
+                context['errors'] = "Name of calendar is required."
+            elif not pattern.match(request.POST['color']):
+                context['errors'] = ("Color has to be hexadecimal with hash "
+                    + "at the beginning.")
             else:
                 owner = UserProfile.objects.get(user=request.user)
                 name = request.POST['name']
                 color = request.POST['color']
                 calendar_ = MyCalendar.objects.create(owner=owner, name=name,
                     color=color)
-            context['calendar'] = calendar_
-            # redirect to make url look better
-            # e.g. if I make a new calendar,
-            # browser will redirect to 'calendar/1'
-            # and not 'calendar/new' which is a page for making new calendars
-            return redirect('my_calendar:calendar_view', cal_pk=calendar_.pk)
-    if cal_pk != None:
-        calendar_ = get_object_or_404(MyCalendar, pk=cal_pk)
-        context['calendar'] = calendar_
-        events = Event.objects.filter(calendar=calendar_)
-        context['events'] = events
-        return render(request, 'my_calendar/calendar.html', context)
+                return redirect('my_calendar:calendar_view',
+                    cal_pk=calendar_.pk)
     return render(request, 'my_calendar/new_calendar.html', context)
-
-def event_view(request, cal_pk=None, event_pk=None):
+    
+def calendar_view(request, cal_pk):
     context = {}
-    if event_pk != None:
-        event = get_object_or_404(Event, pk=event_pk)
-        settings = event.get_owner_settings()
-        guest = settings.guest
-        timezone = {
-            'tz': pytz.timezone(settings.get_timezone_display()),
-            'number': settings.timezone,
-        }
-    else:
-        settings = EventCustomSettings()
-        settings.start = pytz.utc.localize(datetime.datetime.utcnow())
-        settings.end = settings.start + datetime.timedelta(minutes=30)
-        guest = Guest()
-        if request.user.is_authenticated():
-            profile = get_object_or_404(UserProfile, user=request.user)
-            timezone = {
-                'tz': pytz.timezone(profile.get_timezone_display()),
-                'number': profile.timezone,
-            }
+    if request.user.is_authenticated():
+        calendar_ = get_object_or_404(MyCalendar, pk=cal_pk)
+        profile = get_object_or_404(UserProfile, user=request.user)
+        if profile == calendar_.owner:
+            context['colors'] = COLORS
+            if request.method == "POST":
+                pattern = re.compile("^#[A-Fa-f0-9]{6}$")
+                if not request.user.is_authenticated:
+                    context['errors'] = "Only users can edit a calendar."
+                elif not request.POST['name']:
+                    context['errors'] = "Name of calendar is required."
+                elif not pattern.match(request.POST['color']):
+                    context['errors'] = ("Color has to be hexadecimal with "
+                        + "hash at the beginning.")
+                else:
+                    calendar_.name = request.POST['name']
+                    calendar_.color = request.POST['color']
+                    calendar_.save()
+            context['calendar'] = calendar_
+            events = Event.objects.filter(calendar=calendar_)
+            context['events'] = events
         else:
-            timezone = {
-                'tz': pytz.utc,
-                'number': 436,
-            }
-    event_form = EventForm(data=request.POST or None, instance=settings,
-        start=settings.start, end=settings.end, timezone=timezone)
-    state_form = StateForm(data=request.POST or None, instance=guest)
-    if request.method == "POST":
-        if event_form.is_valid() and state_form.is_valid():
-            if event_pk != None:
-                state_form.save()
-                event_form.save()
-            else:
+            context['access_denied'] = "You don't have access to this calendar."
+    return render(request, 'my_calendar/calendar.html', context)
+    
+def new_event(request, cal_pk):
+    context = {}
+    if request.user.is_authenticated():
+        settings = EventCustomSettings()
+        start = pytz.utc.localize(datetime.datetime.utcnow())
+        end = start + datetime.timedelta(minutes=30)
+        guest = Guest()
+        profile = get_object_or_404(UserProfile, user=request.user)
+        timezone = {
+            'tz': pytz.timezone(profile.get_timezone_display()),
+            'number': profile.timezone,
+        }
+        event_form = EventForm(data=request.POST or None, instance=settings,
+            start=start, end=end, timezone=timezone)
+        state_form = StateForm(data=request.POST or None, instance=guest)
+        if request.method == "POST":
+            if event_form.is_valid() and state_form.is_valid():
                 calendar_ = get_object_or_404(MyCalendar, pk=cal_pk)
                 event = Event.objects.create(calendar=calendar_)
                 guest = state_form.save(commit=False)
@@ -207,13 +199,37 @@ def event_view(request, cal_pk=None, event_pk=None):
                 event_custom_settings = event_form.save(commit=False)
                 event_custom_settings.guest = guest
                 event_custom_settings.save()
-            return redirect('my_calendar:event_view', event_pk=event.pk)
-    context['event_form'] = event_form
-    context['state_form'] = state_form
-    if event_pk != None:
-        event = get_object_or_404(Event, pk=event_pk)
-        context['event'] = event.get_owner_settings()
-        guest = Guest.objects.get(user=event.calendar.owner, event=event)
-        context['state'] = guest.get_state_display()
-        return render(request, 'my_calendar/event.html', context)
+                return redirect('my_calendar:event_view', event_pk=event.pk)
+        context['event_form'] = event_form
+        context['state_form'] = state_form
     return render(request, 'my_calendar/new_event.html', context)
+
+def event_view(request, cal_pk=None, event_pk=None):
+    context = {}
+    if request.user.is_authenticated():
+        event = get_object_or_404(Event, pk=event_pk)
+        profile = get_object_or_404(UserProfile, user=request.user)
+        if profile == event.calendar.owner:
+            settings = event.get_owner_settings()
+            guest = settings.guest
+            timezone = {
+                'tz': pytz.timezone(settings.get_timezone_display()),
+                'number': settings.timezone,
+            }
+            event_form = EventForm(data=request.POST or None, instance=settings,
+                start=settings.start, end=settings.end, timezone=timezone)
+            state_form = StateForm(data=request.POST or None, instance=guest)
+            if request.method == "POST":
+                if event_form.is_valid() and state_form.is_valid():
+                    state_form.save()
+                    event_form.save()
+                    return redirect('my_calendar:event_view', event_pk=event.pk)
+            context['event_form'] = event_form
+            context['state_form'] = state_form
+            event = get_object_or_404(Event, pk=event_pk)
+            context['event'] = event.get_owner_settings()
+            guest = Guest.objects.get(user=event.calendar.owner, event=event)
+            context['state'] = guest.get_state_display()
+        else:
+            context['access_denied'] = "You don't have access to this event."
+    return render(request, 'my_calendar/event.html', context)

@@ -16,9 +16,9 @@ urlpatterns = [
         views.week, name='week'),
     url(r'day/(?P<year>\d+)-(?P<month>\d+)-(?P<day>\d+)$',
         views.day, name='day'),
-    url(r'^calendar/new$', views.calendar_view, name='new_calendar'),
+    url(r'^calendar/new$', views.new_calendar, name='new_calendar'),
     url(r'^calendar/(?P<cal_pk>\d+)$',
         views.calendar_view, name='calendar_view'),
-    url(r'^event/new/(?P<cal_pk>\d+)$', views.event_view, name='new_event'),
+    url(r'^event/new/(?P<cal_pk>\d+)$', views.new_event, name='new_event'),
     url(r'^event/(?P<event_pk>\d+)$', views.event_view, name='event_view'),
 ]

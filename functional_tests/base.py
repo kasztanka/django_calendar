@@ -21,10 +21,11 @@ class FunctionalTest(LiveServerTestCase):
         input.send_keys(text)
         
     
-    def register(self):
+    def register(self, username='mary123'):
+        self.browser.get(self.live_server_url)
         link = self.browser.find_element_by_id('registration')
         link.click()
-        self.fill_input('id_username', 'mary123')
+        self.fill_input('id_username', username)
         self.fill_input('id_password', 'JingleBellsBatmanSmells')
         self.fill_input('id_email', 'mary@lou.com')
         self.fill_input('id_first_name', 'Mary')

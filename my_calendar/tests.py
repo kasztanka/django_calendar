@@ -6,8 +6,8 @@ from django.core.urlresolvers import resolve
 from django.contrib.auth import get_user
 from django.test import TestCase
 
-from .views import (index, register, profile, month, week, day,
-    calendar_view, event_view)
+from .views import (index, register, profile, month, week, day, new_calendar,
+    calendar_view, event_view, new_event)
 from .models import UserProfile, MyCalendar, Event, Guest, EventCustomSettings
 from .forms import RegisterForm, EventForm
 
@@ -26,6 +26,7 @@ class BaseTest(TestCase):
     def test_uses_correct_template(self):
         response = self.client.get(self.url)
         self.assertTemplateUsed(response, self.template)
+        self.assertEqual(response.status_code, 200)
         
     def test_template_extends_after_base(self):
         response = self.client.get(self.url)
@@ -315,7 +316,7 @@ class NewCalendarTest(BaseTest):
         self.user_registers()
         self.url = '/calendar/new'
         self.template = 'my_calendar/new_calendar.html'
-        self.function = calendar_view
+        self.function = new_calendar
         
     def test_saves_calendar(self):
         self.client.post(
@@ -357,7 +358,7 @@ class NewCalendarTest(BaseTest):
         self.assertIn('errors', response.context)
         self.assertEqual(MyCalendar.objects.count(), calendars_amount)
         
-    def test_redirects_after_saving_calendar(self):
+    def test_after_saving_calendar_goes_to_its_site(self):
         response = self.client.post(
             self.url, data={
                 'name': 'Pretty face',
@@ -390,6 +391,15 @@ class CalendarViewTest(NewCalendarTest):
         self.assertEqual(MyCalendar.objects.count(), 1)
         self.assertIn('errors', response.context)
         
+    def test_after_saving_calendar_goes_to_its_site(self):
+        response = self.client.post(
+            self.url, data={
+                'name': 'Pretty face',
+                'color': '#FF0000',
+        })
+        calendar_ = MyCalendar.objects.first()
+        self.assertEqual(response.request['PATH_INFO'], self.url)
+        
     def test_passes_events_that_belong_to_calendar(self):
         event = Event.objects.create(calendar=self.calendar)
         second_calendar = MyCalendar.objects.create(owner=self.profile)
@@ -397,7 +407,7 @@ class CalendarViewTest(NewCalendarTest):
         response = self.client.get(self.url)
         self.assertIn(event, response.context['events'])
         self.assertFalse(other_event in response.context['events'])
-
+    
 
 class EventViewTest(BaseTest):
     
@@ -521,7 +531,7 @@ class NewEventTest(EventViewTest):
             name="Cindirella", color="E81AD4")
         self.url = '/event/new/1'
         self.template = 'my_calendar/new_event.html'
-        self.function = event_view
+        self.function = new_event
         self.start = pytz.utc.localize(datetime.datetime.utcnow())
         self.end = self.start + datetime.timedelta(minutes=30)
         
