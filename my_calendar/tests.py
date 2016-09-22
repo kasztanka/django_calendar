@@ -366,7 +366,36 @@ class NewCalendarTest(BaseTest):
         })
         calendar_ = MyCalendar.objects.first()
         self.assertRedirects(response, '/calendar/{}'.format(calendar_.pk))
+    
+    def test_passes_calendar_form(self):
+        response = self.client.get(self.url)
+        self.assertIn('calendar_form', response.context)
         
+    def test_saves_can_read_users(self):
+        profile = UserProfile.objects.get(user=get_user(self.client))
+        response = self.client.post(
+            self.url, data={
+                'name': 'Pretty face',
+                'color': '#FF0000',
+                'can_read': ['1'],
+        })
+        calendar_ = MyCalendar.objects.first()
+        self.assertEqual(list(calendar_.can_read.all())[0], profile)
+    
+    def test_cannot_save_not_existing_user(self):
+        calendar_amount = MyCalendar.objects.count()
+        profile = UserProfile.objects.get(user=get_user(self.client))
+        response = self.client.post(
+            self.url, data={
+                'name': 'Pretty face',
+                'color': '#FF0000',
+                'can_read': ['2'],
+        })
+        self.assertEqual(calendar_amount, MyCalendar.objects.count())
+        if calendar_amount:
+            calendar_ = MyCalendar.objects.first()
+            self.assertEqual(list(calendar_.can_read.all()), [])
+    
     
 class CalendarViewTest(NewCalendarTest):
 
@@ -407,7 +436,7 @@ class CalendarViewTest(NewCalendarTest):
         response = self.client.get(self.url)
         self.assertIn(event, response.context['events'])
         self.assertFalse(other_event in response.context['events'])
-    
+  
 
 class EventViewTest(BaseTest):
     

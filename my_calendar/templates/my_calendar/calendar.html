@@ -5,18 +5,26 @@
 {% else %}
     <div style="background-color:{{ calendar.color }};">Kolor kalendarza</div>
     <h2>{{ calendar.name }}</h2>
-    <button onclick="FormDisplay();return false;" id="edit_calendar">Edit this calendar</button>
-    <form method="POST" id="calendar_form">
-        {% csrf_token %}
-        <p><label for="id_name">Name:</label>
-        <input id="id_name" maxlength="100" name="name" type="text" required /></p>
-        <p><label for="id_color">Choose color:</label>
-        {% for color in colors %}
-            <div style="background-color: #{{ color }}; height:20px; width:20px;" class="colors" name="#{{ color }}"></div>
-        {% endfor %}
-        <input id="id_color" name="color" type="hidden"/></p>
-        <button type="submit" id="save_calendar">Save calendar</button>
-    </form>
+    <div>Users who can read this calendar: {{ calendar.can_read.all }}</div>
+    {% if profile == calendar.owner %}
+        <button onclick="FormDisplay();return false;" id="edit_calendar">Edit this calendar</button>
+        <form method="POST" id="calendar_form">
+            {% csrf_token %}
+            <p><label for="id_name">Name:</label>
+            <input id="id_name" maxlength="100" name="name" type="text" required /></p>
+            <p><label for="id_color">Choose color:</label>
+            {% for color in colors %}
+                <div style="background-color: #{{ color }}; height:20px; width:20px;" class="colors" name="#{{ color }}"></div>
+            {% endfor %}
+            <div id="can_read">Choose users who can read your calendar:
+            {% for user in calendar_form.can_read %}
+                <p>{{ user }}</p>
+            {% endfor %}
+            </div>
+            <input id="id_color" name="color" type="hidden"/></p>
+            <button type="submit" id="save_calendar">Save calendar</button>
+        </form>
+    {% endif %}
     <a id="add_event" href="{% url 'my_calendar:new_event' cal_pk=calendar.pk %}">Add event</a>
     <div id="events">
     {% for ev in events %}

@@ -7,7 +7,7 @@ from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.models import User
 
 from .models import UserProfile, MyCalendar, Event, Guest, EventCustomSettings
-from .forms import RegisterForm, EventForm, StateForm, ProfileForm
+from .forms import RegisterForm, EventForm, StateForm, ProfileForm, CalendarForm
 from .additional_functions import (COLORS, fill_month, fill_week,
     get_events_from_days)
 
@@ -126,6 +126,7 @@ def new_calendar(request):
     context = {}
     if request.user.is_authenticated():
         context['colors'] = COLORS
+        calendar_form = CalendarForm(data=request.POST or None)
         if request.method == "POST":
             pattern = re.compile("^#[A-Fa-f0-9]{6}$")
             if not request.user.is_authenticated:
@@ -135,14 +136,18 @@ def new_calendar(request):
             elif not pattern.match(request.POST['color']):
                 context['errors'] = ("Color has to be hexadecimal with hash "
                     + "at the beginning.")
-            else:
+            elif calendar_form.is_valid():
                 owner = UserProfile.objects.get(user=request.user)
                 name = request.POST['name']
                 color = request.POST['color']
+                can_read_ids = request.POST.getlist('can_read')
+                can_read = UserProfile.objects.filter(id__in=can_read_ids)
                 calendar_ = MyCalendar.objects.create(owner=owner, name=name,
                     color=color)
+                calendar_.can_read.add(*can_read)
                 return redirect('my_calendar:calendar_view',
                     cal_pk=calendar_.pk)
+        context['calendar_form'] = calendar_form
     return render(request, 'my_calendar/new_calendar.html', context)
     
 def calendar_view(request, cal_pk):
@@ -150,21 +155,30 @@ def calendar_view(request, cal_pk):
     if request.user.is_authenticated():
         calendar_ = get_object_or_404(MyCalendar, pk=cal_pk)
         profile = get_object_or_404(UserProfile, user=request.user)
-        if profile == calendar_.owner:
-            context['colors'] = COLORS
-            if request.method == "POST":
-                pattern = re.compile("^#[A-Fa-f0-9]{6}$")
-                if not request.user.is_authenticated:
-                    context['errors'] = "Only users can edit a calendar."
-                elif not request.POST['name']:
-                    context['errors'] = "Name of calendar is required."
-                elif not pattern.match(request.POST['color']):
-                    context['errors'] = ("Color has to be hexadecimal with "
-                        + "hash at the beginning.")
-                else:
-                    calendar_.name = request.POST['name']
-                    calendar_.color = request.POST['color']
-                    calendar_.save()
+        context['profile'] = profile
+        if profile == calendar_.owner or profile in calendar_.can_read.all():
+            if profile == calendar_.owner:
+                context['colors'] = COLORS
+                calendar_form = CalendarForm(data=request.POST or None,
+                    instance=calendar_)
+                if request.method == "POST":
+                    pattern = re.compile("^#[A-Fa-f0-9]{6}$")
+                    if not request.user.is_authenticated:
+                        context['errors'] = "Only users can edit a calendar."
+                    elif not request.POST['name']:
+                        context['errors'] = "Name of calendar is required."
+                    elif not pattern.match(request.POST['color']):
+                        context['errors'] = ("Color has to be hexadecimal with "
+                            + "hash at the beginning.")
+                    else:
+                        calendar_.name = request.POST['name']
+                        calendar_.color = request.POST['color']
+                        can_read_ids = request.POST.getlist('can_read')
+                        can_read = UserProfile.objects.filter(
+                            id__in=can_read_ids)
+                        calendar_.can_read.add(*can_read)
+                        calendar_.save()
+                context['calendar_form'] = calendar_form
             context['calendar'] = calendar_
             events = Event.objects.filter(calendar=calendar_)
             context['events'] = events
@@ -209,7 +223,9 @@ def event_view(request, cal_pk=None, event_pk=None):
     if request.user.is_authenticated():
         event = get_object_or_404(Event, pk=event_pk)
         profile = get_object_or_404(UserProfile, user=request.user)
-        if profile == event.calendar.owner:
+        context['profile'] = profile
+        if (profile == event.calendar.owner 
+            or profile in event.calendar.can_read.all()):
             settings = event.get_owner_settings()
             guest = settings.guest
             timezone = {

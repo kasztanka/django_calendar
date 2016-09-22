@@ -76,7 +76,7 @@ class MyCalendar(models.Model):
     can_modify = models.ManyToManyField(
         UserProfile, related_name='calendars_to_modify')
     can_read = models.ManyToManyField(
-        UserProfile, related_name='calendars_to_read')
+        UserProfile, related_name='calendars_to_read', blank=True)
     
     def __str__(self):
         return self.name

@@ -19,7 +19,10 @@ class FunctionalTest(LiveServerTestCase):
         input = self.browser.find_element_by_id(id)
         input.clear()
         input.send_keys(text)
-        
+     
+    def get_page_text(self):
+        return self.browser.find_element_by_tag_name('body'
+            ).get_attribute('innerHTML')
     
     def register(self, username='mary123'):
         self.browser.get(self.live_server_url)

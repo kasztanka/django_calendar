@@ -4,7 +4,7 @@ import pytz
 from django.contrib.auth.models import User
 from django import forms
 
-from .models import EventCustomSettings, Guest, UserProfile
+from .models import EventCustomSettings, Guest, UserProfile, MyCalendar
 
 
 class RegisterForm(forms.ModelForm):
@@ -22,6 +22,16 @@ class ProfileForm(forms.ModelForm):
         fields = ('timezone',)
         error_messages = {
             'timezone': {'invalid_choice': "Wrong timezone was chosen."}
+        }
+        
+        
+class CalendarForm(forms.ModelForm):
+    
+    class Meta:
+        model = MyCalendar
+        fields = ('can_read',)
+        widgets = {
+            'can_read': forms.CheckboxSelectMultiple,
         }
         
 
