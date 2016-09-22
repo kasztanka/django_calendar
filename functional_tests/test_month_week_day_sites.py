@@ -21,7 +21,7 @@ class UserTest(FunctionalTest):
             'body').get_attribute('innerHTML')
         date_ = datetime.datetime.now()
         time.sleep(2)
-        self.assertIn("<td>" + date_.strftime("%d %b") + "</td>", page_text)
+        self.assertIn("<td>" + date_.strftime("%d %b"), page_text)
         
         week_ = self.browser.find_element_by_id('week')
         week_.click()
@@ -29,7 +29,7 @@ class UserTest(FunctionalTest):
         page_text = self.browser.find_element_by_tag_name(
             'body').get_attribute('innerHTML')
         time.sleep(2)
-        self.assertIn("<td>" + date_.strftime("%A %m/%d") + "</td>", page_text)
+        self.assertIn("<div>" + date_.strftime("%A %m/%d") + "</div>", page_text)
         
         
         day_ = self.browser.find_element_by_id('day')
@@ -38,7 +38,7 @@ class UserTest(FunctionalTest):
         page_text = self.browser.find_element_by_tag_name(
             'body').get_attribute('innerHTML')
         time.sleep(2)
-        self.assertIn("<td>" + date_.strftime("%A %m/%d") + "</td>", page_text)
+        self.assertIn("<div>" + date_.strftime("%A %m/%d") + "</div>", page_text)
         
     
 if __name__ == '__main__':
