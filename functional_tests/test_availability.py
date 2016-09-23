@@ -8,12 +8,19 @@ from functional_tests.base import FunctionalTest
 
 class AvailabilityTest(FunctionalTest):
     
-    def add_calendar(self, name="Example", can_read=None):
+    def add_calendar(self, name="Example", can_read=None, can_modify=None):
         self.browser.get(self.live_server_url + '/calendar/new')
         self.fill_input("id_name", name)
         if can_read != None:
             inputs = self.browser.find_elements_by_name("can_read")
             for username in can_read:
+                for input in inputs:
+                    parent = input.find_element_by_xpath('..')
+                    if username in parent.text:
+                        input.click()
+        if can_modify != None:
+            inputs = self.browser.find_elements_by_name("can_modify")
+            for username in can_modify:
                 for input in inputs:
                     parent = input.find_element_by_xpath('..')
                     if username in parent.text:
@@ -55,7 +62,7 @@ class AvailabilityTest(FunctionalTest):
     def test_can_see_but_not_edit_if_can_read(self):
         self.register(username="Can_man")
         self.logout()
-        self.register()
+        self.register(username="Owner2")
         cal_pk = self.add_calendar(can_read=["Can_man"])
         event_pk = self.add_event(calendar_pk=cal_pk)
         cal_pk2 = self.add_calendar()
@@ -85,6 +92,44 @@ class AvailabilityTest(FunctionalTest):
         page_text = self.get_page_text()
         self.assertFalse("New event" in page_text)
         
+    def test_can_edit_events_not_calendars_when_can_modify(self):
+        self.register(username="Edit_man")
+        self.logout()
+        self.register(username="Owner3")
+        cal_pk = self.add_calendar(can_modify=["Edit_man"])
+        event_pk = self.add_event(calendar_pk=cal_pk)
+        cal_pk2 = self.add_calendar()
+        event_pk2 = self.add_event(calendar_pk=cal_pk2)
+        self.logout()
+        
+        self.fill_input('id_username', 'Edit_man')
+        self.fill_input('id_password', 'JingleBellsBatmanSmells')
+        submit = self.browser.find_element_by_tag_name('button')
+        submit.click()
+        
+        self.browser.get(self.live_server_url + '/calendar/{}'.format(cal_pk))
+        page_text = self.get_page_text()
+        self.assertTrue("Example" in page_text)
+        # still only owner of calendar can add events or edit it the calendar
+        with self.assertRaises(NoSuchElementException):
+            self.browser.find_element_by_id("add_event")
+        with self.assertRaises(NoSuchElementException):
+            self.browser.find_element_by_id("edit_calendar")  
+            
+        self.browser.get(self.live_server_url + '/event/{}'.format(event_pk))
+        page_text = self.get_page_text()
+        self.assertTrue("New event" in page_text)
+        edit = self.browser.find_element_by_id("edit_event")
+        edit.click()
+        
+        self.fill_input("id_title", "New title!")
+        submit = self.browser.find_element_by_id("save_event")
+        submit.click()
+        time.sleep(2)
+        
+        page_text = self.get_page_text()
+        self.assertTrue("<h2>New title!</h2>" in page_text)
+            
 
 if __name__ == '__main__':
     unittest.main() 

@@ -74,7 +74,7 @@ class MyCalendar(models.Model):
     name = models.CharField(max_length=100, default="")
     color = models.CharField(max_length=6) # default = #464AFF?
     can_modify = models.ManyToManyField(
-        UserProfile, related_name='calendars_to_modify')
+        UserProfile, related_name='calendars_to_modify', blank=True)
     can_read = models.ManyToManyField(
         UserProfile, related_name='calendars_to_read', blank=True)
     

@@ -10,7 +10,9 @@
 {% now "d" as current_day %}
 <a id="timeline" href="{% url 'my_calendar:month' year=current_year month=current_month day=current_day %}">Check out you're timeline!</a>
 {% endtimezone %}
-<a id="add_calendar" href="{% url 'my_calendar:new_calendar' %}">Add new calendar</a>
+{% if profile.user == request.user %}
+    <a id="add_calendar" href="{% url 'my_calendar:new_calendar' %}">Add new calendar</a>
+{% endif %}
 <div id="calendars">
 {% for cal in calendars %}
     <a href="{% url 'my_calendar:calendar_view' cal_pk=cal.pk %}">{{ cal.name }}</a>

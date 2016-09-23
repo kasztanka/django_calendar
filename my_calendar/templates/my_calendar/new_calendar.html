@@ -16,6 +16,11 @@
         <p>{{ user }}</p>
     {% endfor %}
     </div>
+    <div id="can_modify">Choose users who can modify events in your calendar:
+    {% for user in calendar_form.can_modify %}
+        <p>{{ user }}</p>
+    {% endfor %}
+    </div>
     <input id="id_color" name="color" type="hidden"/></p>
     <button type="submit" id="save_calendar">Save calendar</button>
 </form>

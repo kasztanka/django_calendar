@@ -29,9 +29,10 @@ class CalendarForm(forms.ModelForm):
     
     class Meta:
         model = MyCalendar
-        fields = ('can_read',)
+        fields = ('can_read', 'can_modify')
         widgets = {
             'can_read': forms.CheckboxSelectMultiple,
+            'can_modify': forms.CheckboxSelectMultiple,
         }
         
 

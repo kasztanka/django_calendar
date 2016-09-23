@@ -32,10 +32,10 @@ class BaseTest(TestCase):
         response = self.client.get(self.url)
         self.assertTemplateUsed(response, 'my_calendar/base.html')
        
-    def user_registers(self):
+    def user_registers(self, username="John123"):
         response = self.client.post(
             '/register', data={
-                'username': 'John123',
+                'username': username,
                 'password': 'password',
                 'email': 'example@email.com',
                 'first_name': 'John',
@@ -371,16 +371,18 @@ class NewCalendarTest(BaseTest):
         response = self.client.get(self.url)
         self.assertIn('calendar_form', response.context)
         
-    def test_saves_can_read_users(self):
+    def test_saves_can_read_and_can_modify_users(self):
         profile = UserProfile.objects.get(user=get_user(self.client))
         response = self.client.post(
             self.url, data={
                 'name': 'Pretty face',
                 'color': '#FF0000',
                 'can_read': ['1'],
+                'can_modify': ['1'],
         })
         calendar_ = MyCalendar.objects.first()
         self.assertEqual(list(calendar_.can_read.all())[0], profile)
+        self.assertEqual(list(calendar_.can_modify.all())[0], profile)
     
     def test_cannot_save_not_existing_user(self):
         calendar_amount = MyCalendar.objects.count()
@@ -390,11 +392,13 @@ class NewCalendarTest(BaseTest):
                 'name': 'Pretty face',
                 'color': '#FF0000',
                 'can_read': ['2'],
+                'can_modify': ['2'],
         })
         self.assertEqual(calendar_amount, MyCalendar.objects.count())
         if calendar_amount:
             calendar_ = MyCalendar.objects.first()
             self.assertEqual(list(calendar_.can_read.all()), [])
+            self.assertEqual(list(calendar_.can_modify.all()), [])
     
     
 class CalendarViewTest(NewCalendarTest):
@@ -550,7 +554,80 @@ class EventViewTest(BaseTest):
         self.assertEqual(form.initial['end_hour'], end.strftime('%H:%M'))
         self.assertEqual(self.settings.timezone, form.initial['timezone'])
         
-
+    def test_others_cannot_save_event(self):
+        amount = Event.objects.count()
+        response = self.client.get('/logout')
+        self.user_registers(username="Other")
+        response = self.client.post(
+            self.url, data={
+                'title': 'Episode 9',
+                'desc': 'Silence of slums',
+                'all_day': True,
+                'start_hour': '15:19',
+                'start_date': '12/13/2016',
+                'end_hour': '16:13',
+                'end_date': '12/13/2016',
+                'timezone': '374',
+                'state': '1',
+        })
+        self.assertEqual(amount, Event.objects.count())
+        if amount:
+            settings = Event.objects.first().get_owner_settings()
+            self.assertEqual(settings.title, 'Radio Gaga')
+            self.assertEqual(response.context['access_denied'], 
+                "You don't have access to this event.")
+        profile = UserProfile.objects.get(user=get_user(self.client))
+        # users that can read others calendars_amount
+        # also shouldn't have access to modifications of events
+        self.calendar.can_read.add(profile)
+        response = self.client.post(
+            self.url, data={
+                'title': 'Episode 9',
+                'desc': 'Silence of slums',
+                'all_day': True,
+                'start_hour': '15:19',
+                'start_date': '12/13/2016',
+                'end_hour': '16:13',
+                'end_date': '12/13/2016',
+                'timezone': '374',
+                'state': '1',
+        })
+        self.assertEqual(amount, Event.objects.count())
+        if amount:
+            settings = Event.objects.first().get_owner_settings()
+            self.assertEqual(settings.title, 'Radio Gaga')
+            self.assertEqual(response.context['access_denied'], 
+                "You don't have access to edit this event.")
+        else:
+            self.assertEqual(response.context['access_denied'], 
+                "You don't have access to add events to this calendar.")
+        
+    def test_user_with_modify_can_edit_but_not_create_event(self):
+        amount = Event.objects.count()
+        response = self.client.get('/logout')
+        self.user_registers(username="Other")
+        profile = UserProfile.objects.get(user=get_user(self.client))
+        self.calendar.can_modify.add(profile)
+        response = self.client.post(
+            self.url, data={
+                'title': 'Episode 9',
+                'desc': 'Silence of slums',
+                'all_day': True,
+                'start_hour': '15:19',
+                'start_date': '12/13/2016',
+                'end_hour': '16:13',
+                'end_date': '12/13/2016',
+                'timezone': '374',
+                'state': '1',
+        })
+        self.assertEqual(amount, Event.objects.count())
+        if amount:
+            settings = Event.objects.first().get_owner_settings()
+            self.assertEqual(settings.title, 'Episode 9')
+        else:
+            self.assertEqual(response.context['access_denied'], 
+                "You don't have access to add events to this calendar.")
+        
 class NewEventTest(EventViewTest):
 
     def setUp(self):

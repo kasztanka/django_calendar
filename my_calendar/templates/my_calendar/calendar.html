@@ -5,9 +5,25 @@
 {% else %}
     <div style="background-color:{{ calendar.color }};">Kolor kalendarza</div>
     <h2>{{ calendar.name }}</h2>
-    <div>Users who can read this calendar: {{ calendar.can_read.all }}</div>
+    <ul>Users who can read this calendar:
+    {% for user in calendar.can_read.all %}
+        <li>{{ user }}</li>
+    {% empty %}
+        <p>No such users.</p>
+    {% endfor %}
+    </ul>
+    <ul>Users who can modify events in this calendar:
+    {% for user in calendar.can_modify.all %}
+        <li>{{ user }}</li>
+    {% empty %}
+        <p>No such users.</p>
+    {% endfor %}
+    </ul>
     {% if profile == calendar.owner %}
         <button onclick="FormDisplay();return false;" id="edit_calendar">Edit this calendar</button>
+        {% if errors %}
+            <p>{{ errors }}</p>
+        {% endif %}
         <form method="POST" id="calendar_form">
             {% csrf_token %}
             <p><label for="id_name">Name:</label>
@@ -21,12 +37,17 @@
                 <p>{{ user }}</p>
             {% endfor %}
             </div>
+            <div id="can_modify">Choose users who can modify events in your calendar:
+            {% for user in calendar_form.can_modify %}
+                <p>{{ user }}</p>
+            {% endfor %}
+            </div>
             <input id="id_color" name="color" type="hidden"/></p>
             <button type="submit" id="save_calendar">Save calendar</button>
         </form>
     <a id="add_event" href="{% url 'my_calendar:new_event' cal_pk=calendar.pk %}">Add event</a>
     {% endif %}
-    <div id="events">
+    <div id="events">Events:
     {% for ev in events %}
         <a href="{% url 'my_calendar:event_view' event_pk=ev.pk %}">{{ ev.get_owner_settings.title }}</a>
     {% empty %}
