@@ -24,8 +24,8 @@
             <input id="id_color" name="color" type="hidden"/></p>
             <button type="submit" id="save_calendar">Save calendar</button>
         </form>
-    {% endif %}
     <a id="add_event" href="{% url 'my_calendar:new_event' cal_pk=calendar.pk %}">Add event</a>
+    {% endif %}
     <div id="events">
     {% for ev in events %}
         <a href="{% url 'my_calendar:event_view' event_pk=ev.pk %}">{{ ev.get_owner_settings.title }}</a>

@@ -70,8 +70,7 @@ class CalendarEventTest(FunctionalTest):
         
         event_url = self.browser.current_url
         self.assertRegex(event_url, '/event/\d+')
-        page_text = self.browser.find_element_by_tag_name(
-            'body').get_attribute('innerHTML')
+        page_text = self.get_page_text()
         self.assertIn("<p>Timezone: Europe/Warsaw</p>", page_text)
         
         edition = self.browser.find_element_by_id("edit_event")
@@ -93,8 +92,7 @@ class CalendarEventTest(FunctionalTest):
         submit.click()
         time.sleep(2)
         
-        page_text = self.browser.find_element_by_tag_name(
-            'body').get_attribute('innerHTML')
+        page_text = self.get_page_text()
         self.assertIn("<p>Come to my place for my birthday!</p>", page_text)
         
 

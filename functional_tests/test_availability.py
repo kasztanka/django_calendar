@@ -72,6 +72,8 @@ class AvailabilityTest(FunctionalTest):
         self.assertTrue("Example" in page_text)
         with self.assertRaises(NoSuchElementException):
             self.browser.find_element_by_id("edit_calendar")
+        with self.assertRaises(NoSuchElementException):
+            self.browser.find_element_by_id("add_event")
         
         self.browser.get(self.live_server_url + '/event/{}'.format(event_pk))
         page_text = self.get_page_text()

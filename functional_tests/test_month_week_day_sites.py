@@ -17,8 +17,7 @@ class UserTest(FunctionalTest):
         timeline.click()
         
         self.assertRegex(self.browser.current_url, '/month')
-        page_text = self.browser.find_element_by_tag_name(
-            'body').get_attribute('innerHTML')
+        page_text = self.get_page_text()
         date_ = datetime.datetime.now()
         time.sleep(2)
         self.assertIn("<td>" + date_.strftime("%d %b"), page_text)
@@ -26,8 +25,7 @@ class UserTest(FunctionalTest):
         week_ = self.browser.find_element_by_id('week')
         week_.click()
         self.assertRegex(self.browser.current_url, '/week')
-        page_text = self.browser.find_element_by_tag_name(
-            'body').get_attribute('innerHTML')
+        page_text = self.get_page_text()
         time.sleep(2)
         self.assertIn("<div>" + date_.strftime("%A %m/%d") + "</div>", page_text)
         
@@ -35,8 +33,7 @@ class UserTest(FunctionalTest):
         day_ = self.browser.find_element_by_id('day')
         day_.click()
         self.assertRegex(self.browser.current_url, '/day')
-        page_text = self.browser.find_element_by_tag_name(
-            'body').get_attribute('innerHTML')
+        page_text = self.get_page_text()
         time.sleep(2)
         self.assertIn("<div>" + date_.strftime("%A %m/%d") + "</div>", page_text)
         
