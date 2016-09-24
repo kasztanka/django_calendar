@@ -7,7 +7,8 @@ from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.models import User
 
 from .models import UserProfile, MyCalendar, Event, Guest, EventCustomSettings
-from .forms import RegisterForm, EventForm, StateForm, ProfileForm, CalendarForm
+from .forms import (RegisterForm, EventForm, StateForm, ProfileForm,
+    CalendarForm, GuestForm)
 from .additional_functions import (COLORS, fill_month, fill_week,
     get_events_from_days)
 
@@ -234,7 +235,6 @@ def event_view(request, cal_pk=None, event_pk=None):
         profile = get_object_or_404(UserProfile, user=request.user)
         context['profile'] = profile
         if (profile == event.calendar.owner 
-            or profile in event.calendar.can_read.all()
             or profile in event.calendar.can_modify.all()):
             settings = event.get_owner_settings()
             guest = settings.guest
@@ -245,23 +245,34 @@ def event_view(request, cal_pk=None, event_pk=None):
             event_form = EventForm(data=request.POST or None, instance=settings,
                 start=settings.start, end=settings.end, timezone=timezone)
             state_form = StateForm(data=request.POST or None, instance=guest)
+            guest_form = GuestForm(event=event, data=request.POST or None)
             if request.method == "POST":
-                if (profile == event.calendar.owner
-                or profile in event.calendar.can_modify.all()):
+                if 'save_event' in request.POST:
                     if event_form.is_valid() and state_form.is_valid():
                         state_form.save()
                         event_form.save()
                         return redirect('my_calendar:event_view',
                             event_pk=event.pk)
-                else:
-                    context['access_denied'] = ("You don't have access to "
-                        + "edit this event.")
+                elif 'save_guest' in request.POST:
+                    if guest_form.is_valid():
+                        guest = guest_form.save(commit=False)
+                        guest.event = event
+                        guest.save()
+                        return redirect('my_calendar:event_view',
+                            event_pk=event.pk)        
             context['event_form'] = event_form
             context['state_form'] = state_form
+            context['guest_form'] = guest_form
+            context['event'] = event.get_owner_settings()
+            context['guests'] = Guest.objects.filter(event=event)
+        elif profile in event.calendar.can_read.all():
+            if request.method == "POST":
+                context['access_denied'] = ("You don't have access to "
+                        + "edit this event.")
             event = get_object_or_404(Event, pk=event_pk)
             context['event'] = event.get_owner_settings()
-            guest = Guest.objects.get(user=event.calendar.owner, event=event)
-            context['state'] = guest.get_state_display()
+            context['guests'] = Guest.objects.filter(event=event)
         else:
             context['access_denied'] = "You don't have access to this event."
     return render(request, 'my_calendar/event.html', context)
+  

@@ -1,6 +1,7 @@
 import datetime
 import pytz
 
+from django.core.exceptions import ValidationError
 from django.contrib.auth.models import User
 from django import forms
 
@@ -111,3 +112,23 @@ class StateForm(forms.ModelForm):
     class Meta:
         model = Guest
         fields = ('state',)
+        
+        
+class GuestForm(forms.ModelForm):
+    
+    class Meta:
+        model = Guest
+        fields = ('user',)
+    
+    def __init__(self, event, *args, **kwargs):
+        super(GuestForm, self).__init__(*args, **kwargs)
+        self.instance.event = event
+        
+    def validate_unique(self):
+        try:
+            self.instance.validate_unique()
+        except ValidationError as e:
+            e.error_dict = {'user': [("This user is already guest added to "
+            + "this event.")]}
+            self._update_errors(e)
+    

@@ -124,6 +124,10 @@ class Guest(models.Model):
         (NOT_GOING, "Not going"),
     )
     state = models.IntegerField(choices=STATE_CHOICES, default=UNKNOWN)
+    class Meta:
+        unique_together = ('event', 'user')
+        # unique_together changes default ordering e.g. for objects.all()
+        ordering = ['id']
     
     def get_settings(self):
         """

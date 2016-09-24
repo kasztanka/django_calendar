@@ -17,15 +17,15 @@ class GuestsTest(FunctionalTest):
         event_pk = self.add_event(calendar_pk=cal_pk)
         
         self.browser.get(self.live_server_url + '/event/{}'.format(event_pk))
-        button = self.browser.find_element_by_id("add_guests")
+        button = self.browser.find_element_by_id("add_guest")
         button.click()
         
-        inputs = self.browser.find_elements_by_name("can_read")
-        for input in inputs:
-            parent = input.find_element_by_xpath('..')
-            if "Guest2" in parent.text:
-                input.click()
-        save = self.browser.find_element_by_id("save_guests")
+        select = self.browser.find_element_by_id('id_user')
+        for option in select.find_elements_by_tag_name('option'):
+            if "Guest2" in option.text:
+                option.click()
+                break
+        save = self.browser.find_element_by_id("save_guest")
         save.click()
         time.sleep(1)
         

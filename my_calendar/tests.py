@@ -2,6 +2,7 @@ import datetime
 import pytz
 
 from django.contrib.auth.models import User, AnonymousUser
+from django.core.exceptions import ValidationError
 from django.core.urlresolvers import resolve
 from django.contrib.auth import get_user
 from django.test import TestCase
@@ -9,7 +10,7 @@ from django.test import TestCase
 from .views import (index, register, profile, month, week, day, new_calendar,
     calendar_view, event_view, new_event)
 from .models import UserProfile, MyCalendar, Event, Guest, EventCustomSettings
-from .forms import RegisterForm, EventForm
+from .forms import RegisterForm, EventForm, GuestForm
 
 
 class BaseTest(TestCase):
@@ -441,28 +442,24 @@ class CalendarViewTest(NewCalendarTest):
         self.assertIn(event, response.context['events'])
         self.assertFalse(other_event in response.context['events'])
   
+        
+class NewEventTest(BaseTest):
 
-class EventViewTest(BaseTest):
-    
     def setUp(self):
         self.user_registers()
-        profile = UserProfile.objects.get(user=get_user(self.client))
-        self.calendar = MyCalendar.objects.create(owner=profile,
+        self.profile = UserProfile.objects.get(user=get_user(self.client))
+        self.calendar = MyCalendar.objects.create(owner=self.profile,
             name="Cindirella", color="E81AD4")
-        self.event = Event.objects.create(calendar=self.calendar)
-        self.guest = Guest.objects.create(event=self.event, user=profile)
+        self.url = '/event/new/1'
+        self.template = 'my_calendar/new_event.html'
+        self.function = new_event
         self.start = pytz.utc.localize(datetime.datetime.utcnow())
         self.end = self.start + datetime.timedelta(minutes=30)
-        self.settings = EventCustomSettings.objects.create(
-            guest=self.guest, title='Radio Gaga', desc='Radio Blabla',
-            timezone=374, start=self.start, end=self.end, all_day=True)
-        self.url = '/event/1'
-        self.template = 'my_calendar/event.html'
-        self.function = event_view
     
     def test_saves_event(self):
         self.client.post(
             self.url, data={
+                'save_event':1,
                 'title': 'Episode 9',
                 'desc': 'Silence of slums',
                 'all_day': True,
@@ -477,33 +474,11 @@ class EventViewTest(BaseTest):
         event = Event.objects.first().get_owner_settings()
         self.assertEqual(event.title, 'Episode 9')
         self.assertEqual(event.guest.state, 1)
-        
-    def test_cannot_save_event_with_empty_title_or_dates(self):
-        title = Event.objects.first().get_owner_settings().title
-        response = self.client.post(
-            self.url, data={
-                'title': '',
-                'desc': '',
-                'all_day': True,
-                'start_hour': '',
-                'start_date': '',
-                'end_hour': '',
-                'end_date': '',
-                'timezone': '374',
-                'state': '1',
-        })
-        event = Event.objects.first().get_owner_settings()
-        self.assertEqual(event.title, title)
-        self.assertEqual(Event.objects.count(), 1)
-        self.assertIn('title', response.context['event_form'].errors)
-        self.assertIn('start_hour', response.context['event_form'].errors)
-        self.assertIn('start_date', response.context['event_form'].errors)
-        self.assertIn('end_hour', response.context['event_form'].errors)
-        self.assertIn('end_date', response.context['event_form'].errors)
-              
+          
     def test_redirects_after_saving_event(self):
         response = self.client.post(
             self.url, data={
+                'save_event':1,
                 'title': 'Episode 9',
                 'desc': 'Silence of slums',
                 'all_day': True,
@@ -520,6 +495,7 @@ class EventViewTest(BaseTest):
     def test_saves_correct_date_and_hour(self):
         response = self.client.post(
             self.url, data={
+                'save_event':1,
                 'title': 'Episode 9',
                 'desc': 'Silence of slums',
                 'all_day': True,
@@ -541,106 +517,7 @@ class EventViewTest(BaseTest):
         self.assertEqual(event.start, start)
         self.assertContains(response, '16:13')
         self.assertEqual(event.end, end)
-        
-    def test_passes_correct_initial_timezone_and_datetime(self):
-        response = self.client.get(self.url)
-        form = response.context['event_form']
-        timezone = pytz.timezone(self.settings.get_timezone_display())
-        start = self.start.astimezone(timezone)
-        end = self.end.astimezone(timezone)
-        self.assertEqual(form.initial['start_date'], start.strftime('%m/%d/%Y'))
-        self.assertEqual(form.initial['start_hour'], start.strftime('%H:%M'))
-        self.assertEqual(form.initial['end_date'], end.strftime('%m/%d/%Y'))
-        self.assertEqual(form.initial['end_hour'], end.strftime('%H:%M'))
-        self.assertEqual(self.settings.timezone, form.initial['timezone'])
-        
-    def test_others_cannot_save_event(self):
-        amount = Event.objects.count()
-        response = self.client.get('/logout')
-        self.user_registers(username="Other")
-        response = self.client.post(
-            self.url, data={
-                'title': 'Episode 9',
-                'desc': 'Silence of slums',
-                'all_day': True,
-                'start_hour': '15:19',
-                'start_date': '12/13/2016',
-                'end_hour': '16:13',
-                'end_date': '12/13/2016',
-                'timezone': '374',
-                'state': '1',
-        })
-        self.assertEqual(amount, Event.objects.count())
-        if amount:
-            settings = Event.objects.first().get_owner_settings()
-            self.assertEqual(settings.title, 'Radio Gaga')
-            self.assertEqual(response.context['access_denied'], 
-                "You don't have access to this event.")
-        profile = UserProfile.objects.get(user=get_user(self.client))
-        # users that can read others calendars_amount
-        # also shouldn't have access to modifications of events
-        self.calendar.can_read.add(profile)
-        response = self.client.post(
-            self.url, data={
-                'title': 'Episode 9',
-                'desc': 'Silence of slums',
-                'all_day': True,
-                'start_hour': '15:19',
-                'start_date': '12/13/2016',
-                'end_hour': '16:13',
-                'end_date': '12/13/2016',
-                'timezone': '374',
-                'state': '1',
-        })
-        self.assertEqual(amount, Event.objects.count())
-        if amount:
-            settings = Event.objects.first().get_owner_settings()
-            self.assertEqual(settings.title, 'Radio Gaga')
-            self.assertEqual(response.context['access_denied'], 
-                "You don't have access to edit this event.")
-        else:
-            self.assertEqual(response.context['access_denied'], 
-                "You don't have access to add events to this calendar.")
-        
-    def test_user_with_modify_can_edit_but_not_create_event(self):
-        amount = Event.objects.count()
-        response = self.client.get('/logout')
-        self.user_registers(username="Other")
-        profile = UserProfile.objects.get(user=get_user(self.client))
-        self.calendar.can_modify.add(profile)
-        response = self.client.post(
-            self.url, data={
-                'title': 'Episode 9',
-                'desc': 'Silence of slums',
-                'all_day': True,
-                'start_hour': '15:19',
-                'start_date': '12/13/2016',
-                'end_hour': '16:13',
-                'end_date': '12/13/2016',
-                'timezone': '374',
-                'state': '1',
-        })
-        self.assertEqual(amount, Event.objects.count())
-        if amount:
-            settings = Event.objects.first().get_owner_settings()
-            self.assertEqual(settings.title, 'Episode 9')
-        else:
-            self.assertEqual(response.context['access_denied'], 
-                "You don't have access to add events to this calendar.")
-        
-class NewEventTest(EventViewTest):
 
-    def setUp(self):
-        self.user_registers()
-        self.profile = UserProfile.objects.get(user=get_user(self.client))
-        self.calendar = MyCalendar.objects.create(owner=self.profile,
-            name="Cindirella", color="E81AD4")
-        self.url = '/event/new/1'
-        self.template = 'my_calendar/new_event.html'
-        self.function = new_event
-        self.start = pytz.utc.localize(datetime.datetime.utcnow())
-        self.end = self.start + datetime.timedelta(minutes=30)
-        
     def test_cannot_save_event_with_empty_title_or_dates(self):
         response = self.client.post(
             self.url, data={
@@ -673,7 +550,171 @@ class NewEventTest(EventViewTest):
         self.assertEqual(form.initial['end_hour'], end.strftime('%H:%M'))
         event = EventCustomSettings(timezone=form.initial['timezone'])
         self.assertEqual(user_timezone, event.get_timezone_display())
- 
+    
+    def test_others_cannot_save_event(self):
+        amount = Event.objects.count()
+        response = self.client.get('/logout')
+        self.user_registers(username="Other")
+        response = self.client.post(
+            self.url, data={
+                'save_event':1,
+                'title': 'Episode 9',
+                'desc': 'Silence of slums',
+                'all_day': True,
+                'start_hour': '15:19',
+                'start_date': '12/13/2016',
+                'end_hour': '16:13',
+                'end_date': '12/13/2016',
+                'timezone': '374',
+                'state': '1',
+        })
+        self.assertEqual(amount, Event.objects.count())
+        if amount:
+            settings = Event.objects.first().get_owner_settings()
+            self.assertEqual(settings.title, 'Radio Gaga')
+            self.assertEqual(response.context['access_denied'], 
+                "You don't have access to this event.")
+        profile = UserProfile.objects.get(user=get_user(self.client))
+        # users that can read others calendars_amount
+        # also shouldn't have access to modifications of events
+        self.calendar.can_read.add(profile)
+        response = self.client.post(
+            self.url, data={
+                'save_event':1,
+                'title': 'Episode 9',
+                'desc': 'Silence of slums',
+                'all_day': True,
+                'start_hour': '15:19',
+                'start_date': '12/13/2016',
+                'end_hour': '16:13',
+                'end_date': '12/13/2016',
+                'timezone': '374',
+                'state': '1',
+        })
+        self.assertEqual(amount, Event.objects.count())
+        if amount:
+            settings = Event.objects.first().get_owner_settings()
+            self.assertEqual(settings.title, 'Radio Gaga')
+            self.assertEqual(response.context['access_denied'], 
+                "You don't have access to edit this event.")
+        else:
+            self.assertEqual(response.context['access_denied'], 
+                "You don't have access to add events to this calendar.")
+        
+    def test_user_with_modify_can_edit_but_not_create_event(self):
+        amount = Event.objects.count()
+        response = self.client.get('/logout')
+        self.user_registers(username="Other")
+        profile = UserProfile.objects.get(user=get_user(self.client))
+        self.calendar.can_modify.add(profile)
+        response = self.client.post(
+            self.url, data={
+                'save_event':1,
+                'title': 'Episode 9',
+                'desc': 'Silence of slums',
+                'all_day': True,
+                'start_hour': '15:19',
+                'start_date': '12/13/2016',
+                'end_hour': '16:13',
+                'end_date': '12/13/2016',
+                'timezone': '374',
+                'state': '1',
+        })
+        self.assertEqual(amount, Event.objects.count())
+        if amount:
+            settings = Event.objects.first().get_owner_settings()
+            self.assertEqual(settings.title, 'Episode 9')
+        else:
+            self.assertEqual(response.context['access_denied'], 
+                "You don't have access to add events to this calendar.")
+
+                
+class EventViewTest(NewEventTest):
+    
+    def setUp(self):
+        self.user_registers()
+        profile = UserProfile.objects.get(user=get_user(self.client))
+        self.calendar = MyCalendar.objects.create(owner=profile,
+            name="Cindirella", color="E81AD4")
+        self.event = Event.objects.create(calendar=self.calendar)
+        self.guest = Guest.objects.create(event=self.event, user=profile)
+        self.start = pytz.utc.localize(datetime.datetime.utcnow())
+        self.end = self.start + datetime.timedelta(minutes=30)
+        self.settings = EventCustomSettings.objects.create(
+            guest=self.guest, title='Radio Gaga', desc='Radio Blabla',
+            timezone=374, start=self.start, end=self.end, all_day=True)
+        self.url = '/event/1'
+        self.template = 'my_calendar/event.html'
+        self.function = event_view
+        
+    def test_cannot_save_event_with_empty_title_or_dates(self):
+        title = Event.objects.first().get_owner_settings().title
+        response = self.client.post(
+            self.url, data={
+                'save_event':1,
+                'title': '',
+                'desc': '',
+                'all_day': True,
+                'start_hour': '',
+                'start_date': '',
+                'end_hour': '',
+                'end_date': '',
+                'timezone': '374',
+                'state': '1',
+        })
+        event = Event.objects.first().get_owner_settings()
+        self.assertEqual(event.title, title)
+        self.assertEqual(Event.objects.count(), 1)
+        self.assertIn('title', response.context['event_form'].errors)
+        self.assertIn('start_hour', response.context['event_form'].errors)
+        self.assertIn('start_date', response.context['event_form'].errors)
+        self.assertIn('end_hour', response.context['event_form'].errors)
+        self.assertIn('end_date', response.context['event_form'].errors)
+                
+    def test_passes_correct_initial_timezone_and_datetime(self):
+        response = self.client.get(self.url)
+        form = response.context['event_form']
+        timezone = pytz.timezone(self.settings.get_timezone_display())
+        start = self.start.astimezone(timezone)
+        end = self.end.astimezone(timezone)
+        self.assertEqual(form.initial['start_date'], start.strftime('%m/%d/%Y'))
+        self.assertEqual(form.initial['start_hour'], start.strftime('%H:%M'))
+        self.assertEqual(form.initial['end_date'], end.strftime('%m/%d/%Y'))
+        self.assertEqual(form.initial['end_hour'], end.strftime('%H:%M'))
+        self.assertEqual(self.settings.timezone, form.initial['timezone'])
+    
+    def test_saves_guest(self):
+        self.client.get('/logout')
+        self.user_registers(username="Human")
+        self.client.get('/logout')
+        self.client.post(
+            '/login', data={
+            'username': 'John123',
+            'password': 'password'
+            })
+        self.client.post(self.url, data={
+            'save_guest': 1,
+            'user': 2,
+        })
+        self.assertEqual(Guest.objects.count(), 2)
+        
+    def test_cannot_save_same_guest_for_event(self):
+        self.client.get('/logout')
+        self.user_registers(username="Human")
+        self.client.get('/logout')
+        self.client.post(
+            '/login', data={
+            'username': 'John123',
+            'password': 'password'
+            })
+        response = self.client.post(self.url, data={
+            'save_guest': 1,
+            'user': 1,
+        })
+        self.assertEqual(Guest.objects.count(), 1)
+        self.assertEqual(response.context['guest_form'].errors['user'],
+            ["This user is already guest added to this event."])
+        
  
 class EventFormTest(TestCase):
     
@@ -793,7 +834,62 @@ class EventCustomSettingsTest(TestCase):
     def test_default_timezone_utc(self):
         event = EventCustomSettings()
         self.assertEqual(event.get_timezone_display(), str(pytz.utc)) 
+ 
+
+class GuestFormTest(TestCase):
+    
+    def setUp(self):
+        user_ = User.objects.create(username="Owner")
+        self.profile = UserProfile.objects.create(user=user_)
+        calendar = MyCalendar.objects.create(owner=self.profile,
+            name="Cindirella", color="E81AD4")
+        self.event = Event.objects.create(calendar=calendar)
+    
+    def user_registers(self, username="John123"):
+        response = self.client.post(
+            '/register', data={
+                'username': username,
+                'password': 'password',
+                'email': 'example@email.com',
+                'first_name': 'John',
+                'last_name': 'Doe',
+                'timezone': '374', # 374 is 'Europe/Warsaw'
+        })
+        return response
+    
+    def test_valid_data(self):
+        self.user_registers()
+        form = GuestForm(event=self.event, data={'user': 1})
+        self.assertTrue(form.is_valid())
         
+    def test_wrong_data(self):
+        # not existing user
+        form = GuestForm(event=self.event, data={'user': 2})
+        self.assertFalse(form.is_valid())
+        # empty data
+        form = GuestForm(event=self.event, data={})
+        self.assertFalse(form.is_valid())
+    
+    def test_form_validation_duplicate_guests(self):
+        Guest.objects.create(event=self.event, user=self.profile)
+        form = GuestForm(event=self.event, data={'user': 1})
+        self.assertFalse(form.is_valid())
+        self.assertEqual(form.errors['user'], [("This user is already guest "
+            + "added to this event.")])
+    
+    
+class GuestTest(TestCase):
+    
+    def test_duplicates_invalid(self):
+        user = User.objects.create(username="Owner")
+        profile = UserProfile.objects.create(user=user)
+        calendar = MyCalendar.objects.create(owner=profile,
+            name="Cindirella", color="E81AD4")
+        event = Event.objects.create(calendar=calendar)
+        Guest.objects.create(event=event, user=profile)
+        with self.assertRaises(ValidationError):
+            guest = Guest(event=event, user=profile)
+            guest.full_clean()
         
 if __name__ == '__main__':
     unittest.main() 
