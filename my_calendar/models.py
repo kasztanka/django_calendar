@@ -45,6 +45,21 @@ class UserProfile(models.Model):
         for guest in guests:
             events.append(guest.event)
         return events
+        
+    def get_all_events(self):
+        """
+        Returns events that user has access to.
+        """
+        events = set()
+        for calendar in (self.get_own_calendars()
+            | self.get_calendars_to_modify() | self.get_calendars_to_read()):
+            events_ = Event.objects.filter(calendar=calendar)
+            for ev in events_:
+                events.add(ev)
+        guests = Guest.objects.filter(user=self)
+        for guest in guests:
+            events.add(guest.event)
+        return events
     
     def get_not_owned_events(self):
         """

@@ -80,9 +80,12 @@ def month(request, year, month, day):
     days = fill_month(date_)
     if request.user.is_authenticated():
         profile = get_object_or_404(UserProfile, user=request.user)
-        events = profile.get_events()
+        events = profile.get_all_events()
         timezone = pytz.timezone(profile.get_timezone_display())
-        context['days'] = get_events_from_days(days, events, timezone)
+        context['days'] = get_events_from_days(days, events, timezone, profile)
+        context['calendars'] = (profile.get_own_calendars()
+            | profile.get_calendars_to_modify()
+            | profile.get_calendars_to_read()).distinct()
     else:
         context['days'] = days
     context['choosen_date'] = date_
@@ -98,9 +101,12 @@ def week(request, year, month, day):
     days = fill_week(date_)
     if request.user.is_authenticated():
         profile = get_object_or_404(UserProfile, user=request.user)
-        events = profile.get_events()
+        events = profile.get_all_events()
         timezone = pytz.timezone(profile.get_timezone_display())
-        context['days'] = get_events_from_days(days, events, timezone)
+        context['days'] = get_events_from_days(days, events, timezone, profile)
+        context['calendars'] = (profile.get_own_calendars()
+            | profile.get_calendars_to_modify()
+            | profile.get_calendars_to_read()).distinct()
     else:
         context['days'] = days
     context['choosen_date'] = date_
@@ -117,9 +123,14 @@ def day(request, year, month, day):
     context['choosen_date'] = date_
     if request.user.is_authenticated():
         profile = get_object_or_404(UserProfile, user=request.user)
-        events = profile.get_events()
+        events = profile.get_all_events()
         timezone = pytz.timezone(profile.get_timezone_display())
-        context['days'] = get_events_from_days([date_], events, timezone)
+        context['days'] = get_events_from_days([date_], events,
+            timezone, profile)
+        # distinct() removes duplicates
+        context['calendars'] = (profile.get_own_calendars()
+            | profile.get_calendars_to_modify()
+            | profile.get_calendars_to_read()).distinct()
     context['range'] = range(24)
     return render(request, 'my_calendar/day.html', context)
     

@@ -6,22 +6,35 @@
 <a id="month" href="/month/{{ choosen_date|date:'Y-m-d' }}">Month</a>
 <a id="week" href="/week/{{ choosen_date|date:'Y-m-d' }}">Week</a>
 <a id="day" href="/day/{{ choosen_date|date:'Y-m-d' }}">1 day</a>
+<div id="calendars">Calendars:
+{% for cal in calendars %}
+    <div>
+        <div id="calendar_{{ cal.pk }}" style="height:20px; width:20px; border:1px solid; background-color:{{ cal.color }}; display:inline-block;"
+        onclick="DisplayOfEvents('calendar_{{ cal.pk }}', '{{ cal.color }}');return false;"></div>
+        <span>{{ cal.name }}</span>
+    </div>
+{% endfor %}
+    <div>
+        <div id="calendar_other" style="height:20px; width:20px; border:1px solid; background-color:#FECA5C; display:inline-block;"
+        onclick="DisplayOfEvents('calendar_other', '#FECA5C');return false;"></div>
+        <span>Others</span>
+    </div>
+</div>
 <div id="timeline" style="width:100%">
-    <div id="header">
-    {% for dict_ in days %}
-        <div>{{ dict_.day|date:"l m/d" }}</div>
-    {% endfor %}
+    <div id="header" style="float:left; width:100%; display:table;">
+        <div style="display:table-cell;">Days:</div>
+        {% for dict_ in days %}
+            <div style="display:table-cell;width:13%">{{ dict_.day|date:"l m/d" }}</div>
+        {% endfor %}
     </div>
     <div id="all_day" style="float:left; width:100%; display:table;">
-        <div style="display:table-cell;">
-        All day:
-        </div>
+        <div style="display:table-cell;">All day:</div>
         {% for dict_ in days %}
             <div style="display:table-cell;width:13%">            
                 {% for event in dict_.events %}
                     {% if event.all_day == True %}  
                     <a href="{% url 'my_calendar:event_view' event_pk=event.pk %}">
-                        <div class="event"
+                        <div class="event calendar_{{ event.class }}"
                             id="event-{{ event.pk }}-{{ dict_.day|date:'Y/m/d' }}"
                             style="background-color:{{ event.color }};">
                             {{ event.title }}</div>
@@ -33,16 +46,16 @@
     </div>
     <div id="bottom" style="float:left; width:100%; display:table;">
         <div id="hours" style="display:table-cell;">
-        {% for i in range %}
-        <div>{{ i }}:00</div>
-        {% endfor %}
+            {% for i in range %}
+            <div>{{ i }}:00</div>
+            {% endfor %}
         </div>
         {% for dict_ in days %}
             <div class="events" style="position:relative; display:table-cell;width:13%">            
                 {% for event in dict_.events %}
                     {% if event.all_day != True %} 
                     <a href="{% url 'my_calendar:event_view' event_pk=event.pk %}">
-                        <div class="event"
+                        <div class="event calendar_{{ event.class }}"
                             id="event-{{ event.pk }}-{{ dict_.day|date:'Y/m/d' }}"
                             style="position:absolute;
                             height:calc({{ event.height }} * 100%);
@@ -67,5 +80,23 @@ var event;
         {% endif %}
     {% endfor %}
 {% endfor %}
+    function DisplayOfEvents(calendar, color) {
+        var square, events;
+        square = document.getElementById(calendar);
+        if (square.style.backgroundColor !== 'transparent') {
+            square.style.backgroundColor = 'transparent';
+            events = document.getElementsByClassName(calendar);
+            for (var i = 0; i < events.length; i++) {
+                events[i].style.display = 'none';
+            }
+        }
+        else {
+            square.style.backgroundColor = color;
+            events = document.getElementsByClassName(calendar);
+            for (var i = 0; i < events.length; i++) {
+                events[i].style.display = 'block';
+            }
+        }
+    };
 </script>
 {% endblock %}

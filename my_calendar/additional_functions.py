@@ -51,7 +51,7 @@ def fill_week(date_):
         first = first + datetime.timedelta(days=1)
     return days
     
-def event_dict(event, settings, start, end):
+def event_dict(event, settings, start, end, from_calendar):
     dict = {
         'pk': event.pk,
         'title': settings.title,
@@ -60,6 +60,12 @@ def event_dict(event, settings, start, end):
         'all_day': settings.all_day,
         'color': event.calendar.color,
     }
+    if from_calendar == True:
+        dict['class'] = event.calendar.pk
+        dict['color'] = event.calendar.color
+    else:
+        dict['class'] = 'other'
+        dict['color'] = "#FECA5C"
     if settings.all_day != True:
         minutes_in_day = 1440
         end_hour = end.hour
@@ -76,7 +82,7 @@ def event_dict(event, settings, start, end):
         dict['height'] = height
     return dict
     
-def get_events_from_days(days, user_events, timezone):
+def get_events_from_days(days, user_events, timezone, profile):
     final_days = []
     for day in days:
         dict_ = {}
@@ -86,11 +92,18 @@ def get_events_from_days(days, user_events, timezone):
         end = start + datetime.timedelta(days=1)
         events = []
         for ev in user_events:
+            calendar = ev.calendar
+            if (calendar in profile.get_own_calendars()
+                or calendar in profile.get_calendars_to_modify()
+                or calendar in profile.get_calendars_to_read()):
+                from_calendar = True
+            else:
+                from_calendar = False
             settings = ev.get_owner_settings()
             if settings.start < end and settings.end > start:
                 event = event_dict(ev, settings,
                     max(timezone.normalize(settings.start), start),
-                    min(timezone.normalize(settings.end), end))
+                    min(timezone.normalize(settings.end), end), from_calendar)
                 events.append(event)
         dict_['events'] = events
         final_days.append(dict_)

@@ -202,6 +202,11 @@ class DayViewTest(BaseTest):
         response = self.client.get(self.url)
         self.assertIn('choosen_date', response.context)
         
+    def test_passes_calendars_when_user_logged_in(self):
+        self.user_registers()
+        response = self.client.get(self.url)
+        self.assertIn('calendars', response.context)
+        
     def test_passes_dict_with_data_about_events(self):
         self.user_registers()
         profile = UserProfile.objects.get(user=get_user(self.client))
@@ -232,6 +237,7 @@ class DayViewTest(BaseTest):
         self.assertEqual(height, dict_['height'])
         self.assertEqual(top, dict_['top'])
         self.assertEqual(calendar.color, dict_['color'])
+        self.assertEqual(calendar.pk, dict_['class'])
         
     def test_event_height_when_time_change(self):
         self.user_registers()
