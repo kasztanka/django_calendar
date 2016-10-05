@@ -247,18 +247,21 @@ def event_view(request, cal_pk=None, event_pk=None):
                 'tz': pytz.timezone(settings.get_timezone_display()),
                 'number': settings.timezone,
             }
-            event_form = EventForm(data=request.POST or None, instance=settings,
-                start=settings.start, end=settings.end, timezone=timezone)
-            state_form = StateForm(data=request.POST or None, instance=guest)
-            guest_form = GuestForm(event=event, data=request.POST or None)
+            event_form = EventForm(instance=settings, start=settings.start,
+                end=settings.end, timezone=timezone)
+            state_form = StateForm(instance=guest)
+            guest_form = GuestForm(event=event)
             if request.method == "POST":
                 if 'save_event' in request.POST:
+                    event_form = EventForm(data=request.POST, instance=settings)
+                    state_form = StateForm(data=request.POST, instance=guest)
                     if event_form.is_valid() and state_form.is_valid():
                         state_form.save()
                         event_form.save()
                         return redirect('my_calendar:event_view',
                             event_pk=event.pk)
                 elif 'save_guest' in request.POST:
+                    guest_form = GuestForm(data=request.POST, event=event)
                     if guest_form.is_valid():
                         guest = guest_form.save(commit=False)
                         guest.event = event
@@ -272,6 +275,8 @@ def event_view(request, cal_pk=None, event_pk=None):
                         guest_state_form.save()
                         return redirect('my_calendar:event_view',
                             event_pk=event.pk)
+                    else:
+                        context['guest_state_form'] = guest_state_form
             context['event_form'] = event_form
             context['state_form'] = state_form
             context['guest_form'] = guest_form
@@ -285,6 +290,8 @@ def event_view(request, cal_pk=None, event_pk=None):
                 if guest_state_form.is_valid():
                     guest_state_form.save()
                     return redirect('my_calendar:event_view', event_pk=event.pk)
+                else:
+                    context['guest_state_form'] = guest_state_form
         elif profile in event.calendar.can_read.all():
             if request.method == "POST":
                 context['access_denied'] = ("You don't have access to "
