@@ -234,6 +234,11 @@ def event_view(request, cal_pk=None, event_pk=None):
         event = get_object_or_404(Event, pk=event_pk)
         profile = get_object_or_404(UserProfile, user=request.user)
         context['profile'] = profile
+        guest = None
+        check_guest = Guest.objects.filter(event=event, user=profile)
+        if list(check_guest) != []:
+            guest = check_guest[0]
+            context['guest_state_form'] = StateForm(instance=guest)
         if (profile == event.calendar.owner 
             or profile in event.calendar.can_modify.all()):
             settings = event.get_owner_settings()
@@ -259,17 +264,31 @@ def event_view(request, cal_pk=None, event_pk=None):
                         guest.event = event
                         guest.save()
                         return redirect('my_calendar:event_view',
-                            event_pk=event.pk)        
+                            event_pk=event.pk)
+                elif 'save_state' in request.POST and guest != None:
+                    guest_state_form = StateForm(data=request.POST,
+                        instance=guest)
+                    if guest_state_form.is_valid():
+                        guest_state_form.save()
+                        return redirect('my_calendar:event_view',
+                            event_pk=event.pk)
             context['event_form'] = event_form
             context['state_form'] = state_form
             context['guest_form'] = guest_form
             context['event'] = event.get_owner_settings()
             context['guests'] = Guest.objects.filter(event=event)
+        elif guest != None:
+            context['event'] = event.get_owner_settings()
+            context['guests'] = Guest.objects.filter(event=event)
+            if request.method == "POST" and 'save_state' in request.POST:
+                guest_state_form = StateForm(data=request.POST, instance=guest)
+                if guest_state_form.is_valid():
+                    guest_state_form.save()
+                    return redirect('my_calendar:event_view', event_pk=event.pk)
         elif profile in event.calendar.can_read.all():
             if request.method == "POST":
                 context['access_denied'] = ("You don't have access to "
                         + "edit this event.")
-            event = get_object_or_404(Event, pk=event_pk)
             context['event'] = event.get_owner_settings()
             context['guests'] = Guest.objects.filter(event=event)
         else:

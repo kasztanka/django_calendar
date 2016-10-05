@@ -5,6 +5,13 @@
     <p>{{ access_denied }}</p>
 {% else %}
     <h2>{{ event.title }}</h2>
+    {% if guest_state_form %}
+        <form method="POST" id="state_form">
+            {% csrf_token %}
+            {{ guest_state_form.as_p }}
+            <button type="submit" id="save_state" value="1" name="save_state">Save state</button>
+        </form>
+    {% endif %}
     <p>{{ event.desc }}</p>
     {% with event.guest.event.calendar as calendar %}
     <p>Belongs to calendar: <a href="{% url 'my_calendar:calendar_view' cal_pk=calendar.pk %}">{{ calendar.name }}</a>

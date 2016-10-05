@@ -42,7 +42,7 @@ class GuestsTest(FunctionalTest):
         with self.assertRaises(NoSuchElementException):
             self.browser.find_element_by_id("add_guests")
         
-        select = self.browser.find_element_by_tag_name('id_guest_state')
+        select = self.browser.find_element_by_id('id_state')
         for option in select.find_elements_by_tag_name('option'):
             if option.text == "Going":
                 option.click()

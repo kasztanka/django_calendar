@@ -44,7 +44,7 @@ class CalendarEventTest(FunctionalTest):
         
         self.fill_input("id_title", "A little party never killed nobody.")
         self.fill_input("id_desc", "You're very welcome.")
-        select = self.browser.find_element_by_tag_name('select')
+        select = self.browser.find_element_by_id('id_timezone')
         for option in select.find_elements_by_tag_name('option'):
             if option.text == "Europe/Warsaw":
                 option.click()
@@ -61,7 +61,7 @@ class CalendarEventTest(FunctionalTest):
             self.fill_input("id_start_hour", "20:15")
         with self.assertRaises(InvalidElementStateException):
             self.fill_input("id_end_hour", "20:25")
-        select = self.browser.find_element_by_tag_name('select')
+        select = self.browser.find_element_by_id('id_timezone')
         self.assertFalse(select.is_enabled())
         all_day.click()
         
@@ -84,7 +84,7 @@ class CalendarEventTest(FunctionalTest):
             self.fill_input("id_start_hour", "20:15")
         with self.assertRaises(InvalidElementStateException):
             self.fill_input("id_end_hour", "20:25")
-        select = self.browser.find_element_by_tag_name('select')
+        select = self.browser.find_element_by_id('id_timezone')
         self.assertFalse(select.is_enabled())
         time.sleep(2)
         

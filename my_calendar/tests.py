@@ -637,7 +637,8 @@ class EventViewTest(NewEventTest):
         self.calendar = MyCalendar.objects.create(owner=profile,
             name="Cindirella", color="E81AD4")
         self.event = Event.objects.create(calendar=self.calendar)
-        self.guest = Guest.objects.create(event=self.event, user=profile)
+        self.guest = Guest.objects.create(event=self.event, user=profile,
+            state=Guest.MAYBE)
         self.start = pytz.utc.localize(datetime.datetime.utcnow())
         self.end = self.start + datetime.timedelta(minutes=30)
         self.settings = EventCustomSettings.objects.create(
@@ -715,7 +716,58 @@ class EventViewTest(NewEventTest):
         self.assertEqual(response.context['guest_form'].errors['user'],
             ["This user is already guest added to this event."])
         
- 
+    def test_guest_state_form_in_context_when_guest(self):
+        response = self.client.get(self.url)
+        self.assertIn('guest_state_form', response.context)
+        form = response.context['guest_state_form']
+        self.assertEqual(form.initial['state'], Guest.MAYBE)
+        
+        self.client.get('/logout')
+        self.user_registers(username="Human")
+        profile = UserProfile.objects.get(user=get_user(self.client))
+        Guest.objects.create(user=profile, event=self.event)
+        response = self.client.get(self.url)
+        self.assertIn('guest_state_form', response.context)
+        form = response.context['guest_state_form']
+        self.assertEqual(form.initial['state'], Guest.UNKNOWN)
+        
+        self.client.get('/logout')
+        self.user_registers(username="Human")
+        response = self.client.get(self.url)
+        self.assertFalse('guest_state_form' in response.context)
+        
+    def test_guest_can_see_event(self):
+        self.client.get('/logout')
+        self.user_registers(username="Human")
+        profile = UserProfile.objects.get(user=get_user(self.client))
+        Guest.objects.create(user=profile, event=self.event)
+        
+        response = self.client.get(self.url)
+        self.assertIn('event', response.context)
+        self.assertIn('guests', response.context)
+        
+    def test_saves_guest_state(self):
+        response = self.client.post(
+            self.url, data={
+                'save_state':1,
+                'state': '1',
+        })        
+        self.assertEqual(Guest.objects.first().state, 1)
+        
+        self.client.get('/logout')
+        self.user_registers(username="Human")
+        profile = UserProfile.objects.get(user=get_user(self.client))
+        Guest.objects.create(user=profile, event=self.event)
+        
+        response = self.client.post(
+            self.url, data={
+                'save_state':1,
+                'state': '4',
+        })
+        guest = Guest.objects.get(user=profile, event=self.event)
+        self.assertEqual(guest.state, 4)
+        
+        
 class EventFormTest(TestCase):
     
     def test_datetime_inputs_have_css_classes(self):
