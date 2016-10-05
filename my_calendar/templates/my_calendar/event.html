@@ -17,11 +17,16 @@
     <p>Belongs to calendar: <a href="{% url 'my_calendar:calendar_view' cal_pk=calendar.pk %}">{{ calendar.name }}</a>
     {% endwith %}
     <p>All day: {{ event.all_day }}</p>
-    <p>Timezone: {{ event.get_timezone_display }}</p>
-    {% timezone event.get_timezone_display %}
-    <p>{{ event.start|date:"m/d/Y H:i" }}</p>
-    <p>{{ event.end|date:"m/d/Y H:i" }}</p>
-    {% endtimezone %}
+    {% if event.all_day == True %}
+        <p>{{ event.start|date:"m/d/Y" }}</p>
+        <p>{{ event.end|date:"m/d/Y" }}</p>
+    {% else %}
+        <p>Timezone: {{ event.get_timezone_display }}</p>
+        {% timezone event.get_timezone_display %}
+        <p>{{ event.start|date:"m/d/Y H:i" }}</p>
+        <p>{{ event.end|date:"m/d/Y H:i" }}</p>
+        {% endtimezone %}
+    {% endif %}
     <ul>Guests:
     {% for guest in guests %}
         <li>{{ guest.user.user.username }}: {{ guest.get_state_display }}</li>

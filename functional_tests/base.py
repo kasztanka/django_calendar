@@ -45,9 +45,12 @@ class FunctionalTest(LiveServerTestCase):
         submit.click()
         return self.browser.current_url[-1]
         
-    def add_event(self, calendar_pk=1, title="New event"):
+    def add_event(self, calendar_pk=1, title="New event", all_day=False):
         self.browser.get(self.live_server_url + '/event/new/{}'.format(calendar_pk))
         self.fill_input("id_title", title)
+        if all_day == True:
+            all_day = self.browser.find_element_by_id("id_all_day")
+            all_day.click()
         submit = self.browser.find_element_by_id("save_event")
         submit.click()
         return self.browser.current_url[-1]

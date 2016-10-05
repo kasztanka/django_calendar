@@ -12,6 +12,25 @@
         <div>{{ dict_.day|date:"l m/d" }}</div>
     {% endfor %}
     </div>
+    <div id="all_day" style="float:left; width:100%; display:table;">
+        <div style="display:table-cell;">
+        All day:
+        </div>
+        {% for dict_ in days %}
+            <div style="display:table-cell;width:13%">            
+                {% for event in dict_.events %}
+                    {% if event.all_day == True %}  
+                    <a href="{% url 'my_calendar:event_view' event_pk=event.pk %}">
+                        <div class="event"
+                            id="event-{{ event.pk }}-{{ dict_.day|date:'Y/m/d' }}"
+                            style="background-color:{{ event.color }};">
+                            {{ event.title }}</div>
+                    </a>
+                    {% endif %}
+                {% endfor %}
+            </div>
+        {% endfor %}
+    </div>
     <div id="bottom" style="float:left; width:100%; display:table;">
         <div id="hours" style="display:table-cell;">
         {% for i in range %}
@@ -21,14 +40,16 @@
         {% for dict_ in days %}
             <div class="events" style="position:relative; display:table-cell;width:13%">            
                 {% for event in dict_.events %}
-                <a href="{% url 'my_calendar:event_view' event_pk=event.pk %}">
-                    <div class="event"
-                        id="event-{{ event.pk }}-{{ dict_.day|date:'Y/m/d' }}"
-                        style="position:absolute;
-                        height:calc({{ event.height }} * 100%);
-                        background-color:{{ event.color }};">
-                        {{ event.title }}</div>
-                </a>
+                    {% if event.all_day != True %} 
+                    <a href="{% url 'my_calendar:event_view' event_pk=event.pk %}">
+                        <div class="event"
+                            id="event-{{ event.pk }}-{{ dict_.day|date:'Y/m/d' }}"
+                            style="position:absolute;
+                            height:calc({{ event.height }} * 100%);
+                            background-color:{{ event.color }};">
+                            {{ event.title }}</div>
+                    </a>
+                    {% endif %}
                 {% endfor %}
             </div>
         {% endfor %}
@@ -39,9 +60,11 @@ var outer_height = $(".events").height();
 var event;
 {% for dict_ in days %}
     {% for event in dict_.events %}
+        {% if event.all_day != True %}
         event = document.getElementById(
             "event-{{ event.pk }}-{{ dict_.day|date:'Y/m/d' }}");
         event.style.top = outer_height * {{ event.top }} + "px";
+        {% endif %}
     {% endfor %}
 {% endfor %}
 </script>
