@@ -27,7 +27,7 @@ class UserTest(FunctionalTest):
         self.assertRegex(self.browser.current_url, '/week')
         page_text = self.get_page_text()
         time.sleep(2)
-        self.assertIn("<div>" + date_.strftime("%A %m/%d") + "</div>", page_text)
+        self.assertIn(date_.strftime("%A %m/%d"), page_text)
         
         
         day_ = self.browser.find_element_by_id('day')
@@ -35,7 +35,7 @@ class UserTest(FunctionalTest):
         self.assertRegex(self.browser.current_url, '/day')
         page_text = self.get_page_text()
         time.sleep(2)
-        self.assertIn("<div>" + date_.strftime("%A %m/%d") + "</div>", page_text)
+        self.assertIn(date_.strftime("%A %m/%d"), page_text)
         
     
 if __name__ == '__main__':
