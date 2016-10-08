@@ -148,11 +148,15 @@ class Guest(models.Model):
         """
         Method can be used to get guest's custom settings.
         If he doesn't have any, method returns settings of the owner.
+        Also it returns the info which settings are returned.
         """
-        settings = EventCustomSettings.objects.get(guest=self)
-        if settings == None:
+        settings_belong_to_owner = False
+        try:
+            settings = EventCustomSettings.objects.get(guest=self)
+        except EventCustomSettings.DoesNotExist:
             settings = self.event.get_owner_settings()
-        return settings
+            settings_belong_to_owner = True
+        return settings, settings_belong_to_owner
 
 
 class EventCustomSettings(models.Model):

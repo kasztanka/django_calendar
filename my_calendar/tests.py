@@ -751,6 +751,9 @@ class EventViewTest(NewEventTest):
         response = self.client.get(self.url)
         self.assertIn('event', response.context)
         self.assertIn('guests', response.context)
+        self.assertIn('user_is_guest', response.context)
+        self.assertIn('event_form', response.context)
+        self.assertIn('guest_message', response.context)
         
     def test_saves_guest_state(self):
         response = self.client.post(
@@ -772,6 +775,32 @@ class EventViewTest(NewEventTest):
         })
         guest = Guest.objects.get(user=profile, event=self.event)
         self.assertEqual(guest.state, 4)
+        
+    def test_guest_can_change_his_settings(self):
+        self.client.get('/logout')
+        self.user_registers(username="Human")
+        profile = UserProfile.objects.get(user=get_user(self.client))
+        guest = Guest.objects.create(user=profile, event=self.event)
+        
+        # at first guest creates new object
+        # then he changes this object
+        for i in range(2):
+            response = self.client.post(
+                self.url, data={
+                    'save_event':1,
+                    'title': ('Hello' + str(i)),
+                    'desc': 'World',
+                    'all_day': True,
+                    'start_hour': '15:19',
+                    'start_date': '12/13/2016',
+                    'end_hour': '16:13',
+                    'end_date': '12/13/2016',
+                    'timezone': '374',
+                    'state': '1',
+            })
+            self.assertEqual(EventCustomSettings.objects.count(), 2)
+            settings = EventCustomSettings.objects.get(guest=guest)
+            self.assertEqual(settings.title, 'Hello' + str(i))
         
         
 class EventFormTest(TestCase):
