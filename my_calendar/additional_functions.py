@@ -1,6 +1,8 @@
 from calendar import monthrange
 import datetime
 
+from .models import Guest
+
 COLORS = (
     "E81AD4",
     "8F00FF",
@@ -99,7 +101,11 @@ def get_events_from_days(days, user_events, timezone, profile):
                 from_calendar = True
             else:
                 from_calendar = False
-            settings = ev.get_owner_settings()
+            try:
+                guest = Guest.objects.get(event=ev, user=profile)
+                settings, _ = guest.get_settings()
+            except Guest.DoesNotExist:
+                settings = ev.get_owner_settings()
             if settings.start < end and settings.end > start:
                 event = event_dict(ev, settings,
                     max(timezone.normalize(settings.start), start),
