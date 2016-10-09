@@ -15,27 +15,27 @@ class UserProfile(models.Model):
     TIMEZONES = ((i + 1, tz) for i, tz in enumerate(TIMEZONES))
     # 436 is UTC
     timezone = models.IntegerField(choices=TIMEZONES, default=436)
-    
+
     def get_own_calendars(self):
         """
         Returns a queryset of usere's own calendars.
         """
         return MyCalendar.objects.filter(owner=self)
-    
+
     def get_calendars_to_modify(self):
         """
         Returns a queryset of calendars that user can modify
         but doesn't own.
         """
         return MyCalendar.objects.filter(can_modify=self)
-    
+
     def get_calendars_to_read(self):
         """
         Returns a queryset of calendars that user can read
         but dooesn't own.
         """
         return MyCalendar.objects.filter(can_read=self)
-    
+
     def get_events(self):
         """
         Returns events where user is guest at.
@@ -45,7 +45,7 @@ class UserProfile(models.Model):
         for guest in guests:
             events.append(guest.event)
         return events
-        
+
     def get_all_events(self):
         """
         Returns events that user has access to.
@@ -60,7 +60,7 @@ class UserProfile(models.Model):
         for guest in guests:
             events.add(guest.event)
         return events
-    
+
     def get_not_owned_events(self):
         """
         Returns events where user is guest at but which he doesn't own.
@@ -71,7 +71,7 @@ class UserProfile(models.Model):
             if guest.user != guest.event.calendar.owner:
                 events.append(guest.event)
         return events
-        
+
     def __str__(self):
         return self.user.username + ", timezone: " + self.get_timezone_display()
 
@@ -92,7 +92,7 @@ class MyCalendar(models.Model):
         UserProfile, related_name='calendars_to_modify', blank=True)
     can_read = models.ManyToManyField(
         UserProfile, related_name='calendars_to_read', blank=True)
-    
+
     def __str__(self):
         return self.name
 
@@ -103,7 +103,7 @@ class Event(models.Model):
     User who creates event should automatically be guest.
     """
     calendar = models.ForeignKey(MyCalendar, on_delete=models.CASCADE)
-    
+
     def get_owner_settings(self):
         """
         Method can be used to get owner's settings.
@@ -143,7 +143,7 @@ class Guest(models.Model):
         unique_together = ('event', 'user')
         # unique_together changes default ordering e.g. for objects.all()
         ordering = ['id']
-    
+
     def get_settings(self):
         """
         Method can be used to get guest's custom settings.
@@ -168,7 +168,7 @@ class EventCustomSettings(models.Model):
     Once user changes some settings, he won't be able to see
     the changes made by the owner of the event.
     """
-    guest = models.ForeignKey(Guest, on_delete=models.CASCADE)
+    guest = models.OneToOneField(Guest, on_delete=models.CASCADE)
     title = models.CharField(max_length=100)
     desc = models.CharField(max_length=1000, default="", blank=True)
     TIMEZONES = list(common_timezones_set)
