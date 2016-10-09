@@ -7,7 +7,7 @@ from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.models import User
 
 from .models import UserProfile, MyCalendar, Event, Guest, EventCustomSettings
-from .forms import (RegisterForm, EventForm, StateForm, ProfileForm,
+from .forms import (RegisterForm, EventForm, AttendingStatusForm, ProfileForm,
     CalendarForm, GuestForm)
 from .additional_functions import (COLORS, fill_month, fill_week,
     get_events_from_days)
@@ -15,7 +15,7 @@ from .additional_functions import (COLORS, fill_month, fill_week,
 
 def index(request):
     return render(request, "my_calendar/index.html")
-    
+
 def register(request):
     context = {}
     if request.method == "POST":
@@ -48,7 +48,7 @@ def profile(request, username):
     calendars = profile.get_own_calendars()
     context['calendars'] = calendars
     return render(request, 'my_calendar/profile.html', context)
-    
+
 def user_login(request):
     context = {}
     next_page = request.GET.get("nextpage", "my_calendar:index")
@@ -62,7 +62,7 @@ def user_login(request):
         else:
             context['login_errors'] = "Wrong username or password."
     return render(request, 'my_calendar/index.html', context)
-    
+
 def user_logout(request):
     logout(request)
     next_page = request.GET.get("nextpage", "my_calendar:index")
@@ -88,7 +88,7 @@ def month(request, year, month, day):
         context['days'] = days
     context['choosen_date'] = date_
     return render(request, 'my_calendar/month.html', context)
-    
+
 def week(request, year, month, day):
     context = {}
     try:
@@ -110,7 +110,7 @@ def week(request, year, month, day):
     context['choosen_date'] = date_
     context['range'] = range(24)
     return render(request, 'my_calendar/week.html', context)
-    
+
 def day(request, year, month, day):
     context = {}
     try:
@@ -131,7 +131,7 @@ def day(request, year, month, day):
             | profile.get_calendars_to_read()).distinct()
     context['range'] = range(24)
     return render(request, 'my_calendar/day.html', context)
-    
+
 def new_calendar(request):
     context = {}
     if request.user.is_authenticated():
@@ -160,7 +160,7 @@ def new_calendar(request):
                     cal_pk=calendar_.pk)
         context['calendar_form'] = calendar_form
     return render(request, 'my_calendar/new_calendar.html', context)
-    
+
 def calendar_view(request, cal_pk):
     context = {}
     if request.user.is_authenticated():
@@ -200,7 +200,7 @@ def calendar_view(request, cal_pk):
         else:
             context['access_denied'] = "You don't have access to this calendar."
     return render(request, 'my_calendar/calendar.html', context)
-    
+
 def new_event(request, cal_pk):
     context = {}
     if request.user.is_authenticated():
@@ -218,11 +218,11 @@ def new_event(request, cal_pk):
             }
             event_form = EventForm(data=request.POST or None, instance=settings,
                 start=start, end=end, timezone=timezone)
-            state_form = StateForm(data=request.POST or None, instance=guest)
+            attending_status_form = AttendingStatusForm(data=request.POST or None, instance=guest)
             if request.method == "POST":
-                if event_form.is_valid() and state_form.is_valid():
+                if event_form.is_valid() and attending_status_form.is_valid():
                     event = Event.objects.create(calendar=calendar_)
-                    guest = state_form.save(commit=False)
+                    guest = attending_status_form.save(commit=False)
                     guest.event = event
                     guest.user = calendar_.owner
                     guest.save()
@@ -231,7 +231,7 @@ def new_event(request, cal_pk):
                     event_custom_settings.save()
                     return redirect('my_calendar:event_view', event_pk=event.pk)
             context['event_form'] = event_form
-            context['state_form'] = state_form
+            context['attending_status_form'] = attending_status_form
         else:
             context['access_denied'] = ("You don't have access to add "
                 + "events to this calendar.")
@@ -239,98 +239,91 @@ def new_event(request, cal_pk):
 
 def event_view(request, cal_pk=None, event_pk=None):
     context = {}
-    if request.user.is_authenticated():
-        event = get_object_or_404(Event, pk=event_pk)
-        profile = get_object_or_404(UserProfile, user=request.user)
-        context['profile'] = profile
+    if not request.user.is_authenticated():
+        return render(request, 'my_calendar/event.html', context)
+    event = get_object_or_404(Event, pk=event_pk)
+    profile = get_object_or_404(UserProfile, user=request.user)
+    context['profile'] = profile
+    try:
+        guest = Guest.objects.get(event=event, user=profile)
+        context['user_is_guest'] = True
+        context['attending_status_form'] = AttendingStatusForm(instance=guest)
+    except Guest.DoesNotExist:
         guest = None
-        check_guest = Guest.objects.filter(event=event, user=profile)
-        if list(check_guest) != []:
-            guest = check_guest[0]
-            context['user_is_guest'] = True
-            context['guest_state_form'] = StateForm(instance=guest)
-        if (profile == event.calendar.owner 
-            or profile in event.calendar.can_modify.all()):
-            settings = event.get_owner_settings()
-            guest = settings.guest
-            timezone = {
-                'tz': pytz.timezone(settings.get_timezone_display()),
-                'number': settings.timezone,
-            }
-            event_form = EventForm(instance=settings, start=settings.start,
-                end=settings.end, timezone=timezone)
-            state_form = StateForm(instance=guest)
-            guest_form = GuestForm(event=event)
-            if request.method == "POST":
-                if 'save_event' in request.POST:
-                    event_form = EventForm(data=request.POST, instance=settings)
-                    state_form = StateForm(data=request.POST, instance=guest)
-                    if event_form.is_valid() and state_form.is_valid():
-                        state_form.save()
-                        event_form.save()
-                        return redirect('my_calendar:event_view',
-                            event_pk=event.pk)
-                elif 'save_guest' in request.POST:
-                    guest_form = GuestForm(data=request.POST, event=event)
-                    if guest_form.is_valid():
-                        guest = guest_form.save(commit=False)
-                        guest.event = event
-                        guest.save()
-                        return redirect('my_calendar:event_view',
-                            event_pk=event.pk)
-                elif 'save_state' in request.POST and guest != None:
-                    guest_state_form = StateForm(data=request.POST,
-                        instance=guest)
-                    if guest_state_form.is_valid():
-                        guest_state_form.save()
-                        return redirect('my_calendar:event_view',
-                            event_pk=event.pk)
-                    else:
-                        context['guest_state_form'] = guest_state_form
-            context['event_form'] = event_form
-            context['state_form'] = state_form
-            context['guest_form'] = guest_form
-            context['event'] = event.get_owner_settings()
-            context['guests'] = Guest.objects.filter(event=event)
-        elif guest != None:
-            settings, settings_belong_to_owner = guest.get_settings()
-            timezone = {
-                'tz': pytz.timezone(settings.get_timezone_display()),
-                'number': settings.timezone,
-            }
-            context['event'] = settings
-            context['guests'] = Guest.objects.filter(event=event)
-            context['guest_message'] = ("If you change default settings, you "
-                + "won't be able to see changes made by owner of this event.")
-            event_form = EventForm(instance=settings, start=settings.start,
-                end=settings.end, timezone=timezone)
-            if request.method == "POST" and 'save_state' in request.POST:
-                guest_state_form = StateForm(data=request.POST, instance=guest)
-                if guest_state_form.is_valid():
-                    guest_state_form.save()
-                    return redirect('my_calendar:event_view', event_pk=event.pk)
-                else:
-                    context['guest_state_form'] = guest_state_form
-            elif request.method == "POST" and 'save_event' in request.POST:
+    if (profile == event.calendar.owner
+        or profile in event.calendar.can_modify.all()):
+        settings = event.get_owner_settings()
+        timezone = {
+            'tz': pytz.timezone(settings.get_timezone_display()),
+            'number': settings.timezone,
+        }
+        event_form = EventForm(instance=settings, start=settings.start,
+            end=settings.end, timezone=timezone)
+        guest_form = GuestForm(event=event)
+        if request.method == "POST":
+            if 'save_event' in request.POST:
                 event_form = EventForm(data=request.POST, instance=settings)
                 if event_form.is_valid():
-                    if settings_belong_to_owner:
-                        event_form = EventForm(data=request.POST)
-                        event_custom_settings = event_form.save(commit=False)
-                        event_custom_settings.guest = guest
-                        event_custom_settings.save()
-                    else:
-                        event_form.save()
+                    event_form.save()
+                    return redirect('my_calendar:event_view', event_pk=event.pk)
+            elif 'save_guest' in request.POST:
+                guest_form = GuestForm(data=request.POST, event=event)
+                if guest_form.is_valid():
+                    guest = guest_form.save(commit=False)
+                    guest.event = event
+                    guest.save()
+                    return redirect('my_calendar:event_view', event_pk=event.pk)
+            elif 'save_attending_status' in request.POST and guest != None:
+                attending_status_form = AttendingStatusForm(data=request.POST,
+                    instance=guest)
+                if attending_status_form.is_valid():
+                    attending_status_form.save()
                     return redirect('my_calendar:event_view',
                         event_pk=event.pk)
-            context['event_form'] = event_form
-        elif profile in event.calendar.can_read.all():
-            if request.method == "POST":
-                context['access_denied'] = ("You don't have access to "
-                        + "edit this event.")
-            context['event'] = event.get_owner_settings()
-            context['guests'] = Guest.objects.filter(event=event)
-        else:
-            context['access_denied'] = "You don't have access to this event."
+                else:
+                    context['attending_status_form'] = attending_status_form
+        context['event_form'] = event_form
+        context['guest_form'] = guest_form
+        context['event'] = event.get_owner_settings()
+        context['guests'] = Guest.objects.filter(event=event)
+    elif guest != None:
+        settings, settings_belong_to_owner = guest.get_settings()
+        timezone = {
+            'tz': pytz.timezone(settings.get_timezone_display()),
+            'number': settings.timezone,
+        }
+        context['event'] = settings
+        context['guests'] = Guest.objects.filter(event=event)
+        context['guest_message'] = ("If you change default settings, you "
+            + "won't be able to see changes made by owner of this event.")
+        event_form = EventForm(instance=settings, start=settings.start,
+            end=settings.end, timezone=timezone)
+        if request.method == "POST" and 'save_attending_status' in request.POST:
+            attending_status_form = AttendingStatusForm(data=request.POST, instance=guest)
+            if attending_status_form.is_valid():
+                attending_status_form.save()
+                return redirect('my_calendar:event_view', event_pk=event.pk)
+            else:
+                context['attending_status_form'] = attending_status_form
+        elif request.method == "POST" and 'save_event' in request.POST:
+            event_form = EventForm(data=request.POST, instance=settings)
+            if event_form.is_valid():
+                if settings_belong_to_owner:
+                    event_form = EventForm(data=request.POST)
+                    event_custom_settings = event_form.save(commit=False)
+                    event_custom_settings.guest = guest
+                    event_custom_settings.save()
+                else:
+                    event_form.save()
+                return redirect('my_calendar:event_view',
+                    event_pk=event.pk)
+        context['event_form'] = event_form
+    elif profile in event.calendar.can_read.all():
+        if request.method == "POST":
+            context['access_denied'] = ("You don't have access to "
+                    + "edit this event.")
+        context['event'] = event.get_owner_settings()
+        context['guests'] = Guest.objects.filter(event=event)
+    else:
+        context['access_denied'] = "You don't have access to this event."
     return render(request, 'my_calendar/event.html', context)
-  

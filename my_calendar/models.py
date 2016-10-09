@@ -120,7 +120,7 @@ class Guest(models.Model):
     """
     Owner of an event can invite other users to it.
     Guests (also owner) responds to an invitation
-    by choosing one of the four states:
+    by choosing one of the four options:
         -> Going
         -> Maybe
         -> Unknown
@@ -132,13 +132,13 @@ class Guest(models.Model):
     MAYBE = 2
     UNKNOWN = 3
     NOT_GOING = 4
-    STATE_CHOICES = (
+    ATTENDING_STATUS_CHOICES = (
         (GOING, "Going"),
         (MAYBE, "Maybe"),
         (UNKNOWN, "Unknown"),
         (NOT_GOING, "Not going"),
     )
-    state = models.IntegerField(choices=STATE_CHOICES, default=UNKNOWN)
+    attending_status = models.IntegerField(choices=ATTENDING_STATUS_CHOICES, default=UNKNOWN)
     class Meta:
         unique_together = ('event', 'user')
         # unique_together changes default ordering e.g. for objects.all()

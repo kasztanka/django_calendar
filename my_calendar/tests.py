@@ -474,12 +474,12 @@ class NewEventTest(BaseTest):
                 'end_hour': '16:13',
                 'end_date': '12/13/2016',
                 'timezone': '374',
-                'state': '1',
+                'attending_status': '1',
         })
         self.assertEqual(Event.objects.count(), 1)
         event = Event.objects.first().get_owner_settings()
         self.assertEqual(event.title, 'Episode 9')
-        self.assertEqual(event.guest.state, 1)
+        self.assertEqual(event.guest.attending_status, 1)
 
     def test_redirects_after_saving_event(self):
         response = self.client.post(
@@ -493,7 +493,7 @@ class NewEventTest(BaseTest):
                 'end_hour': '16:13',
                 'end_date': '12/13/2016',
                 'timezone': '374',
-                'state': '1',
+                'attending_status': '1',
         })
         event = Event.objects.first()
         self.assertRedirects(response, '/event/{}'.format(event.pk))
@@ -510,7 +510,7 @@ class NewEventTest(BaseTest):
                 'end_hour': '16:13',
                 'end_date': '12/13/2016',
                 'timezone': '374',
-                'state': '1',
+                'attending_status': '1',
             }, follow=True)
         europe = pytz.timezone('Europe/Warsaw')
         utc = pytz.timezone('UTC')
@@ -535,7 +535,7 @@ class NewEventTest(BaseTest):
                 'end_hour': '',
                 'end_date': '',
                 'timezone': '374',
-                'state': '1',
+                'attending_status': '1',
         })
         self.assertEqual(Event.objects.count(), 0)
         self.assertIn('title', response.context['event_form'].errors)
@@ -572,7 +572,7 @@ class NewEventTest(BaseTest):
                 'end_hour': '16:13',
                 'end_date': '12/13/2016',
                 'timezone': '374',
-                'state': '1',
+                'attending_status': '1',
         })
         self.assertEqual(amount, Event.objects.count())
         if amount:
@@ -595,7 +595,7 @@ class NewEventTest(BaseTest):
                 'end_hour': '16:13',
                 'end_date': '12/13/2016',
                 'timezone': '374',
-                'state': '1',
+                'attending_status': '1',
         })
         self.assertEqual(amount, Event.objects.count())
         if amount:
@@ -624,7 +624,7 @@ class NewEventTest(BaseTest):
                 'end_hour': '16:13',
                 'end_date': '12/13/2016',
                 'timezone': '374',
-                'state': '1',
+                'attending_status': '1',
         })
         self.assertEqual(amount, Event.objects.count())
         if amount:
@@ -644,7 +644,7 @@ class EventViewTest(NewEventTest):
             name="Cindirella", color="E81AD4")
         self.event = Event.objects.create(calendar=self.calendar)
         self.guest = Guest.objects.create(event=self.event, user=profile,
-            state=Guest.MAYBE)
+            attending_status=Guest.MAYBE)
         self.start = pytz.utc.localize(datetime.datetime.utcnow())
         self.end = self.start + datetime.timedelta(minutes=30)
         self.settings = EventCustomSettings.objects.create(
@@ -653,6 +653,25 @@ class EventViewTest(NewEventTest):
         self.url = '/event/1'
         self.template = 'my_calendar/event.html'
         self.function = event_view
+
+    def test_saves_event(self):
+        self.client.post(
+            self.url, data={
+                'save_event':1,
+                'title': 'Episode 9',
+                'desc': 'Silence of slums',
+                'all_day': True,
+                'start_hour': '15:19',
+                'start_date': '12/13/2016',
+                'end_hour': '16:13',
+                'end_date': '12/13/2016',
+                'timezone': '374',
+                'attending_status': '1',
+        })
+        self.assertEqual(Event.objects.count(), 1)
+        event = Event.objects.first().get_owner_settings()
+        self.assertEqual(event.title, 'Episode 9')
+        self.assertNotEqual(event.guest.attending_status, 1)
 
     def test_cannot_save_event_with_empty_title_or_dates(self):
         title = Event.objects.first().get_owner_settings().title
@@ -667,7 +686,7 @@ class EventViewTest(NewEventTest):
                 'end_hour': '',
                 'end_date': '',
                 'timezone': '374',
-                'state': '1',
+                'attending_status': '1',
         })
         event = Event.objects.first().get_owner_settings()
         self.assertEqual(event.title, title)
@@ -722,25 +741,25 @@ class EventViewTest(NewEventTest):
         self.assertEqual(response.context['guest_form'].errors['user'],
             ["This user is already guest added to this event."])
 
-    def test_guest_state_form_in_context_when_guest(self):
+    def test_attending_status_form_in_context_when_guest(self):
         response = self.client.get(self.url)
-        self.assertIn('guest_state_form', response.context)
-        form = response.context['guest_state_form']
-        self.assertEqual(form.initial['state'], Guest.MAYBE)
+        self.assertIn('attending_status_form', response.context)
+        form = response.context['attending_status_form']
+        self.assertEqual(form.initial['attending_status'], Guest.MAYBE)
 
         self.client.get('/logout')
         self.user_registers(username="Human")
         profile = UserProfile.objects.get(user=get_user(self.client))
         Guest.objects.create(user=profile, event=self.event)
         response = self.client.get(self.url)
-        self.assertIn('guest_state_form', response.context)
-        form = response.context['guest_state_form']
-        self.assertEqual(form.initial['state'], Guest.UNKNOWN)
+        self.assertIn('attending_status_form', response.context)
+        form = response.context['attending_status_form']
+        self.assertEqual(form.initial['attending_status'], Guest.UNKNOWN)
 
         self.client.get('/logout')
         self.user_registers(username="Human")
         response = self.client.get(self.url)
-        self.assertFalse('guest_state_form' in response.context)
+        self.assertFalse('attending_status_form' in response.context)
 
     def test_guest_can_see_event(self):
         self.client.get('/logout')
@@ -755,13 +774,13 @@ class EventViewTest(NewEventTest):
         self.assertIn('event_form', response.context)
         self.assertIn('guest_message', response.context)
 
-    def test_saves_guest_state(self):
+    def test_saves_attending_status(self):
         response = self.client.post(
             self.url, data={
-                'save_state':1,
-                'state': '1',
+                'save_attending_status':1,
+                'attending_status': '1',
         })
-        self.assertEqual(Guest.objects.first().state, 1)
+        self.assertEqual(Guest.objects.first().attending_status, 1)
 
         self.client.get('/logout')
         self.user_registers(username="Human")
@@ -770,11 +789,11 @@ class EventViewTest(NewEventTest):
 
         response = self.client.post(
             self.url, data={
-                'save_state':1,
-                'state': '4',
+                'save_attending_status':1,
+                'attending_status': '4',
         })
         guest = Guest.objects.get(user=profile, event=self.event)
-        self.assertEqual(guest.state, 4)
+        self.assertEqual(guest.attending_status, 4)
 
     def test_guest_can_change_his_settings(self):
         self.client.get('/logout')
@@ -796,7 +815,7 @@ class EventViewTest(NewEventTest):
                     'end_hour': '16:13',
                     'end_date': '12/13/2016',
                     'timezone': '374',
-                    'state': '1',
+                    'attending_status': '1',
             })
             self.assertEqual(EventCustomSettings.objects.count(), 2)
             settings = EventCustomSettings.objects.get(guest=guest)

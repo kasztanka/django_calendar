@@ -14,20 +14,20 @@ class RegisterForm(forms.ModelForm):
     class Meta:
         model = User
         fields = ('username', 'email', 'password', 'first_name', 'last_name')
-        
-        
+
+
 class ProfileForm(forms.ModelForm):
-    
+
     class Meta:
         model = UserProfile
         fields = ('timezone',)
         error_messages = {
             'timezone': {'invalid_choice': "Wrong timezone was chosen."}
         }
-        
-        
+
+
 class CalendarForm(forms.ModelForm):
-    
+
     class Meta:
         model = MyCalendar
         fields = ('can_read', 'can_modify')
@@ -35,7 +35,7 @@ class CalendarForm(forms.ModelForm):
             'can_read': forms.CheckboxSelectMultiple,
             'can_modify': forms.CheckboxSelectMultiple,
         }
-        
+
 
 class EventForm(forms.ModelForm):
     start_date = forms.DateField(label="From", input_formats=['%m/%d/%Y'],
@@ -46,7 +46,7 @@ class EventForm(forms.ModelForm):
         widget=forms.DateInput(attrs={'class': 'datepicker'}))
     end_hour = forms.TimeField(label="", input_formats=['%H:%M'],
         widget=forms.TimeInput(attrs={'class': 'time'}))
-    
+
     class Meta:
         model = EventCustomSettings
         fields = ('title', 'desc', 'all_day', 'timezone')
@@ -56,7 +56,7 @@ class EventForm(forms.ModelForm):
         labels = {
             'desc': 'Description',
         }
-        
+
     def __init__(self, *args, **kwargs):
         start = kwargs.pop('start', None)
         end = kwargs.pop('end', None)
@@ -71,18 +71,18 @@ class EventForm(forms.ModelForm):
                 'end_hour': end.strftime('%H:%M'),
                 'timezone': timezone['number'],
             })
-        super(EventForm, self).__init__(*args, **kwargs)        
-        
+        super(EventForm, self).__init__(*args, **kwargs)
+
     def is_valid(self):
         valid = super(EventForm, self).is_valid()
         if not valid:
             return valid
-        
+
         start = datetime.datetime.strptime(self.data['start_date']
             + ' ' + self.data['start_hour'], '%m/%d/%Y %H:%M')
         end = datetime.datetime.strptime(self.data['end_date']
             + ' ' + self.data['end_hour'], '%m/%d/%Y %H:%M')
-        
+
         if self.data.get('all_day', False):
             if start.date() > end.date():
                 self._errors['end_date'] = ['The event must end after its beginning.']
@@ -91,7 +91,7 @@ class EventForm(forms.ModelForm):
             self._errors['end_date'] = ['The event must end after its beginning.']
             return False
         return True
-    
+
     def save(self, commit=True):
         instance = super(EventForm, self).save(commit=False)
         tz = pytz.timezone(instance.get_timezone_display())
@@ -101,29 +101,29 @@ class EventForm(forms.ModelForm):
         end = datetime.datetime.strptime(self.data['end_date']
             + ' ' + self.data['end_hour'], '%m/%d/%Y %H:%M')
         instance.end = tz.localize(end).astimezone(pytz.utc)
-        
+
         if commit:
             instance.save()
         return instance
-        
-        
-class StateForm(forms.ModelForm):
-    
+
+
+class AttendingStatusForm(forms.ModelForm):
+
     class Meta:
         model = Guest
-        fields = ('state',)
-        
-        
+        fields = ('attending_status',)
+
+
 class GuestForm(forms.ModelForm):
-    
+
     class Meta:
         model = Guest
         fields = ('user',)
-    
+
     def __init__(self, event, *args, **kwargs):
         super(GuestForm, self).__init__(*args, **kwargs)
         self.instance.event = event
-        
+
     def validate_unique(self):
         try:
             self.instance.validate_unique()
@@ -131,4 +131,3 @@ class GuestForm(forms.ModelForm):
             e.error_dict = {'user': [("This user is already guest added to "
             + "this event.")]}
             self._update_errors(e)
-    

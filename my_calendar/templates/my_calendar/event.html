@@ -6,10 +6,10 @@
 {% else %}
     <h2>{{ event.title }}</h2>
     {% if user_is_guest %}
-        <form method="POST" id="state_form">
+        <form method="POST" id="attending_status_form">
             {% csrf_token %}
-            {{ guest_state_form.as_p }}
-            <button type="submit" id="save_state" value="1" name="save_state">Save state</button>
+            {{ attending_status_form.as_p }}
+            <button type="submit" id="save_attending_status" value="1" name="save_attending_status">Save your attending status</button>
         </form>
     {% endif %}
     <p>{{ event.desc }}</p>
@@ -36,13 +36,13 @@
             <p>{{ guest_message }}</p>
             {% endif %}
             {{ event_form.as_p }}
-            {{ state_form.as_p }}
+            {{ attending_status_form.as_p }}
             <button type="submit" id="save_event" name="save_event" value="1" onclick="EnableInputs();">Save event</button>
         </form>
     {% endif %}
     <ul>Guests:
     {% for guest in guests %}
-        <li>{{ guest.user.user.username }}: {{ guest.get_state_display }}</li>
+        <li>{{ guest.user.user.username }}: {{ guest.get_attending_status_display }}</li>
     {% endfor %}
     </ul>
     {% if profile == calendar.owner or profile in calendar.can_modify.all %}
@@ -98,7 +98,7 @@
                 elements[i].disabled = false;
             }
         }
-            
+
     </script>
 {% endif %}
 {% endblock user_content %}
