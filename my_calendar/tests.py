@@ -723,6 +723,10 @@ class EventViewTest(NewEventTest):
             'user': 2,
         })
         self.assertEqual(Guest.objects.count(), 2)
+        guest = Guest.objects.get(pk=2)
+        user = UserProfile.objects.get(pk=2)
+        self.assertEqual(guest.user, user)
+        self.assertEqual(guest.event, self.event)
 
     def test_cannot_save_same_guest_for_event(self):
         self.client.get('/logout')

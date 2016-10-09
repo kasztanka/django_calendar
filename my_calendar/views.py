@@ -10,7 +10,7 @@ from .models import UserProfile, MyCalendar, Event, Guest, EventCustomSettings
 from .forms import (RegisterForm, EventForm, AttendingStatusForm, ProfileForm,
     CalendarForm, GuestForm)
 from .additional_functions import (COLORS, fill_month, fill_week,
-    get_events_from_days)
+    get_events_from_days, get_number_and_name_of_timezone)
 
 
 def index(request):
@@ -212,10 +212,7 @@ def new_event(request, cal_pk):
             end = start + datetime.timedelta(minutes=30)
             guest = Guest()
             profile = get_object_or_404(UserProfile, user=request.user)
-            timezone = {
-                'tz': pytz.timezone(profile.get_timezone_display()),
-                'number': profile.timezone,
-            }
+            timezone = get_number_and_name_of_timezone(profile)
             event_form = EventForm(data=request.POST or None, instance=settings,
                 start=start, end=end, timezone=timezone)
             attending_status_form = AttendingStatusForm(data=request.POST or None, instance=guest)
@@ -237,7 +234,7 @@ def new_event(request, cal_pk):
                 + "events to this calendar.")
     return render(request, 'my_calendar/new_event.html', context)
 
-def event_view(request, cal_pk=None, event_pk=None):
+def event_view(request, event_pk=None):
     context = {}
     if not request.user.is_authenticated():
         return render(request, 'my_calendar/event.html', context)
@@ -252,52 +249,41 @@ def event_view(request, cal_pk=None, event_pk=None):
         guest = None
     if (profile == event.calendar.owner
         or profile in event.calendar.can_modify.all()):
-        settings = event.get_owner_settings()
-        timezone = {
-            'tz': pytz.timezone(settings.get_timezone_display()),
-            'number': settings.timezone,
-        }
-        event_form = EventForm(instance=settings, start=settings.start,
-            end=settings.end, timezone=timezone)
-        guest_form = GuestForm(event=event)
-        if request.method == "POST":
-            if 'save_event' in request.POST:
-                event_form = EventForm(data=request.POST, instance=settings)
-                if event_form.is_valid():
-                    event_form.save()
-                    return redirect('my_calendar:event_view', event_pk=event.pk)
-            elif 'save_guest' in request.POST:
-                guest_form = GuestForm(data=request.POST, event=event)
-                if guest_form.is_valid():
-                    guest = guest_form.save(commit=False)
-                    guest.event = event
-                    guest.save()
-                    return redirect('my_calendar:event_view', event_pk=event.pk)
-            elif 'save_attending_status' in request.POST and guest != None:
-                attending_status_form = AttendingStatusForm(data=request.POST,
-                    instance=guest)
-                if attending_status_form.is_valid():
-                    attending_status_form.save()
-                    return redirect('my_calendar:event_view',
-                        event_pk=event.pk)
-                else:
-                    context['attending_status_form'] = attending_status_form
-        context['event_form'] = event_form
-        context['guest_form'] = guest_form
-        context['event'] = event.get_owner_settings()
+        event_settings = event.get_owner_settings()
+        timezone = get_number_and_name_of_timezone(event_settings)
+        context['event_form'] = EventForm(instance=event_settings, start=event_settings.start,
+            end=event_settings.end, timezone=timezone)
+        context['guest_form'] = GuestForm(event=event)
+        context['event'] = event_settings
         context['guests'] = Guest.objects.filter(event=event)
+        if request.method == "POST":
+            form = None
+            
+            if 'save_event' in request.POST:
+                form = EventForm(data=request.POST, instance=event_settings)
+                form_name = 'event_form'
+            elif 'save_guest' in request.POST:
+                form = GuestForm(data=request.POST, event=event)
+                form_name = 'guest_form'
+            elif 'save_attending_status' in request.POST and guest != None:
+                form = AttendingStatusForm(data=request.POST, instance=guest)
+                form_name = 'attending_status_form'
+
+            if form != None and form.is_valid():
+                form.save()
+                return redirect('my_calendar:event_view', event_pk=event.pk)
+            elif form != None:
+                context[form_name] = form
+
     elif guest != None:
-        settings, settings_belong_to_owner = guest.get_settings()
-        timezone = {
-            'tz': pytz.timezone(settings.get_timezone_display()),
-            'number': settings.timezone,
-        }
-        context['event'] = settings
+        event_settings, settings_belong_to_owner = guest.get_settings()
+        timezone = get_number_and_name_of_timezone(event_settings)
+        context['event'] = event_settings
         context['guests'] = Guest.objects.filter(event=event)
         context['guest_message'] = ("If you change default settings, you "
             + "won't be able to see changes made by owner of this event.")
-        event_form = EventForm(instance=settings, start=settings.start,
-            end=settings.end, timezone=timezone)
+        event_form = EventForm(instance=event_settings, start=event_settings.start,
+            end=event_settings.end, timezone=timezone)
         if request.method == "POST" and 'save_attending_status' in request.POST:
             attending_status_form = AttendingStatusForm(data=request.POST, instance=guest)
             if attending_status_form.is_valid():
@@ -306,7 +292,7 @@ def event_view(request, cal_pk=None, event_pk=None):
             else:
                 context['attending_status_form'] = attending_status_form
         elif request.method == "POST" and 'save_event' in request.POST:
-            event_form = EventForm(data=request.POST, instance=settings)
+            event_form = EventForm(data=request.POST, instance=event_settings)
             if event_form.is_valid():
                 if settings_belong_to_owner:
                     event_form = EventForm(data=request.POST)

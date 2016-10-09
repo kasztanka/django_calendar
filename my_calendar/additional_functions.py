@@ -1,5 +1,6 @@
 from calendar import monthrange
 import datetime
+import pytz
 
 from .models import Guest
 
@@ -17,7 +18,7 @@ def fill_month(date_):
         -> if first day of month is tuesday,
         the function will also return a last day of the previous month
         -> if last day of month is friday,
-        the function will also return two first days of the next month    
+        the function will also return two first days of the next month
     '''
     first = datetime.date(date_.year, date_.month, 1)
     while first.weekday():
@@ -34,10 +35,10 @@ def fill_month(date_):
             break
         first = first + datetime.timedelta(days=1)
     return days
-    
+
 def fill_week(date_):
     '''
-    Function that returns list of days of week for given date.   
+    Function that returns list of days of week for given date.
     '''
     first = date_
     while first.weekday():
@@ -52,7 +53,7 @@ def fill_week(date_):
             break
         first = first + datetime.timedelta(days=1)
     return days
-    
+
 def event_dict(event, settings, start, end, from_calendar):
     dict = {
         'pk': event.pk,
@@ -83,7 +84,7 @@ def event_dict(event, settings, start, end, from_calendar):
         dict['top'] = top
         dict['height'] = height
     return dict
-    
+
 def get_events_from_days(days, user_events, timezone, profile):
     final_days = []
     for day in days:
@@ -115,3 +116,11 @@ def get_events_from_days(days, user_events, timezone, profile):
         final_days.append(dict_)
     return final_days
 
+def get_number_and_name_of_timezone(timezone_source):
+    """
+    Timezone source must be UserProfile or EventCustomSettings instance.
+    """
+    return {
+        'tz': pytz.timezone(timezone_source.get_timezone_display()),
+        'number': timezone_source.timezone,
+    }
