@@ -210,12 +210,10 @@ def new_event(request, cal_pk):
             settings = EventCustomSettings()
             settings.start = pytz.utc.localize(datetime.datetime.utcnow())
             settings.end = settings.start + datetime.timedelta(minutes=30)
-            guest = Guest()
-            profile = get_object_or_404(UserProfile, user=request.user)
             timezone = get_number_and_name_of_timezone(profile)
             event_form = EventForm(data=request.POST or None, instance=settings,
                 timezone=timezone)
-            attending_status_form = AttendingStatusForm(data=request.POST or None, instance=guest)
+            attending_status_form = AttendingStatusForm(data=request.POST or None)
             if request.method == "POST":
                 if event_form.is_valid() and attending_status_form.is_valid():
                     event = Event.objects.create(calendar=calendar_)
@@ -249,17 +247,17 @@ def event_view(request, event_pk=None):
         guest = None
     if (profile == event.calendar.owner
         or profile in event.calendar.can_modify.all()):
-        
+
         event_settings = event.get_owner_settings()
         timezone = get_number_and_name_of_timezone(event_settings)
         context['event_form'] = EventForm(instance=event_settings, timezone=timezone)
         context['guest_form'] = GuestForm(event=event)
         context['event'] = event_settings
         context['guests'] = Guest.objects.filter(event=event)
-        
+
         if request.method == "POST":
             form = None
-            
+
             if 'save_event' in request.POST:
                 form = EventForm(data=request.POST, instance=event_settings)
                 form_name = 'event_form'
@@ -284,26 +282,27 @@ def event_view(request, event_pk=None):
         context['guest_message'] = ("If you change default settings, you "
             + "won't be able to see changes made by owner of this event.")
         event_form = EventForm(instance=event_settings, timezone=timezone)
-        if request.method == "POST" and 'save_attending_status' in request.POST:
-            attending_status_form = AttendingStatusForm(data=request.POST, instance=guest)
-            if attending_status_form.is_valid():
-                attending_status_form.save()
-                return redirect('my_calendar:event_view', event_pk=event.pk)
-            else:
-                context['attending_status_form'] = attending_status_form
-        elif request.method == "POST" and 'save_event' in request.POST:
-            event_form = EventForm(data=request.POST, instance=event_settings)
-            if event_form.is_valid():
-                if settings_belong_to_owner:
-                    event_form = EventForm(data=request.POST)
-                    event_custom_settings = event_form.save(commit=False)
-                    event_custom_settings.guest = guest
-                    event_custom_settings.save()
-                else:
-                    event_form.save()
-                return redirect('my_calendar:event_view',
-                    event_pk=event.pk)
         context['event_form'] = event_form
+
+        if request.method == "POST":
+            form = None
+
+            if 'save_attending_status' in request.POST:
+                form = AttendingStatusForm(data=request.POST, instance=guest)
+                form_name = 'attending_status_form'
+            elif 'save_event' in request.POST:
+                if settings_belong_to_owner:
+                    event_settings = EventCustomSettings()
+                    event_settings.guest = guest
+                form = EventForm(data=request.POST, instance=event_settings)
+                form_name = 'event_form'
+
+            if form != None and form.is_valid():
+                form.save()
+                return redirect('my_calendar:event_view', event_pk=event.pk)
+            elif form != None:
+                context[form_name] = form
+
     elif profile in event.calendar.can_read.all():
         if request.method == "POST":
             context['access_denied'] = ("You don't have access to "
