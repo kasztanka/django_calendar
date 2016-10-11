@@ -962,6 +962,25 @@ class EventCustomSettingsTest(TestCase):
             settings2.full_clean()
 
 
+class MyCalendarTest(TestCase):
+
+    def test_no_duplicates_in_can_read_and_can_modify_fields(self):
+        user_ = User.objects.create(username="Owner")
+        profile = UserProfile.objects.create(user=user_)
+        calendar = MyCalendar.objects.create(owner=profile,
+            name="Cindirella", color="E81AD4")
+            
+        calendar.can_read.add(profile)
+        calendar.can_read.add(profile)
+        self.assertEqual(len(calendar.can_read.all()), 1)
+
+        calendar.can_modify.add(profile)
+        calendar.can_modify.add(profile)
+        self.assertEqual(len(calendar.can_modify.all()), 1)
+
+
+
+
 class GuestFormTest(TestCase):
 
     def setUp(self):

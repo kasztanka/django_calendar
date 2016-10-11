@@ -3,7 +3,7 @@
 <form method="POST" id="event_form">
     {% csrf_token %}
     {{ event_form.as_p }}
-    {{ state_form.as_p }}
+    {{ attending_status_form.as_p }}
     <button type="submit" id="save_event" onclick="EnableInputs();">Save event</button>
 </form>
 <script>
@@ -34,6 +34,6 @@
             elements[i].disabled = false;
         }
     }
-        
+
 </script>
 {% endblock user_content %}
