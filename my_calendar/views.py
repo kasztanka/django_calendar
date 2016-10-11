@@ -208,13 +208,13 @@ def new_event(request, cal_pk):
         profile = get_object_or_404(UserProfile, user=request.user)
         if calendar_.owner == profile:
             settings = EventCustomSettings()
-            start = pytz.utc.localize(datetime.datetime.utcnow())
-            end = start + datetime.timedelta(minutes=30)
+            settings.start = pytz.utc.localize(datetime.datetime.utcnow())
+            settings.end = settings.start + datetime.timedelta(minutes=30)
             guest = Guest()
             profile = get_object_or_404(UserProfile, user=request.user)
             timezone = get_number_and_name_of_timezone(profile)
             event_form = EventForm(data=request.POST or None, instance=settings,
-                start=start, end=end, timezone=timezone)
+                timezone=timezone)
             attending_status_form = AttendingStatusForm(data=request.POST or None, instance=guest)
             if request.method == "POST":
                 if event_form.is_valid() and attending_status_form.is_valid():
@@ -249,13 +249,14 @@ def event_view(request, event_pk=None):
         guest = None
     if (profile == event.calendar.owner
         or profile in event.calendar.can_modify.all()):
+        
         event_settings = event.get_owner_settings()
         timezone = get_number_and_name_of_timezone(event_settings)
-        context['event_form'] = EventForm(instance=event_settings, start=event_settings.start,
-            end=event_settings.end, timezone=timezone)
+        context['event_form'] = EventForm(instance=event_settings, timezone=timezone)
         context['guest_form'] = GuestForm(event=event)
         context['event'] = event_settings
         context['guests'] = Guest.objects.filter(event=event)
+        
         if request.method == "POST":
             form = None
             
@@ -282,8 +283,7 @@ def event_view(request, event_pk=None):
         context['guests'] = Guest.objects.filter(event=event)
         context['guest_message'] = ("If you change default settings, you "
             + "won't be able to see changes made by owner of this event.")
-        event_form = EventForm(instance=event_settings, start=event_settings.start,
-            end=event_settings.end, timezone=timezone)
+        event_form = EventForm(instance=event_settings, timezone=timezone)
         if request.method == "POST" and 'save_attending_status' in request.POST:
             attending_status_form = AttendingStatusForm(data=request.POST, instance=guest)
             if attending_status_form.is_valid():

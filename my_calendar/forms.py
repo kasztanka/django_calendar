@@ -58,10 +58,12 @@ class EventForm(forms.ModelForm):
         }
 
     def __init__(self, *args, **kwargs):
-        start = kwargs.pop('start', None)
-        end = kwargs.pop('end', None)
+        instance = kwargs.get('instance', None)
+        if instance != None:
+            start = instance.start
+            end = instance.end
         timezone = kwargs.pop('timezone', None)
-        if start != None and end != None and timezone != None:
+        if instance != None and timezone != None:
             start = start.astimezone(timezone['tz'])
             end = end.astimezone(timezone['tz'])
             kwargs.update(initial={

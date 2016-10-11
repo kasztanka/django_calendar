@@ -906,7 +906,6 @@ class EventFormTest(TestCase):
         self.assertIn('end_date', form.errors)
 
     def test_inital_datetime_correct_when_timezone_given(self):
-        event = EventCustomSettings()
         europe = pytz.timezone('Europe/Warsaw')
         timezone = {
             'tz': europe,
@@ -915,8 +914,8 @@ class EventFormTest(TestCase):
         start = europe.localize(datetime.datetime.now())
         end = europe.localize(datetime.datetime.now()
             + datetime.timedelta(minutes=30))
-        form = EventForm(instance=event, start=start.astimezone(pytz.utc),
-            end=end.astimezone(pytz.utc), timezone=timezone)
+        event = EventCustomSettings(start=start, end=end)
+        form = EventForm(instance=event, timezone=timezone)
         self.assertEqual(form.initial['start_date'], start.strftime('%m/%d/%Y'))
         self.assertEqual(form.initial['start_hour'], start.strftime('%H:%M'))
         self.assertEqual(form.initial['end_date'], end.strftime('%m/%d/%Y'))

@@ -36,7 +36,6 @@
             <p>{{ guest_message }}</p>
             {% endif %}
             {{ event_form.as_p }}
-            {{ attending_status_form.as_p }}
             <button type="submit" id="save_event" name="save_event" value="1" onclick="EnableInputs();">Save event</button>
         </form>
     {% endif %}
@@ -55,10 +54,10 @@
     {% endif %}
     {% endwith %}
     <script>
-        var form = document.getElementById("event_form");
-        form.style.display = 'none';
-        form = document.getElementById("guest_form");
-        form.style.display = 'none';
+        var event_form = document.getElementById("event_form");
+        event_form.style.display = 'none';
+        guest_form = document.getElementById("guest_form");
+        if (guest_form != null) guest_form.style.display = 'none';
         function FormDisplay(form_id, button_id, text) {
             form = document.getElementById(form_id);
             button = document.getElementById(button_id);
