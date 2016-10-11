@@ -61,7 +61,7 @@ class GuestsTest(FunctionalTest):
         submit.click()
 
         with self.assertRaises(NoSuchElementException):
-            self.browser.find_element_by_id("save_state")
+            self.browser.find_element_by_id("save_attending_status")
 
     def test_guest_can_change_event_but_only_he_sees_the_changes(self):
         self.register(username="Guest")

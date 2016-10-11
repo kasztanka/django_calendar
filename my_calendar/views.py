@@ -136,7 +136,8 @@ def new_calendar(request):
     context = {}
     if request.user.is_authenticated():
         context['colors'] = COLORS
-        calendar_form = CalendarForm(data=request.POST or None)
+        owner = UserProfile.objects.get(user=request.user)
+        calendar_form = CalendarForm(data=request.POST or None, owner=owner)
         if request.method == "POST":
             pattern = re.compile("^#[A-Fa-f0-9]{6}$")
             if not request.POST['name']:
@@ -145,7 +146,6 @@ def new_calendar(request):
                 context['errors'] = ("Color has to be hexadecimal with hash "
                     + "at the beginning.")
             elif calendar_form.is_valid():
-                owner = UserProfile.objects.get(user=request.user)
                 name = request.POST['name']
                 color = request.POST['color']
                 can_read_ids = request.POST.getlist('can_read')
@@ -155,7 +155,9 @@ def new_calendar(request):
                 calendar_ = MyCalendar.objects.create(owner=owner, name=name,
                     color=color)
                 calendar_.can_read.add(*can_read)
+                calendar_.can_read.add(owner)
                 calendar_.can_modify.add(*can_modify)
+                calendar_.can_modify.add(owner)
                 return redirect('my_calendar:calendar_view',
                     cal_pk=calendar_.pk)
         context['calendar_form'] = calendar_form
@@ -167,13 +169,12 @@ def calendar_view(request, cal_pk):
         calendar_ = get_object_or_404(MyCalendar, pk=cal_pk)
         profile = get_object_or_404(UserProfile, user=request.user)
         context['profile'] = profile
-        if (profile == calendar_.owner
-            or profile in calendar_.can_read.all()
+        if (profile in calendar_.can_read.all()
             or profile in calendar_.can_modify.all()):
             if profile == calendar_.owner:
                 context['colors'] = COLORS
                 calendar_form = CalendarForm(data=request.POST or None,
-                    instance=calendar_)
+                    instance=calendar_, owner=profile)
                 if request.method == "POST":
                     pattern = re.compile("^#[A-Fa-f0-9]{6}$")
                     if not request.POST['name']:
@@ -245,8 +246,7 @@ def event_view(request, event_pk=None):
         context['attending_status_form'] = AttendingStatusForm(instance=guest)
     except Guest.DoesNotExist:
         guest = None
-    if (profile == event.calendar.owner
-        or profile in event.calendar.can_modify.all()):
+    if (profile in event.calendar.can_modify.all()):
 
         event_settings = event.get_owner_settings()
         timezone = get_number_and_name_of_timezone(event_settings)

@@ -379,17 +379,18 @@ class NewCalendarTest(BaseTest):
         self.assertIn('calendar_form', response.context)
 
     def test_saves_can_read_and_can_modify_users(self):
-        profile = UserProfile.objects.get(user=get_user(self.client))
+        user_2 = User.objects.create(username="Other")
+        profile = UserProfile.objects.create(user=user_2)
         response = self.client.post(
             self.url, data={
                 'name': 'Pretty face',
                 'color': '#FF0000',
-                'can_read': ['1'],
-                'can_modify': ['1'],
+                'can_read': ['2'],
+                'can_modify': ['2'],
         })
         calendar_ = MyCalendar.objects.first()
-        self.assertEqual(list(calendar_.can_read.all())[0], profile)
-        self.assertEqual(list(calendar_.can_modify.all())[0], profile)
+        self.assertIn(profile, calendar_.can_read.all())
+        self.assertIn(profile, calendar_.can_modify.all())
 
     def test_cannot_save_not_existing_user(self):
         calendar_amount = MyCalendar.objects.count()
@@ -404,8 +405,29 @@ class NewCalendarTest(BaseTest):
         self.assertEqual(calendar_amount, MyCalendar.objects.count())
         if calendar_amount:
             calendar_ = MyCalendar.objects.first()
-            self.assertEqual(list(calendar_.can_read.all()), [])
-            self.assertEqual(list(calendar_.can_modify.all()), [])
+            self.assertEqual(list(calendar_.can_read.all()), [profile])
+            self.assertEqual(list(calendar_.can_modify.all()), [profile])
+
+    def test_owner_by_default_in_can_modify_and_can_read(self):
+        # test only for new_event view
+        if MyCalendar.objects.count():
+            return
+        profile = UserProfile.objects.get(user=get_user(self.client))
+        response = self.client.post(
+            self.url, data={
+                'name': 'Pretty face',
+                'color': '#FF0000',
+        })
+        calendar_ = MyCalendar.objects.first()
+        self.assertIn(profile, calendar_.can_read.all())
+        self.assertIn(profile, calendar_.can_modify.all())
+
+    def test_owner_not_selectable_in_can_modify_and_can_read(self):
+        profile = UserProfile.objects.get(user=get_user(self.client))
+        response = self.client.get(self.url)
+        calendar_form = response.context['calendar_form']
+        self.assertNotIn(profile, calendar_form.fields['can_read'].queryset)
+        self.assertNotIn(profile, calendar_form.fields['can_read'].queryset)
 
 
 class CalendarViewTest(NewCalendarTest):
@@ -415,6 +437,8 @@ class CalendarViewTest(NewCalendarTest):
         self.profile = UserProfile.objects.get(user=get_user(self.client))
         self.calendar = MyCalendar.objects.create(owner=self.profile,
             name="Cindirella", color="E81AD4")
+        self.calendar.can_read.add(self.profile)
+        self.calendar.can_modify.add(self.profile)
         self.url = '/calendar/1'
         self.template = 'my_calendar/calendar.html'
         self.function = calendar_view
@@ -642,6 +666,8 @@ class EventViewTest(NewEventTest):
         profile = UserProfile.objects.get(user=get_user(self.client))
         self.calendar = MyCalendar.objects.create(owner=profile,
             name="Cindirella", color="E81AD4")
+        self.calendar.can_read.add(profile)
+        self.calendar.can_modify.add(profile)
         self.event = Event.objects.create(calendar=self.calendar)
         self.guest = Guest.objects.create(event=self.event, user=profile,
             attending_status=Guest.MAYBE)
@@ -969,7 +995,7 @@ class MyCalendarTest(TestCase):
         profile = UserProfile.objects.create(user=user_)
         calendar = MyCalendar.objects.create(owner=profile,
             name="Cindirella", color="E81AD4")
-            
+
         calendar.can_read.add(profile)
         calendar.can_read.add(profile)
         self.assertEqual(len(calendar.can_read.all()), 1)

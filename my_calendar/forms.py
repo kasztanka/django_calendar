@@ -36,6 +36,16 @@ class CalendarForm(forms.ModelForm):
             'can_modify': forms.CheckboxSelectMultiple,
         }
 
+    def __init__(self, owner=None, *args, **kwargs):
+        """
+        Removes owner from selections for can_modify and can_read fields.
+        """
+        super(CalendarForm, self).__init__(*args, **kwargs)
+        if owner is not None:
+            without_owner = UserProfile.objects.all().exclude(pk=owner.pk)
+            self.fields['can_read'].queryset = without_owner
+            self.fields['can_modify'].queryset = without_owner
+
 
 class EventForm(forms.ModelForm):
     start_date = forms.DateField(label="From", input_formats=['%m/%d/%Y'],
