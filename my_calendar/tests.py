@@ -261,6 +261,12 @@ class DayViewTest(BaseTest):
         height = (4 * 3600) / (24 * 60 * 60)
         self.assertEqual(height, dict_['height'])
 
+    def test_passes_correct_earlier_and_later(self):
+        response = self.client.get(self.url)
+        earlier = self.today - datetime.timedelta(days=1)
+        self.assertEqual(response.context['earlier'], earlier)
+        later = self.today + datetime.timedelta(days=1)
+        self.assertEqual(response.context['later'], later)
 
 class MonthViewTest(DayViewTest):
 
@@ -289,6 +295,13 @@ class MonthViewTest(DayViewTest):
         self.assertIn(last, response.context['days'])
         self.assertEqual(len(response.context['days']), 35)
 
+    def test_passes_correct_earlier_and_later(self):
+        response = self.client.get(self.base_url + '/2016-01-12')
+        earlier = datetime.date(year=2015, month=12, day=1)
+        self.assertEqual(response.context['earlier'], earlier)
+        later = datetime.date(year=2016, month=2, day=1)
+        self.assertEqual(response.context['later'], later)
+
 class WeekViewTest(DayViewTest):
 
     def setUp(self):
@@ -315,6 +328,13 @@ class WeekViewTest(DayViewTest):
         self.assertIn(first, response.context['days'])
         self.assertIn(last, response.context['days'])
         self.assertEqual(len(response.context['days']), 7)
+
+    def test_passes_correct_earlier_and_later(self):
+        response = self.client.get(self.url)
+        earlier = self.today - datetime.timedelta(days=7)
+        self.assertEqual(response.context['earlier'], earlier)
+        later = self.today + datetime.timedelta(days=7)
+        self.assertEqual(response.context['later'], later)
 
 
 class NewCalendarTest(BaseTest):

@@ -12,7 +12,8 @@
     <div>
         <div id="calendar_{{ cal.pk }}" style="height:20px; width:20px; border:1px solid; background-color:{{ cal.color }}; display:inline-block;"
         onclick="DisplayOfEvents('calendar_{{ cal.pk }}', '{{ cal.color }}');return false;"></div>
-        <span>{{ cal.name }}</span>
+        <a href="{% url 'my_calendar:calendar_view' cal_pk=cal.pk %}">
+          <span>{{ cal.name }}</span></a>
     </div>
 {% endfor %}
     <div>
@@ -20,6 +21,10 @@
         onclick="DisplayOfEvents('calendar_other', '#FECA5C');return false;"></div>
         <span>Others</span>
     </div>
+</div>
+<div>
+  <a id="earlier" href="/month/{{ earlier|date:'Y-m-d' }}">Earlier</a>
+  <a id="later" href="/month/{{ later|date:'Y-m-d' }}">Later</a>
 </div>
 <table>
     <tr>
@@ -35,13 +40,15 @@
         {% if forloop.counter0|modulo:7 == 0 %}
             <tr>
         {% endif %}
-        <td>{{ dict_.day|date:"d M" }}
-        <div>
-        {% for event in dict_.events %}
-        <a href="{% url 'my_calendar:event_view' event_pk=event.pk %}">
-            <div style="background-color:{{ event.color }};" class="calendar_{{ event.class }}">{{ event.title }}</div></a>
-        {% endfor %}
-        </div>
+        <td>
+          <a href="/month/{{ dict_.day|date:'Y-m-d' }}">
+            {{ dict_.day|date:"d M" }}</a>
+          <div>
+          {% for event in dict_.events %}
+          <a href="{% url 'my_calendar:event_view' event_pk=event.pk %}">
+              <div style="background-color:{{ event.color }};" class="calendar_{{ event.class }}">{{ event.title }}</div></a>
+          {% endfor %}
+          </div>
         </td>
         {% if forloop.counter0|modulo:7 == 6 %}
             </tr>

@@ -11,7 +11,8 @@
     <div>
         <div id="calendar_{{ cal.pk }}" style="height:20px; width:20px; border:1px solid; background-color:{{ cal.color }}; display:inline-block;"
         onclick="DisplayOfEvents('calendar_{{ cal.pk }}', '{{ cal.color }}');return false;"></div>
-        <span>{{ cal.name }}</span>
+        <a href="{% url 'my_calendar:calendar_view' cal_pk=cal.pk %}">
+          <span>{{ cal.name }}</span></a>
     </div>
 {% endfor %}
     <div>
@@ -20,19 +21,26 @@
         <span>Others</span>
     </div>
 </div>
+<div>
+  <a id="earlier" href="/week/{{ earlier|date:'Y-m-d' }}">Earlier</a>
+  <a id="later" href="/week/{{ later|date:'Y-m-d' }}">Later</a>
+</div>
 <div id="timeline" style="width:100%">
     <div id="header" style="float:left; width:100%; display:table;">
         <div style="display:table-cell;">Days:</div>
         {% for dict_ in days %}
-            <div style="display:table-cell;width:13%">{{ dict_.day|date:"l m/d" }}</div>
+            <div style="display:table-cell;width:13%">
+              <a href="/week/{{ dict_.day|date:'Y-m-d' }}">
+              {{ dict_.day|date:"l m/d" }}</a>
+          </div>
         {% endfor %}
     </div>
     <div id="all_day" style="float:left; width:100%; display:table;">
         <div style="display:table-cell;">All day:</div>
         {% for dict_ in days %}
-            <div style="display:table-cell;width:13%">            
+            <div style="display:table-cell;width:13%">
                 {% for event in dict_.events %}
-                    {% if event.all_day == True %}  
+                    {% if event.all_day == True %}
                     <a href="{% url 'my_calendar:event_view' event_pk=event.pk %}">
                         <div class="event calendar_{{ event.class }}"
                             id="event-{{ event.pk }}-{{ dict_.day|date:'Y/m/d' }}"
@@ -51,9 +59,9 @@
             {% endfor %}
         </div>
         {% for dict_ in days %}
-            <div class="events" style="position:relative; display:table-cell;width:13%">            
+            <div class="events" style="position:relative; display:table-cell;width:13%">
                 {% for event in dict_.events %}
-                    {% if event.all_day != True %} 
+                    {% if event.all_day != True %}
                     <a href="{% url 'my_calendar:event_view' event_pk=event.pk %}">
                         <div class="event calendar_{{ event.class }}"
                             id="event-{{ event.pk }}-{{ dict_.day|date:'Y/m/d' }}"

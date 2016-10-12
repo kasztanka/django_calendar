@@ -87,6 +87,17 @@ def month(request, year, month, day):
     else:
         context['days'] = days
     context['choosen_date'] = date_
+    choosen_month = date_.month
+    decreasing_date = date_
+    while decreasing_date.month == choosen_month:
+        decreasing_date -= datetime.timedelta(days=1)
+    decreasing_date = decreasing_date.replace(day=1)
+    context['earlier'] = decreasing_date
+    increasing_date = date_
+    while increasing_date.month == choosen_month:
+        increasing_date += datetime.timedelta(days=1)
+    increasing_date = increasing_date.replace(day=1)
+    context['later'] = increasing_date
     return render(request, 'my_calendar/month.html', context)
 
 def week(request, year, month, day):
@@ -108,6 +119,8 @@ def week(request, year, month, day):
     else:
         context['days'] = days
     context['choosen_date'] = date_
+    context['earlier'] = date_ - datetime.timedelta(days=7)
+    context['later'] = date_ + datetime.timedelta(days=7)
     context['range'] = range(24)
     return render(request, 'my_calendar/week.html', context)
 
@@ -119,6 +132,8 @@ def day(request, year, month, day):
         date_ = datetime.datetime.now().date()
         context['date_errors'] = "You enetered wrong date."
     context['choosen_date'] = date_
+    context['earlier'] = date_ - datetime.timedelta(days=1)
+    context['later'] = date_ + datetime.timedelta(days=1)
     if request.user.is_authenticated():
         profile = get_object_or_404(UserProfile, user=request.user)
         events = profile.get_all_events()
