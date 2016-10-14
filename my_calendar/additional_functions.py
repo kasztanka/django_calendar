@@ -96,8 +96,7 @@ def get_events_from_days(days, user_events, timezone, profile):
         events = []
         for ev in user_events:
             calendar = ev.calendar
-            if (calendar in profile.get_own_calendars()
-                or calendar in profile.get_calendars_to_modify()
+            if (calendar in profile.get_calendars_to_modify()
                 or calendar in profile.get_calendars_to_read()):
                 from_calendar = True
             else:

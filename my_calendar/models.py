@@ -27,32 +27,22 @@ class UserProfile(models.Model):
         Returns a queryset of calendars that user can modify
         but doesn't own.
         """
-        return MyCalendar.objects.filter(can_modify=self)
+        return MyCalendar.objects.filter(modifiers=self)
 
     def get_calendars_to_read(self):
         """
         Returns a queryset of calendars that user can read
         but dooesn't own.
         """
-        return MyCalendar.objects.filter(can_read=self)
-
-    def get_events(self):
-        """
-        Returns events where user is guest at.
-        """
-        events = []
-        guests = Guest.objects.filter(user=self)
-        for guest in guests:
-            events.append(guest.event)
-        return events
+        return MyCalendar.objects.filter(readers=self)
 
     def get_all_events(self):
         """
         Returns events that user has access to.
         """
         events = set()
-        for calendar in (self.get_own_calendars()
-            | self.get_calendars_to_modify() | self.get_calendars_to_read()):
+        for calendar in (self.get_calendars_to_modify()
+            | self.get_calendars_to_read()):
             events_ = Event.objects.filter(calendar=calendar)
             for ev in events_:
                 events.add(ev)
@@ -61,37 +51,38 @@ class UserProfile(models.Model):
             events.add(guest.event)
         return events
 
-    def get_not_owned_events(self):
-        """
-        Returns events where user is guest at but which he doesn't own.
-        """
-        events = []
-        guests = Guest.objects.filter(user=self)
-        for guest in guests:
-            if guest.user != guest.event.calendar.owner:
-                events.append(guest.event)
-        return events
-
     def __str__(self):
         return self.user.username + ", timezone: " + self.get_timezone_display()
+
+
+class MyCalendarManager(models.Manager):
+    """
+    When calendar is created, owner should be added
+    to modifiers and readers fields.
+    """
+    def create(self, *args, **kwargs):
+        calendar_ = super(MyCalendarManager, self).create(*args, **kwargs)
+        calendar_.readers.add(calendar_.owner)
+        calendar_.modifiers.add(calendar_.owner)
+        return calendar_
 
 
 class MyCalendar(models.Model):
     """
     Model of the calendar.
     Calendar belongs to single user.
-    Attributes: owner, name, color, can_modify, can_read.
-    Last two contains users who can modify/read a calendar.
+    Attributes: owner, name, color, modifiers, readers.
     """
     owner = models.ForeignKey(
         UserProfile, on_delete=models.CASCADE,
         related_name='owned_calendars')
     name = models.CharField(max_length=100, default="")
     color = models.CharField(max_length=6) # default = #464AFF?
-    can_modify = models.ManyToManyField(
+    modifiers = models.ManyToManyField(
         UserProfile, related_name='calendars_to_modify', blank=True)
-    can_read = models.ManyToManyField(
+    readers = models.ManyToManyField(
         UserProfile, related_name='calendars_to_read', blank=True)
+    objects = MyCalendarManager()
 
     def __str__(self):
         return self.name

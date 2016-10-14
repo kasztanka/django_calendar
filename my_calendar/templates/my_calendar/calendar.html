@@ -6,14 +6,14 @@
     <div style="background-color:{{ calendar.color }};">Kolor kalendarza</div>
     <h2>{{ calendar.name }}</h2>
     <ul>Users who can read this calendar:
-    {% for user in calendar.can_read.all %}
+    {% for user in calendar.readers.all %}
         <li>{{ user }}</li>
     {% empty %}
         <p>No such users.</p>
     {% endfor %}
     </ul>
     <ul>Users who can modify events in this calendar:
-    {% for user in calendar.can_modify.all %}
+    {% for user in calendar.modifiers.all %}
         <li>{{ user }}</li>
     {% empty %}
         <p>No such users.</p>
@@ -32,13 +32,13 @@
             {% for color in colors %}
                 <div style="background-color: #{{ color }}; height:20px; width:20px;" class="colors" name="#{{ color }}"></div>
             {% endfor %}
-            <div id="can_read">Choose users who can read your calendar:
-            {% for user in calendar_form.can_read %}
+            <div id="readers">Choose users who can read your calendar:
+            {% for user in calendar_form.readers %}
                 <p>{{ user }}</p>
             {% endfor %}
             </div>
-            <div id="can_modify">Choose users who can modify events in your calendar:
-            {% for user in calendar_form.can_modify %}
+            <div id="modifiers">Choose users who can modify events in your calendar:
+            {% for user in calendar_form.modifiers %}
                 <p>{{ user }}</p>
             {% endfor %}
             </div>
@@ -73,7 +73,7 @@
         previous.className += " active";
         input = document.getElementById("id_color");
         input.value = colors[0].getAttribute("name");
-        
+
         for (var i = 0; i < colors.length; i++) {
             colors[i].onclick = function(){
                 old = document.getElementsByClassName("active")[0];

@@ -70,81 +70,75 @@ def user_logout(request):
 
 def month(request, year, month, day):
     context = {}
-    try:
-        date_ = datetime.date(int(year), int(month), int(day))
-    except ValueError:
-        date_ = datetime.datetime.now().date()
-        context['date_errors'] = "You enetered wrong date."
-    days = fill_month(date_)
     if request.user.is_authenticated():
+        try:
+            date_ = datetime.date(int(year), int(month), int(day))
+        except ValueError:
+            date_ = datetime.datetime.now().date()
+            context['date_errors'] = "You enetered wrong date."
+        days = fill_month(date_)
         profile = get_object_or_404(UserProfile, user=request.user)
         events = profile.get_all_events()
         timezone = pytz.timezone(profile.get_timezone_display())
         context['days'] = get_events_from_days(days, events, timezone, profile)
-        context['calendars'] = (profile.get_own_calendars()
-            | profile.get_calendars_to_modify()
+        context['calendars'] = (profile.get_calendars_to_modify()
             | profile.get_calendars_to_read()).distinct()
-    else:
-        context['days'] = days
-    context['choosen_date'] = date_
-    choosen_month = date_.month
-    decreasing_date = date_
-    while decreasing_date.month == choosen_month:
-        decreasing_date -= datetime.timedelta(days=1)
-    decreasing_date = decreasing_date.replace(day=1)
-    context['earlier'] = decreasing_date
-    increasing_date = date_
-    while increasing_date.month == choosen_month:
-        increasing_date += datetime.timedelta(days=1)
-    increasing_date = increasing_date.replace(day=1)
-    context['later'] = increasing_date
+        context['choosen_date'] = date_
+        choosen_month = date_.month
+        decreasing_date = date_
+        while decreasing_date.month == choosen_month:
+            decreasing_date -= datetime.timedelta(days=1)
+        decreasing_date = decreasing_date.replace(day=1)
+        context['earlier'] = decreasing_date
+        increasing_date = date_
+        while increasing_date.month == choosen_month:
+            increasing_date += datetime.timedelta(days=1)
+        increasing_date = increasing_date.replace(day=1)
+        context['later'] = increasing_date
     return render(request, 'my_calendar/month.html', context)
 
 def week(request, year, month, day):
     context = {}
-    try:
-        date_ = datetime.date(int(year), int(month), int(day))
-    except ValueError:
-        date_ = datetime.datetime.now().date()
-        context['date_errors'] = "You enetered wrong date."
-    days = fill_week(date_)
     if request.user.is_authenticated():
+        try:
+            date_ = datetime.date(int(year), int(month), int(day))
+        except ValueError:
+            date_ = datetime.datetime.now().date()
+            context['date_errors'] = "You enetered wrong date."
+        days = fill_week(date_)
         profile = get_object_or_404(UserProfile, user=request.user)
         events = profile.get_all_events()
         timezone = pytz.timezone(profile.get_timezone_display())
         context['days'] = get_events_from_days(days, events, timezone, profile)
-        context['calendars'] = (profile.get_own_calendars()
-            | profile.get_calendars_to_modify()
+        context['calendars'] = (profile.get_calendars_to_modify()
             | profile.get_calendars_to_read()).distinct()
-    else:
-        context['days'] = days
-    context['choosen_date'] = date_
-    context['earlier'] = date_ - datetime.timedelta(days=7)
-    context['later'] = date_ + datetime.timedelta(days=7)
-    context['range'] = range(24)
+        context['choosen_date'] = date_
+        context['earlier'] = date_ - datetime.timedelta(days=7)
+        context['later'] = date_ + datetime.timedelta(days=7)
+        context['range'] = range(24)
     return render(request, 'my_calendar/week.html', context)
 
 def day(request, year, month, day):
     context = {}
-    try:
-        date_ = datetime.date(int(year), int(month), int(day))
-    except ValueError:
-        date_ = datetime.datetime.now().date()
-        context['date_errors'] = "You enetered wrong date."
-    context['choosen_date'] = date_
-    context['earlier'] = date_ - datetime.timedelta(days=1)
-    context['later'] = date_ + datetime.timedelta(days=1)
     if request.user.is_authenticated():
+        try:
+            date_ = datetime.date(int(year), int(month), int(day))
+        except ValueError:
+            date_ = datetime.datetime.now().date()
+            context['date_errors'] = "You enetered wrong date."
+        context['choosen_date'] = date_
+        context['earlier'] = date_ - datetime.timedelta(days=1)
+        context['later'] = date_ + datetime.timedelta(days=1)
+
         profile = get_object_or_404(UserProfile, user=request.user)
         events = profile.get_all_events()
         timezone = pytz.timezone(profile.get_timezone_display())
         context['days'] = get_events_from_days([date_], events,
             timezone, profile)
         # distinct() removes duplicates
-        context['calendars'] = (profile.get_own_calendars()
-            | profile.get_calendars_to_modify()
+        context['calendars'] = (profile.get_calendars_to_modify()
             | profile.get_calendars_to_read()).distinct()
-    context['range'] = range(24)
+        context['range'] = range(24)
     return render(request, 'my_calendar/day.html', context)
 
 def new_calendar(request):
@@ -163,16 +157,14 @@ def new_calendar(request):
             elif calendar_form.is_valid():
                 name = request.POST['name']
                 color = request.POST['color']
-                can_read_ids = request.POST.getlist('can_read')
-                can_read = UserProfile.objects.filter(id__in=can_read_ids)
-                can_modify_ids = request.POST.getlist('can_modify')
-                can_modify = UserProfile.objects.filter(id__in=can_modify_ids)
+                readers_ids = request.POST.getlist('readers')
+                new_readers = UserProfile.objects.filter(id__in=readers_ids)
+                modifiers_ids = request.POST.getlist('modifiers')
+                new_modifiers = UserProfile.objects.filter(id__in=modifiers_ids)
                 calendar_ = MyCalendar.objects.create(owner=owner, name=name,
                     color=color)
-                calendar_.can_read.add(*can_read)
-                calendar_.can_read.add(owner)
-                calendar_.can_modify.add(*can_modify)
-                calendar_.can_modify.add(owner)
+                calendar_.readers.add(*new_readers)
+                calendar_.modifiers.add(*new_modifiers)
                 return redirect('my_calendar:calendar_view',
                     cal_pk=calendar_.pk)
         context['calendar_form'] = calendar_form
@@ -184,8 +176,8 @@ def calendar_view(request, cal_pk):
         calendar_ = get_object_or_404(MyCalendar, pk=cal_pk)
         profile = get_object_or_404(UserProfile, user=request.user)
         context['profile'] = profile
-        if (profile in calendar_.can_read.all()
-            or profile in calendar_.can_modify.all()):
+        if (profile in calendar_.readers.all()
+            or profile in calendar_.modifiers.all()):
             if profile == calendar_.owner:
                 context['colors'] = COLORS
                 calendar_form = CalendarForm(data=request.POST or None,
@@ -200,14 +192,14 @@ def calendar_view(request, cal_pk):
                     else:
                         calendar_.name = request.POST['name']
                         calendar_.color = request.POST['color']
-                        can_read_ids = request.POST.getlist('can_read')
-                        can_read = UserProfile.objects.filter(
-                            id__in=can_read_ids)
-                        calendar_.can_read.add(*can_read)
-                        can_modify_ids = request.POST.getlist('can_modify')
-                        can_modify = UserProfile.objects.filter(
-                            id__in=can_modify_ids)
-                        calendar_.can_modify.add(*can_modify)
+                        readers_ids = request.POST.getlist('readers')
+                        updated_readers = UserProfile.objects.filter(
+                            id__in=readers_ids)
+                        calendar_.readers.add(*updated_readers)
+                        modifiers_ids = request.POST.getlist('modifiers')
+                        updated_modifiers = UserProfile.objects.filter(
+                            id__in=modifiers_ids)
+                        calendar_.modifiers.add(*updated_modifiers)
                         calendar_.save()
                 context['calendar_form'] = calendar_form
             context['calendar'] = calendar_
@@ -261,7 +253,7 @@ def event_view(request, event_pk=None):
         context['attending_status_form'] = AttendingStatusForm(instance=guest)
     except Guest.DoesNotExist:
         guest = None
-    if (profile in event.calendar.can_modify.all()):
+    if (profile in event.calendar.modifiers.all()):
 
         event_settings = event.get_owner_settings()
         timezone = get_number_and_name_of_timezone(event_settings)
@@ -318,7 +310,7 @@ def event_view(request, event_pk=None):
             elif form != None:
                 context[form_name] = form
 
-    elif profile in event.calendar.can_read.all():
+    elif profile in event.calendar.readers.all():
         if request.method == "POST":
             context['access_denied'] = ("You don't have access to "
                     + "edit this event.")

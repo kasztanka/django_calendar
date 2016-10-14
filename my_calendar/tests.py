@@ -177,6 +177,7 @@ class LogoutViewTest(TestCase):
 class DayViewTest(BaseTest):
 
     def setUp(self):
+        self.user_registers()
         self.today = datetime.datetime.now().date()
         self.base_url = '/day'
         self.date_url()
@@ -208,13 +209,12 @@ class DayViewTest(BaseTest):
         self.assertIn('calendars', response.context)
 
     def test_passes_dict_with_data_about_events(self):
-        self.user_registers()
         profile = UserProfile.objects.get(user=get_user(self.client))
-        calendar = MyCalendar.objects.create(owner=profile, color="#000FFF")
+        calendar_ = MyCalendar.objects.create(owner=profile, color="#000FFF")
         start = datetime.datetime.combine(self.today, datetime.time(13, 30))
         start = pytz.utc.localize(start)
         end = start + datetime.timedelta(minutes=30)
-        event = Event.objects.create(calendar=calendar)
+        event = Event.objects.create(calendar=calendar_)
         guest = Guest.objects.create(event=event, user=profile)
         settings = EventCustomSettings.objects.create(guest=guest,
             start=start, end=end, all_day=False)
@@ -236,20 +236,19 @@ class DayViewTest(BaseTest):
         top = (start - beginning).total_seconds() / (24 * 60 * 60)
         self.assertEqual(height, dict_['height'])
         self.assertEqual(top, dict_['top'])
-        self.assertEqual(calendar.color, dict_['color'])
-        self.assertEqual(calendar.pk, dict_['class'])
+        self.assertEqual(calendar_.color, dict_['color'])
+        self.assertEqual(calendar_.pk, dict_['class'])
 
     def test_event_height_when_time_change(self):
-        self.user_registers()
         profile = UserProfile.objects.get(user=get_user(self.client))
-        calendar = MyCalendar.objects.create(owner=profile, color="#000FFF")
+        calendar_ = MyCalendar.objects.create(owner=profile, color="#000FFF")
         europe = pytz.timezone(profile.get_timezone_display())
         time_change = datetime.date(2016, 10, 30)
         start = datetime.datetime.combine(time_change, datetime.time(0, 0))
         start = europe.localize(start)
         end = datetime.datetime.combine(time_change, datetime.time(4, 0))
         end = europe.localize(end)
-        event = Event.objects.create(calendar=calendar)
+        event = Event.objects.create(calendar=calendar_)
         guest = Guest.objects.create(event=event, user=profile)
         settings = EventCustomSettings.objects.create(guest=guest,
             start=start, end=end, all_day=False)
@@ -271,17 +270,25 @@ class DayViewTest(BaseTest):
 class MonthViewTest(DayViewTest):
 
     def setUp(self):
+        self.user_registers()
         self.today = datetime.datetime.now().date()
         self.base_url = '/month'
         self.date_url()
         self.template = 'my_calendar/month.html'
         self.function = month
 
+    def get_days_from_context(self, context):
+        days = set()
+        for day_dict in context['days']:
+            days.add(day_dict['day'])
+        return days
+
     def passes_days_if_date_is_today(self, response):
         first = datetime.date(self.today.year, self.today.month, 1)
         some = datetime.date(self.today.year, self.today.month, 25)
-        self.assertIn(first, response.context['days'])
-        self.assertIn(some, response.context['days'])
+        days = self.get_days_from_context(response.context)
+        self.assertIn(first, days)
+        self.assertIn(some, days)
 
     def test_passes_days_of_month_in_context(self):
         response = self.client.get(self.url)
@@ -291,9 +298,10 @@ class MonthViewTest(DayViewTest):
         response = self.client.get(self.base_url + '/2015-02-01')
         first = datetime.date(2015, 1, 26)
         last = datetime.date(2015, 3, 1)
-        self.assertIn(first, response.context['days'])
-        self.assertIn(last, response.context['days'])
-        self.assertEqual(len(response.context['days']), 35)
+        days = self.get_days_from_context(response.context)
+        self.assertIn(first, days)
+        self.assertIn(last, days)
+        self.assertEqual(len(days), 35)
 
     def test_passes_correct_earlier_and_later(self):
         response = self.client.get(self.base_url + '/2016-01-12')
@@ -305,17 +313,24 @@ class MonthViewTest(DayViewTest):
 class WeekViewTest(DayViewTest):
 
     def setUp(self):
+        self.user_registers()
         self.today = datetime.datetime.now().date()
         self.base_url = '/week'
         self.date_url()
         self.template = 'my_calendar/week.html'
         self.function = week
 
+    def get_days_from_context(self, context):
+        days = set()
+        for day_dict in context['days']:
+            days.add(day_dict['day'])
+        return days
+
     def passes_days_if_date_is_today(self, response):
-        previous = self.today - datetime.timedelta(days=1)
-        next = self.today + datetime.timedelta(days=1)
-        self.assertTrue(previous in response.context['days']
-            or next in response.context['days'])
+        yesterday = self.today - datetime.timedelta(days=1)
+        tommorow = self.today + datetime.timedelta(days=1)
+        days = self.get_days_from_context(response.context)
+        self.assertTrue(yesterday in days or tommorow in days)
 
     def test_passes_days_of_week_in_context(self):
         response = self.client.get(self.url)
@@ -325,9 +340,10 @@ class WeekViewTest(DayViewTest):
         response = self.client.get(self.base_url + '/2015-02-01')
         first = datetime.date(2015, 1, 26)
         last = datetime.date(2015, 2, 1)
-        self.assertIn(first, response.context['days'])
-        self.assertIn(last, response.context['days'])
-        self.assertEqual(len(response.context['days']), 7)
+        days = self.get_days_from_context(response.context)
+        self.assertIn(first, days)
+        self.assertIn(last, days)
+        self.assertEqual(len(days), 7)
 
     def test_passes_correct_earlier_and_later(self):
         response = self.client.get(self.url)
@@ -398,19 +414,19 @@ class NewCalendarTest(BaseTest):
         response = self.client.get(self.url)
         self.assertIn('calendar_form', response.context)
 
-    def test_saves_can_read_and_can_modify_users(self):
+    def test_saves_readers_and_modifiers(self):
         user_2 = User.objects.create(username="Other")
         profile = UserProfile.objects.create(user=user_2)
         response = self.client.post(
             self.url, data={
                 'name': 'Pretty face',
                 'color': '#FF0000',
-                'can_read': ['2'],
-                'can_modify': ['2'],
+                'readers': ['2'],
+                'modifiers': ['2'],
         })
         calendar_ = MyCalendar.objects.first()
-        self.assertIn(profile, calendar_.can_read.all())
-        self.assertIn(profile, calendar_.can_modify.all())
+        self.assertIn(profile, calendar_.readers.all())
+        self.assertIn(profile, calendar_.modifiers.all())
 
     def test_cannot_save_not_existing_user(self):
         calendar_amount = MyCalendar.objects.count()
@@ -419,16 +435,16 @@ class NewCalendarTest(BaseTest):
             self.url, data={
                 'name': 'Pretty face',
                 'color': '#FF0000',
-                'can_read': ['2'],
-                'can_modify': ['2'],
+                'readers': ['2'],
+                'modifiers': ['2'],
         })
         self.assertEqual(calendar_amount, MyCalendar.objects.count())
         if calendar_amount:
             calendar_ = MyCalendar.objects.first()
-            self.assertEqual(list(calendar_.can_read.all()), [profile])
-            self.assertEqual(list(calendar_.can_modify.all()), [profile])
+            self.assertEqual(list(calendar_.readers.all()), [profile])
+            self.assertEqual(list(calendar_.modifiers.all()), [profile])
 
-    def test_owner_by_default_in_can_modify_and_can_read(self):
+    def test_owner_by_default_in_modifiers_and_readers(self):
         # test only for new_event view
         if MyCalendar.objects.count():
             return
@@ -439,15 +455,15 @@ class NewCalendarTest(BaseTest):
                 'color': '#FF0000',
         })
         calendar_ = MyCalendar.objects.first()
-        self.assertIn(profile, calendar_.can_read.all())
-        self.assertIn(profile, calendar_.can_modify.all())
+        self.assertIn(profile, calendar_.readers.all())
+        self.assertIn(profile, calendar_.modifiers.all())
 
-    def test_owner_not_selectable_in_can_modify_and_can_read(self):
+    def test_owner_not_selectable_in_modifiers_and_readers(self):
         profile = UserProfile.objects.get(user=get_user(self.client))
         response = self.client.get(self.url)
         calendar_form = response.context['calendar_form']
-        self.assertNotIn(profile, calendar_form.fields['can_read'].queryset)
-        self.assertNotIn(profile, calendar_form.fields['can_read'].queryset)
+        self.assertNotIn(profile, calendar_form.fields['readers'].queryset)
+        self.assertNotIn(profile, calendar_form.fields['readers'].queryset)
 
 
 class CalendarViewTest(NewCalendarTest):
@@ -457,8 +473,6 @@ class CalendarViewTest(NewCalendarTest):
         self.profile = UserProfile.objects.get(user=get_user(self.client))
         self.calendar = MyCalendar.objects.create(owner=self.profile,
             name="Cindirella", color="E81AD4")
-        self.calendar.can_read.add(self.profile)
-        self.calendar.can_modify.add(self.profile)
         self.url = '/calendar/1'
         self.template = 'my_calendar/calendar.html'
         self.function = calendar_view
@@ -624,10 +638,10 @@ class NewEventTest(BaseTest):
             self.assertEqual(settings.title, 'Radio Gaga')
             self.assertEqual(response.context['access_denied'],
                 "You don't have access to this event.")
-        profile = UserProfile.objects.get(user=get_user(self.client))
+        not_owner_profile = UserProfile.objects.get(user=get_user(self.client))
         # users that can read others calendars_amount
         # also shouldn't have access to modifications of events
-        self.calendar.can_read.add(profile)
+        self.calendar.readers.add(not_owner_profile)
         response = self.client.post(
             self.url, data={
                 'save_event':1,
@@ -656,7 +670,7 @@ class NewEventTest(BaseTest):
         response = self.client.get('/logout')
         self.user_registers(username="Other")
         profile = UserProfile.objects.get(user=get_user(self.client))
-        self.calendar.can_modify.add(profile)
+        self.calendar.modifiers.add(profile)
         response = self.client.post(
             self.url, data={
                 'save_event':1,
@@ -686,8 +700,6 @@ class EventViewTest(NewEventTest):
         profile = UserProfile.objects.get(user=get_user(self.client))
         self.calendar = MyCalendar.objects.create(owner=profile,
             name="Cindirella", color="E81AD4")
-        self.calendar.can_read.add(profile)
-        self.calendar.can_modify.add(profile)
         self.event = Event.objects.create(calendar=self.calendar)
         self.guest = Guest.objects.create(event=self.event, user=profile,
             attending_status=Guest.MAYBE)
@@ -1010,21 +1022,33 @@ class EventCustomSettingsTest(TestCase):
 
 class MyCalendarTest(TestCase):
 
-    def test_no_duplicates_in_can_read_and_can_modify_fields(self):
+    def test_owner_added_to_readers_during_creation(self):
         user_ = User.objects.create(username="Owner")
         profile = UserProfile.objects.create(user=user_)
-        calendar = MyCalendar.objects.create(owner=profile,
+        calendar_ = MyCalendar.objects.create(owner=profile,
+            name="Cindirella", color="E81AD4")
+        self.assertIn(profile, calendar_.readers.all())
+        self.assertEqual(len(calendar_.readers.all()), 1)
+
+    def test_owner_added_to_modifiers_during_creation(self):
+        user_ = User.objects.create(username="Owner")
+        profile = UserProfile.objects.create(user=user_)
+        calendar_ = MyCalendar.objects.create(owner=profile,
+            name="Cindirella", color="E81AD4")
+        self.assertIn(profile, calendar_.modifiers.all())
+        self.assertEqual(len(calendar_.modifiers.all()), 1)
+
+    def test_no_duplicates_in_readers_and_modifiers(self):
+        user_ = User.objects.create(username="Owner")
+        profile = UserProfile.objects.create(user=user_)
+        calendar_ = MyCalendar.objects.create(owner=profile,
             name="Cindirella", color="E81AD4")
 
-        calendar.can_read.add(profile)
-        calendar.can_read.add(profile)
-        self.assertEqual(len(calendar.can_read.all()), 1)
+        calendar_.readers.add(profile)
+        self.assertEqual(len(calendar_.readers.all()), 1)
 
-        calendar.can_modify.add(profile)
-        calendar.can_modify.add(profile)
-        self.assertEqual(len(calendar.can_modify.all()), 1)
-
-
+        calendar_.modifiers.add(profile)
+        self.assertEqual(len(calendar_.modifiers.all()), 1)
 
 
 class GuestFormTest(TestCase):
