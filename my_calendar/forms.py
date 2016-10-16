@@ -7,6 +7,11 @@ from django import forms
 
 from .models import EventCustomSettings, Guest, UserProfile, MyCalendar
 
+WRONG_TIMEZONE_ERROR = "Wrong timezone was chosen."
+END_BEFORE_START_ERROR = "The event must end after its beginning."
+DUPLICATE_GUEST_ERROR = "This user is already guest added to this event."
+WRONG_ATTENDING_STATUS_ERROR = "Wrong attending status was chosen."
+
 
 class RegisterForm(forms.ModelForm):
     password = forms.CharField(widget=forms.PasswordInput())
@@ -22,7 +27,7 @@ class ProfileForm(forms.ModelForm):
         model = UserProfile
         fields = ('timezone',)
         error_messages = {
-            'timezone': {'invalid_choice': "Wrong timezone was chosen."}
+            'timezone': {'invalid_choice': WRONG_TIMEZONE_ERROR}
         }
 
 
@@ -61,7 +66,7 @@ class EventForm(forms.ModelForm):
         model = EventCustomSettings
         fields = ('title', 'desc', 'all_day', 'timezone')
         error_messages = {
-            'timezone': {'invalid_choice': "Wrong timezone was chosen."}
+            'timezone': {'invalid_choice': WRONG_TIMEZONE_ERROR}
         }
         labels = {
             'desc': 'Description',
@@ -97,10 +102,10 @@ class EventForm(forms.ModelForm):
 
         if self.data.get('all_day', False):
             if start.date() > end.date():
-                self._errors['end_date'] = ['The event must end after its beginning.']
+                self.add_error('end_date', END_BEFORE_START_ERROR)
                 return False
         elif start > end:
-            self._errors['end_date'] = ['The event must end after its beginning.']
+            self.add_error('end_date', END_BEFORE_START_ERROR)
             return False
         return True
 
@@ -124,6 +129,9 @@ class AttendingStatusForm(forms.ModelForm):
     class Meta:
         model = Guest
         fields = ('attending_status',)
+        error_messages = {
+            'attending_status': {'invalid_choice': WRONG_ATTENDING_STATUS_ERROR}
+        }
 
 
 class GuestForm(forms.ModelForm):
@@ -140,6 +148,4 @@ class GuestForm(forms.ModelForm):
         try:
             self.instance.validate_unique()
         except ValidationError as e:
-            e.error_dict = {'user': [("This user is already guest added to "
-            + "this event.")]}
-            self._update_errors(e)
+            self.add_error('user', DUPLICATE_GUEST_ERROR)

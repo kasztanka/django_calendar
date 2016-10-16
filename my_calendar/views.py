@@ -316,6 +316,7 @@ def event_view(request, event_pk=None):
                     + "edit this event.")
         context['event'] = event.get_owner_settings()
         context['guests'] = Guest.objects.filter(event=event)
+        
     else:
         context['access_denied'] = "You don't have access to this event."
     return render(request, 'my_calendar/event.html', context)
