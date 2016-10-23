@@ -8,6 +8,7 @@
         <link rel="stylesheet" href="https://code.jquery.com/ui/1.12.0/themes/base/jquery-ui.css">
         <script src="https://code.jquery.com/jquery-1.12.4.js"></script>
         <script src="https://code.jquery.com/ui/1.12.0/jquery-ui.js"></script>
+        <link href="/static/base.css" rel="stylesheet" media="screen">
         <script>
         $( function() {
         $( ".datepicker" ).datepicker({
@@ -19,7 +20,7 @@
         </script>
     </head>
     <body>
-        <h1>My Calendar</h1>
+        <h1 id="id_page_title">My Calendar</h1>
         {% if user.is_authenticated %}
             <a href="{% url 'my_calendar:profile' username=user.username %}"><p>Hey, {{ user.username }}!</p></a>
             <a href="{% url 'my_calendar:user_logout' %}?nextpage={{ request.path }}">
