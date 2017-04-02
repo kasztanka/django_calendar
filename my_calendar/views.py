@@ -2,7 +2,8 @@ import datetime
 import pytz
 import re
 
-from django.shortcuts import get_object_or_404, render, redirect
+from django.shortcuts import get_object_or_404, render, redirect, reverse
+from django.utils.deprecation import MiddlewareMixin
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.models import User
 
@@ -13,7 +14,22 @@ from .additional_functions import (COLORS, fill_month, fill_week,
     get_events_from_days, get_number_and_name_of_timezone)
 
 
+class AuthRequiredMiddleware(MiddlewareMixin):
+    def process_request(self, request):
+        allowed_urls = [
+            reverse('my_calendar:index'),
+            reverse('my_calendar:user_login'),
+            reverse('my_calendar:register'),
+        ]
+
+        if request.path not in allowed_urls and not request.user.is_authenticated():
+            return redirect('my_calendar:index')
+        return None
+
+
 def index(request):
+    if request.user.is_authenticated():
+        return redirect('my_calendar:profile', username=request.user.username)
     return render(request, "my_calendar/index.html")
 
 def register(request):
@@ -51,14 +67,13 @@ def profile(request, username):
 
 def user_login(request):
     context = {}
-    next_page = request.GET.get("nextpage", "my_calendar:index")
     if request.method == "POST":
         username = request.POST['username']
         password = request.POST['password']
         user = authenticate(username=username, password=password)
         if user:
             login(request, user)
-            return redirect(next_page)
+            return redirect('my_calendar:profile', username=username)
         else:
             context['login_errors'] = "Wrong username or password."
     return render(request, 'my_calendar/index.html', context)

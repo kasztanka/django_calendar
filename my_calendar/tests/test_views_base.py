@@ -32,7 +32,7 @@ class BaseViewTest(TestCase):
                 'email': 'example@email.com',
                 'first_name': 'John',
                 'last_name': 'Doe',
-                'timezone': '374', # 374 is 'Europe/Warsaw'
+                'timezone': '374',
         })
         return response
 

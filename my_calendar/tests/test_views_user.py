@@ -7,6 +7,15 @@ from my_calendar.models import UserProfile
 from .test_views_base import BaseViewTest
 
 
+class AnonymousUserTest(TestCase):
+
+    def test_redirects_to_index(self):
+        urls = ['/pierogi', '/profile/babajaga']
+        for url in urls:
+            response = self.client.get(url, follow=True)
+            self.assertRedirects(response, '/')
+
+
 class RegisterViewTest(BaseViewTest):
 
     def setUp(self):
@@ -57,9 +66,10 @@ class RegisterViewTest(BaseViewTest):
 class ProfileViewTest(BaseViewTest):
 
     def setUp(self):
-        correct_user = User.objects.create(username='pretty_woman')
-        self.correct_profile = UserProfile.objects.create(user=correct_user)
-        other_user = User.objects.create()
+        self.user_registers('pretty_woman')
+        correct_user = User.objects.get(username='pretty_woman')
+        self.correct_profile = UserProfile.objects.get(user=correct_user)
+        other_user = User.objects.create(username='john')
         self.other_profile = UserProfile.objects.create(user=other_user)
         self.url = '/profile/{}'.format(self.correct_profile.user.username)
         self.template = 'my_calendar/profile.html'
@@ -73,28 +83,33 @@ class ProfileViewTest(BaseViewTest):
 class LoginViewTest(TestCase):
 
     def setUp(self):
-        self.user = User.objects.create(username='pretty_woman', password='cow')
+        self.username = 'pretty_woman'
+        self.password = 'cow'
+        self.user = User.objects.create(username=self.username, password=self.password)
         self.user.set_password(self.user.password)
         self.user.save()
         profile = UserProfile.objects.create(user=self.user)
         profile.save()
 
-    def test_user_can_login(self):
+    def login(self, username, password):
         response = self.client.post(
             '/login', data={
-            'username': 'pretty_woman',
-            'password': 'cow'
+            'username': username,
+            'password': password
             }, follow=True)
+        return response
+
+    def test_user_can_login(self):
+        self.login(self.username, self.password)
         user = get_user(self.client)
         self.assertEqual(user, self.user)
-        self.assertContains(response, "Hey, pretty_woman!")
+
+    def test_redirects_to_profile_after_login(self):
+        response = self.login(self.username, self.password)
+        self.assertRedirects(response, '/profile/' + self.username)
 
     def test_passes_erros_after_wrong_login(self):
-        response = self.client.post(
-            '/login', data={
-            'username': 'pretty_woman',
-            'password': 'bull'
-            })
+        response = self.login(self.username, 'wrong')
         self.assertTrue('login_errors' in response.context)
         self.assertContains(response, "Wrong username or password.")
 

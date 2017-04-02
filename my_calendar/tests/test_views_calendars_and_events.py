@@ -475,11 +475,6 @@ class EventViewTest(NewEventViewTest):
         form = response.context['attending_status_form']
         self.assertEqual(form.initial['attending_status'], Guest.UNKNOWN)
 
-        self.client.get('/logout')
-        self.user_registers(username="Human")
-        response = self.client.get(self.url)
-        self.assertFalse('attending_status_form' in response.context)
-
     def test_guest_can_see_event(self):
         self.client.get('/logout')
         self.user_registers(username="Human")
