@@ -1,6 +1,6 @@
 {% extends 'my_calendar/base.html' %}
 {% load staticfiles %}
-{% block user_content %}
+{% block content %}
 
     <form method="POST" id="event_form">
         {% csrf_token %}
@@ -10,4 +10,4 @@
     </form>
     <script src="{% static 'disable_event_inputs.js' %}"></script>
 
-{% endblock user_content %}
+{% endblock content %}

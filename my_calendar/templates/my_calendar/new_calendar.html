@@ -1,11 +1,11 @@
 {% extends 'my_calendar/base.html' %}
 {% load staticfiles %}
-{% block user_content %}
+{% block content %}
 
     {% if form_errors %}
         <p>{{ form_errors }}</p>
     {% endif %}
-    
+
     <form method="POST" id="calendar_form">
         {% csrf_token %}
         <div>
@@ -38,4 +38,4 @@
         const input = document.getElementById("id_color");
         input.value = colors[0].getAttribute("name");
     </script>
-{% endblock user_content %}
+{% endblock content %}

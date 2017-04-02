@@ -11,43 +11,25 @@
         <link href="/static/base.css" rel="stylesheet" media="screen">
         <script>
         $( function() {
-        $( ".datepicker" ).datepicker({
-          showOtherMonths: true,
-          selectOtherMonths: true,
-          firstDay: 1,
-        });
+            $( ".datepicker" ).datepicker({
+              showOtherMonths: true,
+              selectOtherMonths: true,
+              firstDay: 1,
+            });
         } );
         </script>
     </head>
     <body>
-        <h1 id="id_page_title">My Calendar</h1>
         {% if user.is_authenticated %}
-            <a href="{% url 'my_calendar:profile' username=user.username %}"><p>Hey, {{ user.username }}!</p></a>
+        <nav>
+            Navigation bar
             <a href="{% url 'my_calendar:user_logout' %}?nextpage={{ request.path }}">
                 <button id="logout">Log out</button>
             </a>
-            {% block user_content %}
-            {% endblock user_content %}
-        {% else %}
-            {% if not 'register' in request.path %}
-                {% if login_errors %}
-                    <p>{{ login_errors }}</p>
-                {% endif %}
-                <form method="POST" id="login_form" action="{% url 'my_calendar:user_login' %}?nextpage={{ request.path }}">
-                    {% csrf_token %}
-                    <p><label for="id_username">Username:</label>
-                    <input id="id_username" maxlength="150" name="username" type="text" required /></p>
-                    <p><label for="id_password">Password:</label>
-                    <input id="id_password" name="password" type="password" required /></p>
-                    <button type="submit">Sign in</button>
-                </form>
-                <p>You haven't signed up yet?</p>
-                <a id='registration' href="{% url 'my_calendar:register' %}">Register now!</a>
-            {% endif %}
-            {% block content %}
-            {% endblock content %}
+        </nav>
         {% endif %}
-        {% block for_all %}
-        {% endblock for_all %}
+        <h1 id="id_page_title">My Calendar</h1>
+        {% block content %}
+        {% endblock content %}
     </body>
 </html>

@@ -1,6 +1,6 @@
 {% extends 'my_calendar/base.html' %}
 {% load staticfiles %}
-{% block user_content %}
+{% block content %}
 
     {% if access_denied %}
         <div>{{ access_denied }}</div>
@@ -77,4 +77,4 @@
         </script>
         <script src="{% static 'form_display.js' %}"></script>
     {% endif %}
-{% endblock user_content %}
+{% endblock content %}

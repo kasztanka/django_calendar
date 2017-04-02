@@ -1,6 +1,6 @@
 {% extends 'my_calendar/base.html' %}
 {% load staticfiles %}
-{% block user_content %}
+{% block content %}
 
     {% if date_errors %}
         <div>{{ date_errors }}</div>
@@ -90,4 +90,4 @@
     </script>
     <script src="{% static 'display_of_events.js' %}"></script>
 
-{% endblock %}
+{% endblock content %}

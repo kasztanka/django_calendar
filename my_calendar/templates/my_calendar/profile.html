@@ -1,6 +1,6 @@
 {% extends 'my_calendar/base.html' %}
 {% load tz %}
-{% block user_content %}
+{% block content %}
     <h2>{{ profile.user.first_name}} {{ profile.user.last_name }}</h2>
     <div>{{ profile.user.email }}</div>
     <div>Timezone: {{ profile.get_timezone_display }}</div>
@@ -24,4 +24,4 @@
         {% endfor %}
     </div>
 
-{% endblock user_content %}
+{% endblock content %}
