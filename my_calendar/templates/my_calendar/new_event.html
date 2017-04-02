@@ -1,39 +1,13 @@
 {% extends 'my_calendar/base.html' %}
+{% load staticfiles %}
 {% block user_content %}
-<form method="POST" id="event_form">
-    {% csrf_token %}
-    {{ event_form.as_p }}
-    {{ attending_status_form.as_p }}
-    <button type="submit" id="save_event" onclick="EnableInputs();">Save event</button>
-</form>
-<script>
-    var all_day = document.getElementById("id_all_day")
-    var start_hour = document.getElementById("id_start_hour")
-    var end_hour = document.getElementById("id_end_hour")
-    var timezone = document.getElementById("id_timezone")
-    var elements = [start_hour, end_hour, timezone]
-    if (all_day.checked) {
-        for (var i = 0; i < elements.length; i++) {
-                elements[i].disabled = true;
-            }
-    }
-    all_day.onclick = function() {
-        if (all_day.checked) {
-            for (var i = 0; i < elements.length; i++) {
-                elements[i].disabled = true;
-            }
-        }
-        else {
-            for (var i = 0; i < elements.length; i++) {
-                elements[i].disabled = false;
-            }
-        }
-    }
-    function EnableInputs() {
-        for (var i = 0; i < elements.length; i++) {
-            elements[i].disabled = false;
-        }
-    }
 
-</script>
+    <form method="POST" id="event_form">
+        {% csrf_token %}
+        {{ event_form.as_p }}
+        {{ attending_status_form.as_p }}
+        <button type="submit" id="save_event" onclick="enableInputs();">Save event</button>
+    </form>
+    <script src="{% static 'disable_event_inputs.js' %}"></script>
+
 {% endblock user_content %}

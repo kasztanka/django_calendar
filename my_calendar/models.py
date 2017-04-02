@@ -12,9 +12,9 @@ class UserProfile(models.Model):
     user = models.OneToOneField(User)
     TIMEZONES = list(common_timezones_set)
     TIMEZONES.sort()
-    TIMEZONES = ((i + 1, tz) for i, tz in enumerate(TIMEZONES))
-    # 436 is UTC
-    timezone = models.IntegerField(choices=TIMEZONES, default=436)
+    TIMEZONES = tuple((i + 1, tz) for i, tz in enumerate(TIMEZONES))
+    UTC_index = next(x[0] for x in reversed(TIMEZONES) if x[1] == 'UTC')
+    timezone = models.IntegerField(choices=TIMEZONES, default=UTC_index)
 
     def get_own_calendars(self):
         """
@@ -164,9 +164,9 @@ class EventCustomSettings(models.Model):
     desc = models.CharField(max_length=1000, default="", blank=True)
     TIMEZONES = list(common_timezones_set)
     TIMEZONES.sort()
-    TIMEZONES = ((i + 1, tz) for i, tz in enumerate(TIMEZONES))
-    # 436 is UTC
-    timezone = models.IntegerField(choices=TIMEZONES, default=436)
+    TIMEZONES = tuple((i + 1, tz) for i, tz in enumerate(TIMEZONES))
+    UTC_index = next(x[0] for x in reversed(TIMEZONES) if x[1] == 'UTC')
+    timezone = models.IntegerField(choices=TIMEZONES, default=UTC_index)
     start = models.DateTimeField()
     end = models.DateTimeField()
     all_day = models.BooleanField()

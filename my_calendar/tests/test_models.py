@@ -15,7 +15,11 @@ class UserProfileTest(TestCase):
     def test_default_timezone_utc(self):
         user = User.objects.create(username='John')
         profile = UserProfile.objects.create(user=user)
-        self.assertEqual(profile.timezone, 436)
+        TIMEZONES = list(pytz.common_timezones_set)
+        TIMEZONES.sort()
+        TIMEZONES = tuple((i + 1, tz) for i, tz in enumerate(TIMEZONES))
+        UTC_index = next(x[0] for x in reversed(TIMEZONES) if x[1] == 'UTC')
+        self.assertEqual(profile.timezone, UTC_index)
         self.assertEqual(profile.get_timezone_display(), 'UTC')
 
 

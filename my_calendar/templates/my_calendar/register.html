@@ -1,13 +1,13 @@
 {% extends 'my_calendar/base.html' %}
 {% block content %}
-<p>Registration</p>
-<form method="POST" id="register_form">
-    {% csrf_token %}
-    {{ register_form.as_p }}
-    {{ profile_form.as_p }}
-    <button type="submit">Sign up</button>
-</form>
-{% endblock content %}
-{% block user_content %}
-<p>You already have an account. Log out if you want another.</p>
+    <div>Registration</div>
+    <form method="POST" id="register_form">
+        {% csrf_token %}
+        {{ register_form.as_p }}
+        {{ profile_form.as_p }}
+        <button type="submit">Sign up</button>
+    </form>
+    {% endblock content %}
+    {% block user_content %}
+    <div>You already have an account. Log out if you want another.</div>
 {% endblock user_content %}

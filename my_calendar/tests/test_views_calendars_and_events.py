@@ -34,7 +34,7 @@ class NewCalendarViewTest(BaseViewTest):
                 'color': '#FF0000',
         })
         self.assertEqual(MyCalendar.objects.count(), 0)
-        self.assertIn('errors', response.context)
+        self.assertIn('form_errors', response.context)
 
     def test_checks_color_regex(self):
         calendars_amount = MyCalendar.objects.count()
@@ -43,19 +43,19 @@ class NewCalendarViewTest(BaseViewTest):
                 'name': 'Name',
                 'color': '#FF000',
         })
-        self.assertIn('errors', response.context)
+        self.assertIn('form_errors', response.context)
         response = self.client.post(
             self.url, data={
                 'name': 'Name',
                 'color': '#FF0ZZZ',
         })
-        self.assertIn('errors', response.context)
+        self.assertIn('form_errors', response.context)
         response = self.client.post(
             self.url, data={
                 'name': 'Name',
                 'color': '2FFE000',
         })
-        self.assertIn('errors', response.context)
+        self.assertIn('form_errors', response.context)
         self.assertEqual(MyCalendar.objects.count(), calendars_amount)
 
     def test_after_saving_calendar_goes_to_its_site(self):
@@ -144,7 +144,7 @@ class CalendarViewTest(NewCalendarViewTest):
         calendar_ = MyCalendar.objects.first()
         self.assertEqual(calendar_.name, name)
         self.assertEqual(MyCalendar.objects.count(), 1)
-        self.assertIn('errors', response.context)
+        self.assertIn('form_errors', response.context)
 
     def test_after_saving_calendar_goes_to_its_site(self):
         response = self.client.post(

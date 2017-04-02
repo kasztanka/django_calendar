@@ -150,9 +150,9 @@ def new_calendar(request):
         if request.method == "POST":
             pattern = re.compile("^#[A-Fa-f0-9]{6}$")
             if not request.POST['name']:
-                context['errors'] = "Name of calendar is required."
+                context['form_errors'] = "Name of calendar is required."
             elif not pattern.match(request.POST['color']):
-                context['errors'] = ("Color has to be hexadecimal with hash "
+                context['form_errors'] = ("Color has to be hexadecimal with hash "
                     + "at the beginning.")
             elif calendar_form.is_valid():
                 name = request.POST['name']
@@ -185,9 +185,9 @@ def calendar_view(request, cal_pk):
                 if request.method == "POST":
                     pattern = re.compile("^#[A-Fa-f0-9]{6}$")
                     if not request.POST['name']:
-                        context['errors'] = "Name of calendar is required."
+                        context['form_errors'] = "Name of calendar is required."
                     elif not pattern.match(request.POST['color']):
-                        context['errors'] = ("Color has to be hexadecimal with "
+                        context['form_errors'] = ("Color has to be hexadecimal with "
                             + "hash at the beginning.")
                     else:
                         calendar_.name = request.POST['name']
@@ -316,7 +316,7 @@ def event_view(request, event_pk=None):
                     + "edit this event.")
         context['event'] = event.get_owner_settings()
         context['guests'] = Guest.objects.filter(event=event)
-        
+
     else:
         context['access_denied'] = "You don't have access to this event."
     return render(request, 'my_calendar/event.html', context)
