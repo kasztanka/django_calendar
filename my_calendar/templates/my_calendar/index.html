@@ -1,16 +1,29 @@
 {% extends 'my_calendar/base.html' %}
 {% block content %}
-    {% if login_errors %}
-        <p>{{ login_errors }}</p>
-    {% endif %}
-    <form method="POST" id="login_form" action="{% url 'my_calendar:user_login' %}?nextpage={{ request.path }}">
-        {% csrf_token %}
-        <p><label for="id_username">Username:</label>
-        <input id="id_username" maxlength="150" name="username" type="text" required /></p>
-        <p><label for="id_password">Password:</label>
-        <input id="id_password" name="password" type="password" required /></p>
-        <button type="submit">Sign in</button>
-    </form>
-    <p>You haven't signed up yet?</p>
-    <a id='registration' href="{% url 'my_calendar:register' %}">Register now!</a>
+    <div class="row">
+        <div class="col-lg-6">
+            <h1 class="large-title">Wielofunkcyjny kalendarz dla każdego</h1>
+        </div>
+        <div class="col-lg-6">
+            <div class="signin-container">
+                <h2 class="form-signin-heading">Sign in</h2>
+                <form method="POST" id="login-form" action="{% url 'my_calendar:user_login' %}">
+                    {% csrf_token %}
+                    {% if login_errors %}
+                        <p>{{ login_errors }}</p>
+                    {% endif %}
+                    <input id="id_username" class="form-control" placeholder="Username"
+                        maxlength="150" name="username" type="text" required autofocus/>
+                    <input id="id_password" class="form-control" placeholder="Password"
+                        name="password" type="password" required />
+                    <button class="btn btn-lg btn-primary btn-block" type="submit">Sign in</button>
+                </form>
+                <hr>
+                <h4>You haven't signed up yet?</h4>
+                <a id='registration' href="{% url 'my_calendar:register' %}">
+                    <button class="btn btn-lg btn-info btn-block" type="submit">Register now!</button>
+                </a>
+            </div>
+        </div>
+    </div>
 {% endblock content %}
