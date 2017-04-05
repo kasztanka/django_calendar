@@ -5,7 +5,7 @@ from django.core.exceptions import ValidationError
 from django.contrib.auth.models import User
 from django import forms
 
-from .models import EventCustomSettings, Guest, UserProfile, MyCalendar
+from .models import Event, Guest, UserProfile, MyCalendar
 
 WRONG_TIMEZONE_ERROR = "Wrong timezone was chosen."
 END_BEFORE_START_ERROR = "The event must end after its beginning."
@@ -63,7 +63,7 @@ class EventForm(forms.ModelForm):
         widget=forms.TimeInput(attrs={'class': 'time'}))
 
     class Meta:
-        model = EventCustomSettings
+        model = Event
         fields = ('title', 'desc', 'all_day', 'timezone')
         error_messages = {
             'timezone': {'invalid_choice': WRONG_TIMEZONE_ERROR}

@@ -54,13 +54,13 @@ def fill_week(date_):
         first = first + datetime.timedelta(days=1)
     return days
 
-def event_dict(event, settings, start, end, from_calendar):
+def event_dict(event, start, end, from_calendar):
     dict = {
         'pk': event.pk,
-        'title': settings.title,
-        'start': settings.start,
-        'end': settings.end,
-        'all_day': settings.all_day,
+        'title': event.title,
+        'start': event.start,
+        'end': event.end,
+        'all_day': event.all_day,
         'color': event.calendar.color,
     }
     if from_calendar == True:
@@ -69,7 +69,7 @@ def event_dict(event, settings, start, end, from_calendar):
     else:
         dict['class'] = 'other'
         dict['color'] = "#FECA5C"
-    if settings.all_day != True:
+    if event.all_day != True:
         minutes_in_day = 1440
         end_hour = end.hour
         # if end_hour would be 0
@@ -101,15 +101,9 @@ def get_events_from_days(days, user_events, timezone, profile):
                 from_calendar = True
             else:
                 from_calendar = False
-            try:
-                guest = Guest.objects.get(event=ev, user=profile)
-                settings, _ = guest.get_settings()
-            except Guest.DoesNotExist:
-                settings = ev.get_owner_settings()
-            if settings.start < end and settings.end > start:
-                event = event_dict(ev, settings,
-                    max(timezone.normalize(settings.start), start),
-                    min(timezone.normalize(settings.end), end), from_calendar)
+            if ev.start < end and ev.end > start:
+                event = event_dict(ev, max(timezone.normalize(ev.start), start),
+                    min(timezone.normalize(ev.end), end), from_calendar)
                 events.append(event)
         dict_['events'] = events
         final_days.append(dict_)
@@ -117,7 +111,7 @@ def get_events_from_days(days, user_events, timezone, profile):
 
 def get_number_and_name_of_timezone(timezone_source):
     """
-    Timezone source must be UserProfile or EventCustomSettings instance.
+    Timezone source must be UserProfile or Event instance.
     """
     return {
         'tz': pytz.timezone(timezone_source.get_timezone_display()),

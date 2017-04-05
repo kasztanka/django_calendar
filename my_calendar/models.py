@@ -1,4 +1,5 @@
 from pytz import common_timezones_set
+import datetime
 
 from django.contrib.auth.models import User
 from django.db import models
@@ -92,18 +93,18 @@ class Event(models.Model):
     User who creates event should automatically be guest.
     """
     calendar = models.ForeignKey(MyCalendar, on_delete=models.CASCADE)
+    title = models.CharField(max_length=100)
+    desc = models.CharField(max_length=1000, default="", blank=True)
 
-    def get_owner_settings(self):
-        """
-        Method can be used to get owner's settings.
-        """
-        guest = Guest.objects.filter(
-            event=self
-        ).get(
-            user=self.calendar.owner
-        )
-        return EventCustomSettings.objects.get(guest=guest)
+    TIMEZONES = list(common_timezones_set)
+    TIMEZONES.sort()
+    TIMEZONES = tuple((i + 1, tz) for i, tz in enumerate(TIMEZONES))
+    UTC_index = next(x[0] for x in reversed(TIMEZONES) if x[1] == 'UTC')
+    timezone = models.IntegerField(choices=TIMEZONES, default=UTC_index)
 
+    start = models.DateTimeField()
+    end = models.DateTimeField()
+    all_day = models.BooleanField(default=False)
 
 class Guest(models.Model):
     """
@@ -132,39 +133,3 @@ class Guest(models.Model):
         unique_together = ('event', 'user')
         # unique_together changes default ordering e.g. for objects.all()
         ordering = ['id']
-
-    def get_settings(self):
-        """
-        Method can be used to get guest's custom settings.
-        If he doesn't have any, method returns settings of the owner.
-        Also it returns the info which settings are returned.
-        """
-        settings_belong_to_owner = False
-        try:
-            settings = EventCustomSettings.objects.get(guest=self)
-        except EventCustomSettings.DoesNotExist:
-            settings = self.event.get_owner_settings()
-            settings_belong_to_owner = True
-        return settings, settings_belong_to_owner
-
-
-class EventCustomSettings(models.Model):
-    """
-    Every guest can edit settings of the event:
-    title, description, timezone, date, time
-    and duration of event (all day or specific hours).
-    Default settings are chosen by owner.
-    Once user changes some settings, he won't be able to see
-    the changes made by the owner of the event.
-    """
-    guest = models.OneToOneField(Guest, on_delete=models.CASCADE)
-    title = models.CharField(max_length=100)
-    desc = models.CharField(max_length=1000, default="", blank=True)
-    TIMEZONES = list(common_timezones_set)
-    TIMEZONES.sort()
-    TIMEZONES = tuple((i + 1, tz) for i, tz in enumerate(TIMEZONES))
-    UTC_index = next(x[0] for x in reversed(TIMEZONES) if x[1] == 'UTC')
-    timezone = models.IntegerField(choices=TIMEZONES, default=UTC_index)
-    start = models.DateTimeField()
-    end = models.DateTimeField()
-    all_day = models.BooleanField()

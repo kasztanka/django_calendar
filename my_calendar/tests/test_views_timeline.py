@@ -4,8 +4,7 @@ import pytz
 from django.contrib.auth import get_user
 
 from my_calendar.views import month, week, day
-from my_calendar.models import (UserProfile, MyCalendar, Event, Guest,
-    EventCustomSettings)
+from my_calendar.models import (UserProfile, MyCalendar, Event, Guest)
 from .test_views_base import BaseViewTest
 
 
@@ -49,20 +48,19 @@ class DayViewTest(BaseViewTest):
         start = datetime.datetime.combine(self.today, datetime.time(13, 30))
         start = pytz.utc.localize(start)
         end = start + datetime.timedelta(minutes=30)
-        event = Event.objects.create(calendar=calendar_)
-        guest = Guest.objects.create(event=event, user=profile)
-        settings = EventCustomSettings.objects.create(guest=guest,
+        event = Event.objects.create(calendar=calendar_,
             start=start, end=end, all_day=False)
+        guest = Guest.objects.create(event=event, user=profile)
         response = self.client.get(self.url)
         for dict_ in response.context['days']:
             if dict_['day'] == self.today:
                 dict_ = dict_['events'][0]
                 break
         self.assertEqual(event.pk, dict_['pk'])
-        self.assertEqual(settings.title, dict_['title'])
-        self.assertEqual(settings.start, dict_['start'])
-        self.assertEqual(settings.end, dict_['end'])
-        self.assertEqual(settings.all_day, dict_['all_day'])
+        self.assertEqual(event.title, dict_['title'])
+        self.assertEqual(event.start, dict_['start'])
+        self.assertEqual(event.end, dict_['end'])
+        self.assertEqual(event.all_day, dict_['all_day'])
         height = (end - start).total_seconds() / (24 * 60 * 60)
         # timezone of timeline is a timezone of the user, not event
         europe = pytz.timezone(profile.get_timezone_display())
@@ -83,10 +81,9 @@ class DayViewTest(BaseViewTest):
         start = europe.localize(start)
         end = datetime.datetime.combine(time_change, datetime.time(4, 0))
         end = europe.localize(end)
-        event = Event.objects.create(calendar=calendar_)
-        guest = Guest.objects.create(event=event, user=profile)
-        settings = EventCustomSettings.objects.create(guest=guest,
+        event = Event.objects.create(calendar=calendar_,
             start=start, end=end, all_day=False)
+        guest = Guest.objects.create(event=event, user=profile)
         response = self.client.get(self.base_url + '/2016-10-30')
         for dict_ in response.context['days']:
             if dict_['day'] == time_change:

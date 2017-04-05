@@ -5,8 +5,7 @@ from django.contrib.auth.models import User
 from django.contrib.auth import get_user
 
 from my_calendar.views import new_calendar, calendar_view, event_view, new_event
-from my_calendar.models import (UserProfile, MyCalendar, Event, Guest,
-    EventCustomSettings)
+from my_calendar.models import (UserProfile, MyCalendar, Event, Guest)
 from .test_views_base import BaseViewTest
 
 
@@ -156,9 +155,13 @@ class CalendarViewTest(NewCalendarViewTest):
         self.assertEqual(response.request['PATH_INFO'], self.url)
 
     def test_passes_events_that_belong_to_calendar(self):
-        event = Event.objects.create(calendar=self.calendar)
+        start = pytz.utc.localize(datetime.datetime.now())
+        end = start + datetime.timedelta(minutes=30)
+        event = Event.objects.create(calendar=self.calendar, start=start, end=end,
+            title="Some title", all_day=True)
         second_calendar = MyCalendar.objects.create(owner=self.profile)
-        other_event = Event.objects.create(calendar=second_calendar)
+        other_event = Event.objects.create(calendar=second_calendar, start=start, end=end,
+            title="Some title", all_day=True)
         response = self.client.get(self.url)
         self.assertIn(event, response.context['events'])
         self.assertFalse(other_event in response.context['events'])
@@ -192,9 +195,10 @@ class NewEventViewTest(BaseViewTest):
                 'attending_status': '1',
         })
         self.assertEqual(Event.objects.count(), 1)
-        event = Event.objects.first().get_owner_settings()
+        event = Event.objects.first()
         self.assertEqual(event.title, 'Episode 9')
-        self.assertEqual(event.guest.attending_status, 1)
+        guest = Guest.objects.first()
+        self.assertEqual(guest.attending_status, 1)
 
     def test_redirects_after_saving_event(self):
         response = self.client.post(
@@ -233,7 +237,7 @@ class NewEventViewTest(BaseViewTest):
         start = europe.localize(start).astimezone(utc)
         end = datetime.datetime(2016, 12, 13, 16, 13)
         end = europe.localize(end).astimezone(utc)
-        event = Event.objects.first().get_owner_settings()
+        event = Event.objects.first()
         self.assertContains(response, '15:19')
         self.assertEqual(event.start, start)
         self.assertContains(response, '16:13')
@@ -269,7 +273,7 @@ class NewEventViewTest(BaseViewTest):
         self.assertEqual(form.initial['start_hour'], start.strftime('%H:%M'))
         self.assertEqual(form.initial['end_date'], end.strftime('%m/%d/%Y'))
         self.assertEqual(form.initial['end_hour'], end.strftime('%H:%M'))
-        event = EventCustomSettings(timezone=form.initial['timezone'])
+        event = Event(timezone=form.initial['timezone'])
         self.assertEqual(user_timezone, event.get_timezone_display())
 
     def test_others_cannot_save_event(self):
@@ -291,8 +295,8 @@ class NewEventViewTest(BaseViewTest):
         })
         self.assertEqual(amount, Event.objects.count())
         if amount:
-            settings = Event.objects.first().get_owner_settings()
-            self.assertEqual(settings.title, 'Radio Gaga')
+            event = Event.objects.first()
+            self.assertEqual(event.title, 'Radio Gaga')
             self.assertEqual(response.context['access_denied'],
                 "You don't have access to this event.")
         not_owner_profile = UserProfile.objects.get(user=get_user(self.client))
@@ -314,8 +318,8 @@ class NewEventViewTest(BaseViewTest):
         })
         self.assertEqual(amount, Event.objects.count())
         if amount:
-            settings = Event.objects.first().get_owner_settings()
-            self.assertEqual(settings.title, 'Radio Gaga')
+            event = Event.objects.first()
+            self.assertEqual(event.title, 'Radio Gaga')
             self.assertEqual(response.context['access_denied'],
                 "You don't have access to edit this event.")
         else:
@@ -343,8 +347,8 @@ class NewEventViewTest(BaseViewTest):
         })
         self.assertEqual(amount, Event.objects.count())
         if amount:
-            settings = Event.objects.first().get_owner_settings()
-            self.assertEqual(settings.title, 'Episode 9')
+            event = Event.objects.first()
+            self.assertEqual(event.title, 'Episode 9')
         else:
             self.assertEqual(response.context['access_denied'],
                 "You don't have access to add events to this calendar.")
@@ -357,14 +361,13 @@ class EventViewTest(NewEventViewTest):
         profile = UserProfile.objects.get(user=get_user(self.client))
         self.calendar = MyCalendar.objects.create(owner=profile,
             name="Cindirella", color="E81AD4")
-        self.event = Event.objects.create(calendar=self.calendar)
-        self.guest = Guest.objects.create(event=self.event, user=profile,
-            attending_status=Guest.MAYBE)
         self.start = pytz.utc.localize(datetime.datetime.utcnow())
         self.end = self.start + datetime.timedelta(minutes=30)
-        self.settings = EventCustomSettings.objects.create(
-            guest=self.guest, title='Radio Gaga', desc='Radio Blabla',
+        self.event = Event.objects.create(calendar=self.calendar,
+            title='Radio Gaga', desc='Radio Blabla',
             timezone=374, start=self.start, end=self.end, all_day=True)
+        self.guest = Guest.objects.create(event=self.event, user=profile,
+            attending_status=Guest.MAYBE)
         self.url = '/event/1'
         self.template = 'my_calendar/event.html'
         self.function = event_view
@@ -384,12 +387,13 @@ class EventViewTest(NewEventViewTest):
                 'attending_status': '1',
         })
         self.assertEqual(Event.objects.count(), 1)
-        event = Event.objects.first().get_owner_settings()
+        event = Event.objects.first()
         self.assertEqual(event.title, 'Episode 9')
-        self.assertNotEqual(event.guest.attending_status, 1)
+        guest = Guest.objects.first()
+        self.assertNotEqual(guest.attending_status, 1)
 
     def test_cannot_save_event_with_empty_title_or_dates(self):
-        title = Event.objects.first().get_owner_settings().title
+        title = Event.objects.first().title
         response = self.client.post(
             self.url, data={
                 'save_event':1,
@@ -403,7 +407,7 @@ class EventViewTest(NewEventViewTest):
                 'timezone': '374',
                 'attending_status': '1',
         })
-        event = Event.objects.first().get_owner_settings()
+        event = Event.objects.first()
         self.assertEqual(event.title, title)
         self.assertEqual(Event.objects.count(), 1)
         self.assertIn('title', response.context['event_form'].errors)
@@ -415,14 +419,14 @@ class EventViewTest(NewEventViewTest):
     def test_passes_correct_initial_timezone_and_datetime(self):
         response = self.client.get(self.url)
         form = response.context['event_form']
-        timezone = pytz.timezone(self.settings.get_timezone_display())
+        timezone = pytz.timezone(self.event.get_timezone_display())
         start = self.start.astimezone(timezone)
         end = self.end.astimezone(timezone)
         self.assertEqual(form.initial['start_date'], start.strftime('%m/%d/%Y'))
         self.assertEqual(form.initial['start_hour'], start.strftime('%H:%M'))
         self.assertEqual(form.initial['end_date'], end.strftime('%m/%d/%Y'))
         self.assertEqual(form.initial['end_hour'], end.strftime('%H:%M'))
-        self.assertEqual(self.settings.timezone, form.initial['timezone'])
+        self.assertEqual(self.event.timezone, form.initial['timezone'])
 
     def test_saves_guest(self):
         self.client.get('/logout')
@@ -485,8 +489,7 @@ class EventViewTest(NewEventViewTest):
         self.assertIn('event', response.context)
         self.assertIn('guests', response.context)
         self.assertIn('user_is_guest', response.context)
-        self.assertIn('event_form', response.context)
-        self.assertIn('guest_message', response.context)
+        self.assertIn('attending_status_form', response.context)
 
     def test_saves_attending_status(self):
         response = self.client.post(
@@ -509,31 +512,6 @@ class EventViewTest(NewEventViewTest):
         guest = Guest.objects.get(user=profile, event=self.event)
         self.assertEqual(guest.attending_status, 4)
 
-    def test_guest_can_change_his_settings(self):
-        self.client.get('/logout')
-        self.user_registers(username="Human")
-        profile = UserProfile.objects.get(user=get_user(self.client))
-        guest = Guest.objects.create(user=profile, event=self.event)
-
-        # at first guest creates new object
-        # then he changes this object
-        for i in range(2):
-            response = self.client.post(
-                self.url, data={
-                    'save_event':1,
-                    'title': ('Hello' + str(i)),
-                    'desc': 'World',
-                    'all_day': True,
-                    'start_hour': '15:19',
-                    'start_date': '12/13/2016',
-                    'end_hour': '16:13',
-                    'end_date': '12/13/2016',
-                    'timezone': '374',
-                    'attending_status': '1',
-            })
-            self.assertEqual(EventCustomSettings.objects.count(), 2)
-            settings = EventCustomSettings.objects.get(guest=guest)
-            self.assertEqual(settings.title, 'Hello' + str(i))
 
 
 if __name__ == '__main__':

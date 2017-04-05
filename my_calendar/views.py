@@ -7,7 +7,7 @@ from django.utils.deprecation import MiddlewareMixin
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.models import User
 
-from .models import UserProfile, MyCalendar, Event, Guest, EventCustomSettings
+from .models import UserProfile, MyCalendar, Event, Guest
 from .forms import (RegisterForm, EventForm, AttendingStatusForm, ProfileForm,
     CalendarForm, GuestForm)
 from .additional_functions import (COLORS, fill_month, fill_week,
@@ -63,21 +63,17 @@ def profile(request, username):
     context['profile'] = profile
     calendars = profile.get_own_calendars()
     context['calendars'] = calendars
+    context['other_calendars'] = (profile.get_calendars_to_read()
+        | profile.get_calendars_to_modify()).exclude(owner=profile)
 
     all_events = profile.get_all_events()
     upcoming_events = []
     for event in all_events:
-        try:
-            settings = Guest.objects.get(event=event, user=profile).get_settings()[0]
-        except Guest.DoesNotExist:
-            settings = event.get_owner_settings()
-        start = settings.start.replace(tzinfo=None)
+        start = event.start.replace(tzinfo=None)
         if start >= datetime.datetime.now():
             upcoming_events.append(event)
     context['upcoming_events'] = upcoming_events[:5]
 
-    context['other_calendars'] = (profile.get_calendars_to_read()
-        | profile.get_calendars_to_modify()).exclude(owner=profile)
     return render(request, 'my_calendar/profile.html', context)
 
 def user_login(request):
@@ -95,8 +91,7 @@ def user_login(request):
 
 def user_logout(request):
     logout(request)
-    next_page = request.GET.get("nextpage", "my_calendar:index")
-    return redirect(next_page)
+    return redirect('my_calendar:index')
 
 def month(request, year, month, day):
     context = {}
@@ -165,7 +160,6 @@ def day(request, year, month, day):
         timezone = pytz.timezone(profile.get_timezone_display())
         context['days'] = get_events_from_days([date_], events,
             timezone, profile)
-        # distinct() removes duplicates
         context['calendars'] = (profile.get_calendars_to_modify()
             | profile.get_calendars_to_read()).distinct()
         context['range'] = range(24)
@@ -245,23 +239,22 @@ def new_event(request, cal_pk):
         calendar_ = get_object_or_404(MyCalendar, pk=cal_pk)
         profile = get_object_or_404(UserProfile, user=request.user)
         if calendar_.owner == profile:
-            settings = EventCustomSettings()
-            settings.start = pytz.utc.localize(datetime.datetime.utcnow())
-            settings.end = settings.start + datetime.timedelta(minutes=30)
+            event = Event()
+            event.start = pytz.utc.localize(datetime.datetime.utcnow())
+            event.end = event.start + datetime.timedelta(minutes=30)
             timezone = get_number_and_name_of_timezone(profile)
-            event_form = EventForm(data=request.POST or None, instance=settings,
+            event_form = EventForm(data=request.POST or None, instance=event,
                 timezone=timezone)
             attending_status_form = AttendingStatusForm(data=request.POST or None)
             if request.method == "POST":
                 if event_form.is_valid() and attending_status_form.is_valid():
-                    event = Event.objects.create(calendar=calendar_)
+                    event = event_form.save(commit=False)
+                    event.calendar = calendar_
+                    event.save()
                     guest = attending_status_form.save(commit=False)
                     guest.event = event
                     guest.user = calendar_.owner
                     guest.save()
-                    event_custom_settings = event_form.save(commit=False)
-                    event_custom_settings.guest = guest
-                    event_custom_settings.save()
                     return redirect('my_calendar:event_view', event_pk=event.pk)
             context['event_form'] = event_form
             context['attending_status_form'] = attending_status_form
@@ -285,18 +278,17 @@ def event_view(request, event_pk=None):
         guest = None
     if (profile in event.calendar.modifiers.all()):
 
-        event_settings = event.get_owner_settings()
-        timezone = get_number_and_name_of_timezone(event_settings)
-        context['event_form'] = EventForm(instance=event_settings, timezone=timezone)
+        timezone = get_number_and_name_of_timezone(event)
+        context['event_form'] = EventForm(instance=event, timezone=timezone)
         context['guest_form'] = GuestForm(event=event)
-        context['event'] = event_settings
+        context['event'] = event
         context['guests'] = Guest.objects.filter(event=event)
 
         if request.method == "POST":
             form = None
 
             if 'save_event' in request.POST:
-                form = EventForm(data=request.POST, instance=event_settings)
+                form = EventForm(data=request.POST, instance=event)
                 form_name = 'event_form'
             elif 'save_guest' in request.POST:
                 form = GuestForm(data=request.POST, event=event)
@@ -312,39 +304,24 @@ def event_view(request, event_pk=None):
                 context[form_name] = form
 
     elif guest != None:
-        event_settings, settings_belong_to_owner = guest.get_settings()
-        timezone = get_number_and_name_of_timezone(event_settings)
-        context['event'] = event_settings
+        context['event'] = event
         context['guests'] = Guest.objects.filter(event=event)
-        context['guest_message'] = ("If you change default settings, you "
-            + "won't be able to see changes made by owner of this event.")
-        event_form = EventForm(instance=event_settings, timezone=timezone)
-        context['event_form'] = event_form
-
         if request.method == "POST":
-            form = None
-
             if 'save_attending_status' in request.POST:
                 form = AttendingStatusForm(data=request.POST, instance=guest)
-                form_name = 'attending_status_form'
-            elif 'save_event' in request.POST:
-                if settings_belong_to_owner:
-                    event_settings = EventCustomSettings()
-                    event_settings.guest = guest
-                form = EventForm(data=request.POST, instance=event_settings)
-                form_name = 'event_form'
-
-            if form != None and form.is_valid():
-                form.save()
-                return redirect('my_calendar:event_view', event_pk=event.pk)
-            elif form != None:
-                context[form_name] = form
-
+                if form.is_valid():
+                    form.save()
+                    return redirect('my_calendar:event_view', event_pk=event.pk)
+                else:
+                    context['attending_status_form'] = form
+            else:
+                context['access_denied'] = ("You don't have access to "
+                        + "edit this event.")
     elif profile in event.calendar.readers.all():
         if request.method == "POST":
             context['access_denied'] = ("You don't have access to "
                     + "edit this event.")
-        context['event'] = event.get_owner_settings()
+        context['event'] = event
         context['guests'] = Guest.objects.filter(event=event)
 
     else:

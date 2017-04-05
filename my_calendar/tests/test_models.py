@@ -6,8 +6,7 @@ from django.core.exceptions import ValidationError
 from django.test import TestCase
 
 
-from my_calendar.models import (UserProfile, MyCalendar, Event, Guest,
-    EventCustomSettings)
+from my_calendar.models import (UserProfile, MyCalendar, Event, Guest)
 
 
 class UserProfileTest(TestCase):
@@ -61,35 +60,21 @@ class GuestTest(TestCase):
         profile = UserProfile.objects.create(user=user)
         calendar = MyCalendar.objects.create(owner=profile,
             name="Cindirella", color="E81AD4")
-        event = Event.objects.create(calendar=calendar)
+        start = pytz.utc.localize(datetime.datetime.now())
+        end = start + datetime.timedelta(minutes=30)
+        event = Event.objects.create(calendar=calendar, start=start, end=end,
+            title="Some title", all_day=True)
         Guest.objects.create(event=event, user=profile)
         with self.assertRaises(ValidationError):
             guest = Guest(event=event, user=profile)
             guest.full_clean()
 
 
-class EventCustomSettingsTest(TestCase):
+class EventTest(TestCase):
 
     def test_default_timezone_utc(self):
-        event = EventCustomSettings()
+        event = Event()
         self.assertEqual(event.get_timezone_display(), str(pytz.utc))
-
-    def test_unique_guest_for_settings(self):
-        user = User.objects.create(username='John')
-        profile = UserProfile.objects.create(user=user)
-        calendar = MyCalendar.objects.create(owner=profile)
-        event = Event.objects.create(calendar=calendar)
-        guest =  Guest.objects.create(user=profile, event=event)
-        start = pytz.utc.localize(datetime.datetime.now())
-        end = start + datetime.timedelta(minutes=30)
-        EventCustomSettings.objects.create(guest=guest, start=start, end=end,
-            title="Some title", all_day=True)
-        start = datetime.datetime.now()
-        end = start + datetime.timedelta(minutes=30)
-        with self.assertRaises(ValidationError):
-            settings2 = EventCustomSettings(guest=guest, start=start, end=end,
-                title='Habubaba', all_day=True)
-            settings2.full_clean()
 
 
 if __name__ == '__main__':

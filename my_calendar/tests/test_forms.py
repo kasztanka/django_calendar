@@ -4,8 +4,7 @@ import pytz
 from django.contrib.auth.models import User
 from django.test import TestCase
 
-from my_calendar.models import (UserProfile, MyCalendar, Event, Guest,
-    EventCustomSettings)
+from my_calendar.models import (UserProfile, MyCalendar, Event, Guest)
 from my_calendar.forms import (
     RegisterForm, EventForm, GuestForm, ProfileForm, CalendarForm,
     AttendingStatusForm,
@@ -78,10 +77,8 @@ class EventFormTest(TestCase):
 
     def test_datetime_inputs_have_css_classes(self):
         form = EventForm()
-        self.assertIn('class="datepicker" id="id_start_date"', form.as_p())
-        self.assertIn('class="time" id="id_start_hour"', form.as_p())
-        self.assertIn('class="datepicker" id="id_end_date"', form.as_p())
-        self.assertIn('class="time" id="id_end_hour"', form.as_p())
+        self.assertEqual(form.as_p().count('class="datepicker"'), 2)
+        self.assertEqual(form.as_p().count('class="time"'), 2)
 
     def test_valid_data(self):
         form = EventForm({
@@ -169,7 +166,7 @@ class EventFormTest(TestCase):
         start = europe.localize(datetime.datetime.now())
         end = europe.localize(datetime.datetime.now()
             + datetime.timedelta(minutes=30))
-        event = EventCustomSettings(start=start, end=end)
+        event = Event(start=start, end=end)
         form = EventForm(instance=event, timezone=timezone)
         self.assertEqual(form.initial['start_date'], start.strftime('%m/%d/%Y'))
         self.assertEqual(form.initial['start_hour'], start.strftime('%H:%M'))
@@ -200,7 +197,10 @@ class GuestFormTest(TestCase):
         self.profile = UserProfile.objects.create(user=user_)
         calendar = MyCalendar.objects.create(owner=self.profile,
             name="Cindirella", color="E81AD4")
-        self.event = Event.objects.create(calendar=calendar)
+        start = pytz.utc.localize(datetime.datetime.now())
+        end = start + datetime.timedelta(minutes=30)
+        self.event = Event.objects.create(calendar=calendar, start=start, end=end,
+            title="Some title", all_day=True)
 
     def test_valid_data(self):
         form = GuestForm(event=self.event, data={'user': 1})

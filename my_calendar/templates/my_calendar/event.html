@@ -16,7 +16,7 @@
         {% endif %}
 
         <div>{{ event.desc }}</div>
-        {% with event.guest.event.calendar as calendar %}
+        {% with event.calendar as calendar %}
             <div>Belongs to calendar: <a href="{% url 'my_calendar:calendar_view' cal_pk=calendar.pk %}">{{ calendar.name }}</a></div>
         {% endwith %}
         <div>All day: {{ event.all_day }}</div>
@@ -32,7 +32,7 @@
             {% endtimezone %}
         {% endif %}
 
-        {% with event.guest.event.calendar as calendar %}
+        {% with event.calendar as calendar %}
             {% if profile in calendar.modifiers.all or user_is_guest %}
                 <button onclick="formDisplay('event_form', 'edit_event', 'Edit this event');return false;" id="edit_event">Edit this event</button>
                 <form method="POST" id="event_form">
