@@ -21,29 +21,35 @@
     </div>
     <div class="col-lg-7">
         <h2>Upcoming events</h2>
-        <ul>
-            {% for event in upcoming_events %}
-                <li><a href="{% url 'my_calendar:event_view' event_pk=event.pk %}">{{ event }}</a></li>
-            {% empty %}
-                <p>You don't have any events yet. </p>
-            {% endfor %}
-        </ul>
+        {% if upcoming_events %}
+            <dl class="dl-horizontal">
+                {% for event in upcoming_events %}
+                    <dt><a href="{% url 'my_calendar:event_view' event_pk=event.pk %}">{{ event }}</a></dt><dd>pozdrawiam</dd>
+                {% endfor %}
+            </dl>
+        {% else %}
+            <p>You don't have any events yet.</p>
+        {% endif %}
     </div>
 </div>
-<div id="calendars">
-    <h2>Your calendars</h2>
-    {% for cal in calendars %}
-        <a href="{% url 'my_calendar:calendar_view' cal_pk=cal.pk %}">{{ cal.name }}</a>
-    {% empty %}
-        <p>You don't have any calendars yet.
-            <a href="{% url 'my_calendar:new_calendar' %}">Go and create a new one!</a>
-        </p>
-    {% endfor %}
-    <h2>Other calendars</h2>
-    {% for cal in other_calendars %}
-        <a href="{% url 'my_calendar:calendar_view' cal_pk=cal.pk %}">{{ cal.name }}</a>
-    {% empty %}
-        <p>You don't take part in other users' calendars. Find some friends using search bar.</p>
-    {% endfor %}
+<div id="calendars" class="row">
+    <div class="col-lg-6">
+        <h2>My calendars</h2>
+        {% if calendars %}
+            {% include 'my_calendar/calendars_table.html' with calendars=calendars only %}
+        {% else %}
+            <p>You don't have any calendars yet.
+                <a href="{% url 'my_calendar:new_calendar' %}">Go and create a new one!</a>
+            </p>
+        {% endif %}
+    </div>
+    <div class="col-lg-6">
+        <h2>Other calendars</h2>
+        {% if other_calendars %}
+            {% include 'my_calendar/calendars_table.html' with calendars=other_calendars only %}
+        {% else %}
+            <p>You don't take part in other users' calendars. Find some friends using search bar.</p>
+        {% endif %}
+    </div>
 </div>
 {% endblock content %}
