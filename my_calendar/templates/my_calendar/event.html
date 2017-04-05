@@ -33,7 +33,7 @@
         {% endif %}
 
         {% with event.guest.event.calendar as calendar %}
-            {% if profile == calendar.owner or profile in calendar.modifiers.all or user_is_guest %}
+            {% if profile in calendar.modifiers.all or user_is_guest %}
                 <button onclick="formDisplay('event_form', 'edit_event', 'Edit this event');return false;" id="edit_event">Edit this event</button>
                 <form method="POST" id="event_form">
                     {% csrf_token %}
@@ -51,7 +51,7 @@
                 {% endfor %}
             </ul>
 
-            {% if profile == calendar.owner or profile in calendar.modifiers.all %}
+            {% if profile in calendar.modifiers.all %}
                 <button onclick="formDisplay('guest_form', 'add_guest', 'Add guest');return false;" id="add_guest">Add guest</button>
                 <form method="POST" id="guest_form">
                     {% csrf_token %}

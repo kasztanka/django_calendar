@@ -22,9 +22,11 @@
     <div class="col-lg-7">
         <h2>Upcoming events</h2>
         <ul>
-            <li>Event 1</li>
-            <li>Event 2</li>
-            <li>Event 3</li>
+            {% for event in upcoming_events %}
+                <li><a href="{% url 'my_calendar:event_view' event_pk=event.pk %}">{{ event }}</a></li>
+            {% empty %}
+                <p>You don't have any events yet. </p>
+            {% endfor %}
         </ul>
     </div>
 </div>
@@ -38,7 +40,8 @@
         </p>
     {% endfor %}
     <h2>Other calendars</h2>
-    {% for calendar in other_calendars %}
+    {% for cal in other_calendars %}
+        <a href="{% url 'my_calendar:calendar_view' cal_pk=cal.pk %}">{{ cal.name }}</a>
     {% empty %}
         <p>You don't take part in other users' calendars. Find some friends using search bar.</p>
     {% endfor %}

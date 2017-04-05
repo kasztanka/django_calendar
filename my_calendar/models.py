@@ -24,15 +24,13 @@ class UserProfile(models.Model):
 
     def get_calendars_to_modify(self):
         """
-        Returns a queryset of calendars that user can modify
-        but doesn't own.
+        Returns a queryset of calendars that user can modify.
         """
         return MyCalendar.objects.filter(modifiers=self)
 
     def get_calendars_to_read(self):
         """
-        Returns a queryset of calendars that user can read
-        but dooesn't own.
+        Returns a queryset of calendars that user can read.
         """
         return MyCalendar.objects.filter(readers=self)
 

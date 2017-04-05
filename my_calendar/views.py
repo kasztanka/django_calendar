@@ -63,6 +63,21 @@ def profile(request, username):
     context['profile'] = profile
     calendars = profile.get_own_calendars()
     context['calendars'] = calendars
+
+    all_events = profile.get_all_events()
+    upcoming_events = []
+    for event in all_events:
+        try:
+            settings = Guest.objects.get(event=event, user=profile).get_settings()[0]
+        except Guest.DoesNotExist:
+            settings = event.get_owner_settings()
+        start = settings.start.replace(tzinfo=None)
+        if start >= datetime.datetime.now():
+            upcoming_events.append(event)
+    context['upcoming_events'] = upcoming_events[:5]
+
+    context['other_calendars'] = (profile.get_calendars_to_read()
+        | profile.get_calendars_to_modify()).exclude(owner=profile)
     return render(request, 'my_calendar/profile.html', context)
 
 def user_login(request):
