@@ -5,24 +5,55 @@
     {% if access_denied %}
         <div>{{ access_denied }}</div>
     {% else %}
-
-        <div style="background-color:{{ calendar.color }};">Kolor kalendarza</div>
-        <h2>{{ calendar.name }}</h2>
-        <ul>Users who can read this calendar:
-        {% for user in calendar.readers.all %}
-            <li>{{ user }}</li>
-        {% empty %}
-            <div>No such users.</div>
-        {% endfor %}
-        </ul>
-        <ul>Users who can modify events in this calendar:
-        {% for user in calendar.modifiers.all %}
-            <li>{{ user }}</li>
-        {% empty %}
-            <div>No such users.</div>
-        {% endfor %}
-        </ul>
-
+        <h2 id="calendar_name" style="color:{{ calendar.color }}">{{ calendar.name }}</h2>
+        <hr>
+        <div class="row">
+            <div class="col-lg-8">
+                <div class="panel panel-default">
+                    <div class="panel-heading">
+                        <h3 class="panel-title">Events</h3>
+                    </div>
+                    <div id="events" class="panel-body list-group">
+                        {% for ev in events %}
+                        <a class="list-group-item" href="{% url 'my_calendar:event_view' event_pk=ev.pk %}">
+                            {{ ev.get_owner_settings.title }}</a>
+                            {% empty %}
+                        <p>You don't have any events in this calendar yet.</p>
+                            {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-lg-4">
+                <div class="panel panel-default">
+                    <div class="panel-heading">
+                        <h3 class="panel-title">Readers</h3>
+                    </div>
+                    <div class="panel-body list-group">
+                        {% for user in calendar.readers.all %}
+                            <p class="list-group-item">{{ user }}</p>
+                            {% empty %}
+                            <p>No such users.</p>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-4">
+                <div class="panel panel-default">
+                    <div class="panel-heading">
+                        <h3 class="panel-title">Modifiers</h3>
+                    </div>
+                    <div class="panel-body list-group">
+                        {% for user in calendar.modifiers.all %}
+                            <p class="list-group-item">{{ user }}</p>
+                            {% empty %}
+                            <p>No such users.</p>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
         {% if profile == calendar.owner %}
             <button onclick="formDisplay('calendar_form', 'edit_calendar', 'Edit this calendar');return false;" id="edit_calendar">Edit this calendar</button>
 
@@ -58,15 +89,6 @@
 
             <a id="add_event" href="{% url 'my_calendar:new_event' cal_pk=calendar.pk %}">Add event</a>
         {% endif %}
-
-        <div id="events">Events:
-        {% for ev in events %}
-            <a href="{% url 'my_calendar:event_view' event_pk=ev.pk %}">{{ ev.get_owner_settings.title }}</a>
-        {% empty %}
-            <span>You don't have any events in this calendar yet.</span>
-        {% endfor %}
-        </div>
-
         <script src="{% static 'calendar_form_colors.js' %}"></script>
         <script>
             const currentColor = document.getElementsByName("{{ calendar.color }}")[0];

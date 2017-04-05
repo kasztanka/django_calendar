@@ -1,20 +1,16 @@
-{% for cal in calendars %}
-    {% if forloop.first %}
-        <table class="table table-striped">
-            <thead>
-                <tr>
-                    <th>Kolor</th>
-                    <th>Nazwa kalendarza</th>
-                </tr>
-            </thead>
-            <tbody>
-    {% endif %}
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>Kolor</th>
+            <th>Nazwa kalendarza</th>
+        </tr>
+    </thead>
+    <tbody>
+    {% for cal in calendars %}
         <tr>
             <td><i class="fa fa-square" style="color: {{ cal.color }}"></i></td>
             <td colspan="3"><a href="{% url 'my_calendar:calendar_view' cal_pk=cal.pk %}">{{ cal.name }}</a></td>
         </tr>
-    {% if forloop.last %}
-            </tbody>
-        </table>
-    {% endif %}
-{% endfor %}
+    {% endfor %}
+    </tbody>
+</table>

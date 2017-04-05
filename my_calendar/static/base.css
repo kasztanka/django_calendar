@@ -56,6 +56,15 @@ hr {
     margin-top: 50px;
 }
 
+#calendar_name {
+    margin-bottom: 30px;
+}
+
+.panel-body {
+    max-height: 400px;
+    overflow-y: auto;
+}
+
 footer {
     padding: 40px 0;
     color: #888;
