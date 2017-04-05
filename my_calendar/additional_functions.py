@@ -5,10 +5,10 @@ import pytz
 from .models import Guest
 
 COLORS = (
-    "E81AD4",
-    "8F00FF",
-    "6214CC",
-    "464AFF",
+    "#E81AD4",
+    "#8F00FF",
+    "#6214CC",
+    "#464AFF",
 )
 
 def fill_month(date_):

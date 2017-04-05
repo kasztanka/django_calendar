@@ -76,7 +76,7 @@ class MyCalendar(models.Model):
         UserProfile, on_delete=models.CASCADE,
         related_name='owned_calendars')
     name = models.CharField(max_length=100, default="")
-    color = models.CharField(max_length=6) # default = #464AFF?
+    color = models.CharField(max_length=7)
     modifiers = models.ManyToManyField(
         UserProfile, related_name='calendars_to_modify', blank=True)
     readers = models.ManyToManyField(

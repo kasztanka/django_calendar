@@ -24,7 +24,7 @@
         {% if upcoming_events %}
             <dl class="dl-horizontal">
                 {% for event in upcoming_events %}
-                    <dt><a href="{% url 'my_calendar:event_view' event_pk=event.pk %}">{{ event }}</a></dt><dd>pozdrawiam</dd>
+                    <dt><a href="{% url 'my_calendar:event_view' event_pk=event.pk %}">{{ event.title }}</a></dt><dd>pozdrawiam</dd>
                 {% endfor %}
             </dl>
         {% else %}
