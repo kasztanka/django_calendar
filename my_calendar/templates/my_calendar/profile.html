@@ -2,7 +2,7 @@
 {% load tz %}
 {% block content %}
 <div class="row">
-    <div class="col-lg-5">
+    <div class="col-lg-6">
         <h2>{{ profile.user.first_name}} {{ profile.user.last_name }}</h2>
         <h4>{{ profile.user.email }}</h4>
         <h4>Timezone: {{ profile.get_timezone_display }}</h4>
@@ -19,13 +19,20 @@
             <a id="add_calendar" href="{% url 'my_calendar:new_calendar' %}">Add new calendar</a>
         {% endif %}
     </div>
-    <div class="col-lg-7">
+    <div class="col-lg-5">
         <h2>Upcoming events</h2>
         {% if upcoming_events %}
-            <dl class="dl-horizontal">
+            <dl id="upcoming-events" class="dl-horizontal">
+                <ul class="list-group">
                 {% for event in upcoming_events %}
-                    <dt><a href="{% url 'my_calendar:event_view' event_pk=event.pk %}">{{ event.title }}</a></dt><dd>pozdrawiam</dd>
+                    <li class="list-group-item">
+                        <dt>{{ event.start|date:"d.m.Y" }}</dt>
+                        <a href="{% url 'my_calendar:event_view' event_pk=event.pk %}">
+                            <dd>{{ event.title}}</dd>
+                        </a>
+                    </li>
                 {% endfor %}
+                </ul>
             </dl>
         {% else %}
             <p>You don't have any events yet.</p>

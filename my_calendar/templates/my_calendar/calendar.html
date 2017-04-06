@@ -5,7 +5,7 @@
     {% if access_denied %}
         <div>{{ access_denied }}</div>
     {% else %}
-        <h2 id="calendar_name" style="color:{{ calendar.color }}">{{ calendar.name }}</h2>
+        <h2 id="calendar_name"><i class="fa fa-square" style="color:{{ calendar.color }}"></i> {{ calendar.name }}</h2>
         <hr>
         <div class="row">
             <div class="col-lg-8">
@@ -14,12 +14,13 @@
                         <h3 class="panel-title">Events</h3>
                     </div>
                     <div id="events" class="panel-body list-group">
-                        {% for ev in events %}
+                    {% for ev in events %}
                         <a class="list-group-item" href="{% url 'my_calendar:event_view' event_pk=ev.pk %}">
-                            {{ ev.get_owner_settings.title }}</a>
-                            {% empty %}
+                            {{ ev.title }} - {{ ev.start|date:"d.m.Y" }}
+                        </a>
+                    {% empty %}
                         <p>You don't have any events in this calendar yet.</p>
-                            {% endfor %}
+                    {% endfor %}
                     </div>
                 </div>
             </div>

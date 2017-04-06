@@ -106,6 +106,9 @@ class Event(models.Model):
     end = models.DateTimeField()
     all_day = models.BooleanField(default=False)
 
+    def __str__(self):
+        return self.title
+
 class Guest(models.Model):
     """
     Owner of an event can invite other users to it.
