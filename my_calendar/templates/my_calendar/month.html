@@ -6,61 +6,73 @@
     {% if date_errors %}
         <div>{{ date_errors }}</div>
     {% endif %}
+<div class="row">
+    <div class="col-lg-2">
+        <a id="month" href="/month/{{ choosen_date|date:'Y-m-d' }}">Month</a>
+        <a id="week" href="/week/{{ choosen_date|date:'Y-m-d' }}">Week</a>
+        <a id="day" href="/day/{{ choosen_date|date:'Y-m-d' }}">Day</a>
 
-    <a id="month" href="/month/{{ choosen_date|date:'Y-m-d' }}">Month</a>
-    <a id="week" href="/week/{{ choosen_date|date:'Y-m-d' }}">Week</a>
-    <a id="day" href="/day/{{ choosen_date|date:'Y-m-d' }}">1 day</a>
-
-    <ul id="calendars">Calendars:
-        {% for cal in calendars %}
+        <ul id="calendars">Calendars:
+            {% for cal in calendars %}
+                <li>
+                    <div id="calendar_{{ cal.pk }}" style="height:20px; width:20px; border:1px solid; background-color:{{ cal.color }}; display:inline-block;"
+                    onclick="displayOfEvents('calendar_{{ cal.pk }}', '{{ cal.color }}');return false;"></div>
+                    <a href="{% url 'my_calendar:calendar_view' cal_pk=cal.pk %}">
+                      <span>{{ cal.name }}</span></a>
+                </li>
+            {% endfor %}
             <li>
-                <div id="calendar_{{ cal.pk }}" style="height:20px; width:20px; border:1px solid; background-color:{{ cal.color }}; display:inline-block;"
-                onclick="displayOfEvents('calendar_{{ cal.pk }}', '{{ cal.color }}');return false;"></div>
-                <a href="{% url 'my_calendar:calendar_view' cal_pk=cal.pk %}">
-                  <span>{{ cal.name }}</span></a>
+                <div id="calendar_other" style="height:20px; width:20px; border:1px solid; background-color:#FECA5C; display:inline-block;"
+                onclick="displayOfEvents('calendar_other', '#FECA5C');return false;"></div>
+                <span>Others</span>
             </li>
-        {% endfor %}
-        <li>
-            <div id="calendar_other" style="height:20px; width:20px; border:1px solid; background-color:#FECA5C; display:inline-block;"
-            onclick="displayOfEvents('calendar_other', '#FECA5C');return false;"></div>
-            <span>Others</span>
-        </li>
-    </ul>
+        </ul>
 
-    <div>
-        <a id="earlier" href="/month/{{ earlier|date:'Y-m-d' }}">Earlier</a>
-        <a id="later" href="/month/{{ later|date:'Y-m-d' }}">Later</a>
+        <div>
+            <a id="earlier" href="/month/{{ earlier|date:'Y-m-d' }}">Earlier</a>
+            <a id="later" href="/month/{{ later|date:'Y-m-d' }}">Later</a>
+        </div>
     </div>
-    <table>
-        <tr>
-            <th>Monday</th>
-            <th>Tuesday</th>
-            <th>Wednesday</th>
-            <th>Thursday</th>
-            <th>Friday</th>
-            <th>Saturday</th>
-            <th>Sunday</th>
-        </tr>
-        {% for dict_ in days %}
-            {% if forloop.counter0|modulo:7 == 0 %}
+    <div class="col-lg-10">
+        <table class="table-bordered" id="table-month">
+            <thead>
                 <tr>
-            {% endif %}
-            <td>
-              <a href="/month/{{ dict_.day|date:'Y-m-d' }}">
-                {{ dict_.day|date:"d M" }}</a>
-              <div>
-              {% for event in dict_.events %}
-              <a href="{% url 'my_calendar:event_view' event_pk=event.pk %}">
-                  <div style="background-color:{{ event.color }};" class="calendar_{{ event.class }}">{{ event.title }}</div></a>
-              {% endfor %}
-              </div>
-            </td>
-            {% if forloop.counter0|modulo:7 == 6 %}
+                    <th>Monday</th>
+                    <th>Tuesday</th>
+                    <th>Wednesday</th>
+                    <th>Thursday</th>
+                    <th>Friday</th>
+                    <th>Saturday</th>
+                    <th>Sunday</th>
                 </tr>
-            {% endif %}
-        {% endfor %}
-    </table>
-
+            </thead>
+            <tbody>
+            {% for dict_ in days %}
+                {% if forloop.counter0|modulo:7 == 0 %}
+                    <tr>
+                {% endif %}
+                <td>
+                    <a href="/month/{{ dict_.day|date:'Y-m-d' }}">
+                        {{ dict_.day|date:"d" }}
+                    </a>
+                {% for event in dict_.events %}
+                    <div class="well well-supersmall">
+                        <a href="{% url 'my_calendar:event_view' event_pk=event.pk %}">
+                            <span style="color:{{ event.color }}" class="calendar_{{ event.class }}">
+                                {{ event.title }}
+                            </span>
+                        </a>
+                    </div>
+                {% endfor %}
+                </td>
+                {% if forloop.counter0|modulo:7 == 6 %}
+                    </tr>
+                {% endif %}
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
     <script src="{% static 'display_of_events.js' %}"></script>
 
 {% endblock content %}

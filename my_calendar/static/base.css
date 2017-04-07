@@ -73,6 +73,26 @@ hr {
     font-weight: 400;
 }
 
+.well-supersmall {
+    padding: 5px;
+    margin-bottom: 0;
+    margin-top: 5px;
+}
+
+#table-month, #table-month th {
+    text-align: center;
+}
+
+#table-month td, #table-month th {
+    vertical-align: top;
+    width: 13%;
+    padding: 5px;
+}
+
+#table-month {
+    background-color: #fff;
+}
+
 footer {
     padding: 40px 0;
     color: #888;
