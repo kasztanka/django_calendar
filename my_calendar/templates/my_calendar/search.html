@@ -1,0 +1,28 @@
+{% extends 'my_calendar/base.html' %}
+{% block content %}
+    <h3>{{ phrase }}</h3>
+    <ul>Users
+    {% for profile in users %}
+        <li><a href="{% url 'my_calendar:profile' username=profile.user.username %}">
+            {{ profile }}
+        </a></li>
+    {% endfor %}
+    </ul>
+
+    <ul>Calendars
+    {% for cal in calendars %}
+        <li><a href="{% url 'my_calendar:calendar_view' cal_pk=cal.pk %}">
+            {{ cal.name }}
+        </a></li>
+    {% endfor %}
+    </ul>
+
+    <ul>Events
+    {% for event in events %}
+        <li><a href="{% url 'my_calendar:event_view' event_pk=event.pk %}">
+            {{ event.title }}
+        </a></li>
+    {% endfor %}
+    </ul>
+
+{% endblock content %}

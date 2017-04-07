@@ -5,6 +5,7 @@ import re
 from django.shortcuts import get_object_or_404, render, redirect, reverse
 from django.utils.deprecation import MiddlewareMixin
 from django.contrib.auth import authenticate, login, logout
+from django.contrib.postgres.search import SearchVector
 from django.contrib.auth.models import User
 
 from .models import UserProfile, MyCalendar, Event, Guest
@@ -321,3 +322,16 @@ def event_view(request, event_pk=None):
     else:
         context['access_denied'] = "You don't have access to this event."
     return render(request, 'my_calendar/event.html', context)
+
+def search(request):
+    phrase = request.GET.get('phrase')
+    context = {'phrase': phrase}
+    context['users'] = (UserProfile.objects.filter(
+        user__first_name__startswith=phrase) |
+        UserProfile.objects.filter(
+        user__last_name__startswith=phrase)).distinct()
+    context['calendars'] = MyCalendar.objects.filter(
+        name__contains=phrase)
+    context['events'] = Event.objects.filter(
+        title__contains=phrase)
+    return render(request, 'my_calendar/search.html', context)

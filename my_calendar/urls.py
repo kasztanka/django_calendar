@@ -22,4 +22,5 @@ urlpatterns = [
         views.calendar_view, name='calendar_view'),
     url(r'^event/new/(?P<cal_pk>\d+)$', views.new_event, name='new_event'),
     url(r'^event/(?P<event_pk>\d+)$', views.event_view, name='event_view'),
+    url(r'^search/', views.search, name='search'),
 ]

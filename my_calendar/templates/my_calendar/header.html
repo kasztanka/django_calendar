@@ -7,15 +7,18 @@
         <div id="navbar">
             <ul class="nav navbar-nav">
                 <li><a href="{% url 'my_calendar:profile' username=user.username %}">Profile</a></li>
-                <li><a href="#">Timeline</a></li>
+                {% now "Y" as current_year %}
+                {% now "m" as current_month %}
+                {% now "d" as current_day %}
+                <li><a href="{% url 'my_calendar:month' year=current_year month=current_month day=current_day %}">Timeline</a></li>
                 <li><a href="#">Create</a></li>
             </ul>
             <ul class="nav navbar-nav navbar-right">
                 <li><a href="{% url 'my_calendar:user_logout' %}">Logout</a></li>
             </ul>
-            <form class="navbar-form navbar-right">
+            <form class="navbar-form navbar-right" action="{% url 'my_calendar:search' %}" method="get" accept-charset="utf-8">
                 <div class="form-group">
-                    <input type="text" class="form-control" placeholder="Search">
+                    <input type="text" class="form-control" placeholder="Search" name="phrase" required>
                 </div>
                 <button type="submit" class="btn btn-default">Submit</button>
             </form>
