@@ -21,10 +21,11 @@ class AuthRequiredMiddleware(MiddlewareMixin):
             reverse('my_calendar:user_login'),
             reverse('my_calendar:register'),
         ]
-
-        if request.path not in allowed_urls and not request.user.is_authenticated():
-            return redirect('my_calendar:index')
-        return None
+        if (request.path.startswith('/admin')
+                or request.path in allowed_urls
+                or request.user.is_authenticated()):
+            return None
+        return redirect('my_calendar:index')
 
 
 def index(request):
@@ -64,15 +65,8 @@ def profile(request, username):
     calendars = profile.get_own_calendars()
     context['calendars'] = calendars
     context['other_calendars'] = (profile.get_calendars_to_read()
-        | profile.get_calendars_to_modify()).exclude(owner=profile)
-
-    all_events = profile.get_all_events()
-    upcoming_events = []
-    for event in all_events:
-        start = event.start.replace(tzinfo=None)
-        if start >= datetime.datetime.now():
-            upcoming_events.append(event)
-    context['upcoming_events'] = upcoming_events[:5]
+        | profile.get_calendars_to_modify()).exclude(owner=profile).distinct()
+    context['upcoming_events'] = profile.get_upcoming_events(5)
 
     return render(request, 'my_calendar/profile.html', context)
 

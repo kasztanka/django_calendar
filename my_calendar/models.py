@@ -50,8 +50,18 @@ class UserProfile(models.Model):
             events.add(guest.event)
         return events
 
+    def get_upcoming_events(self, amount):
+        all_events = self.get_all_events()
+        upcoming_events = []
+        for event in all_events:
+            start = event.start.replace(tzinfo=None)
+            if start >= datetime.datetime.now():
+                upcoming_events.append(event)
+        upcoming_events.sort(key=lambda x: x.start)
+        return upcoming_events[-amount:]
+
     def __str__(self):
-        return self.user.username + ", timezone: " + self.get_timezone_display()
+        return self.user.first_name + ' ' + self.user.last_name
 
 
 class MyCalendarManager(models.Manager):

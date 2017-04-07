@@ -7,56 +7,61 @@
         <h4>{{ profile.user.email }}</h4>
         <h4>Timezone: {{ profile.get_timezone_display }}</h4>
 
-        {% timezone profile.get_timezone_display %}
-            {% now "Y" as current_year %}
-            {% now "m" as current_month %}
-            {% now "d" as current_day %}
-            <a id="timeline" href="{% url 'my_calendar:month' year=current_year month=current_month day=current_day %}">
-                Check out you're timeline!</a>
-        {% endtimezone %}
-
         {% if profile.user == request.user %}
+            {% timezone profile.get_timezone_display %}
+                {% now "Y" as current_year %}
+                {% now "m" as current_month %}
+                {% now "d" as current_day %}
+                <a id="timeline" href="{% url 'my_calendar:month' year=current_year month=current_month day=current_day %}">
+                    Check out you're timeline!
+                </a>
+            {% endtimezone %}
+
             <a id="add_calendar" href="{% url 'my_calendar:new_calendar' %}">Add new calendar</a>
         {% endif %}
     </div>
-    <div class="col-lg-5">
-        <h2>Upcoming events</h2>
-        {% if upcoming_events %}
-            <dl id="upcoming-events" class="dl-horizontal">
-                <ul class="list-group">
-                {% for event in upcoming_events %}
-                    <li class="list-group-item">
-                        <dt>{{ event.start|date:"d.m.Y" }}</dt>
-                        <a href="{% url 'my_calendar:event_view' event_pk=event.pk %}">
-                            <dd>{{ event.title}}</dd>
-                        </a>
-                    </li>
-                {% endfor %}
-                </ul>
-            </dl>
-        {% else %}
-            <p>You don't have any events yet.</p>
-        {% endif %}
-    </div>
+    {% if profile.user == request.user %}
+        <div class="col-lg-5">
+            <h2>Upcoming events</h2>
+            {% if upcoming_events %}
+                <dl id="upcoming-events" class="dl-horizontal">
+                    <ul class="list-group">
+                    {% for event in upcoming_events %}
+                        <li class="list-group-item">
+                            <dt>{{ event.start|date:"d.m.Y" }}</dt>
+                            <a href="{% url 'my_calendar:event_view' event_pk=event.pk %}">
+                                <dd>{{ event.title}}</dd>
+                            </a>
+                        </li>
+                    {% endfor %}
+                    </ul>
+                </dl>
+            {% else %}
+                <p>You don't have any events yet.</p>
+            {% endif %}
+        </div>
+    {% endif %}
 </div>
-<div id="calendars" class="row">
-    <div class="col-lg-6">
-        <h2>My calendars</h2>
-        {% if calendars %}
-            {% include 'my_calendar/calendars_table.html' with calendars=calendars only %}
-        {% else %}
-            <p>You don't have any calendars yet.
-                <a href="{% url 'my_calendar:new_calendar' %}">Go and create a new one!</a>
-            </p>
-        {% endif %}
+{% if profile.user == request.user %}
+    <div id="calendars" class="row">
+        <div class="col-lg-6">
+            <h2>My calendars</h2>
+            {% if calendars %}
+                {% include 'my_calendar/calendars_table.html' with calendars=calendars only %}
+            {% else %}
+                <p>You don't have any calendars yet.
+                    <a href="{% url 'my_calendar:new_calendar' %}">Go and create a new one!</a>
+                </p>
+            {% endif %}
+        </div>
+        <div class="col-lg-6">
+            <h2>Other calendars</h2>
+            {% if other_calendars %}
+                {% include 'my_calendar/calendars_table.html' with calendars=other_calendars only %}
+            {% else %}
+                <p>You don't take part in other users' calendars. Find some friends using search bar.</p>
+            {% endif %}
+        </div>
     </div>
-    <div class="col-lg-6">
-        <h2>Other calendars</h2>
-        {% if other_calendars %}
-            {% include 'my_calendar/calendars_table.html' with calendars=other_calendars only %}
-        {% else %}
-            <p>You don't take part in other users' calendars. Find some friends using search bar.</p>
-        {% endif %}
-    </div>
-</div>
+{% endif %}
 {% endblock content %}

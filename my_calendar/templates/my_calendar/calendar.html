@@ -32,8 +32,10 @@
                         <h3 class="panel-title">Readers</h3>
                     </div>
                     <div class="panel-body list-group">
-                        {% for user in calendar.readers.all %}
-                            <p class="list-group-item">{{ user }}</p>
+                        {% for profile in calendar.readers.all %}
+                            <a class="list-group-item" href="{% url 'my_calendar:profile' username=profile.user.username %}">
+                                {{ profile }}
+                            </a>
                             {% empty %}
                             <p>No such users.</p>
                         {% endfor %}
@@ -46,8 +48,9 @@
                         <h3 class="panel-title">Modifiers</h3>
                     </div>
                     <div class="panel-body list-group">
-                        {% for user in calendar.modifiers.all %}
-                            <p class="list-group-item">{{ user }}</p>
+                        {% for profile in calendar.modifiers.all %}
+                            <a class="list-group-item" href="{% url 'my_calendar:profile' username=profile.user.username %}">
+                                {{ profile }}</a>
                             {% empty %}
                             <p>No such users.</p>
                         {% endfor %}
