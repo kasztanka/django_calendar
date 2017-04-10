@@ -8,6 +8,8 @@
         {{ attending_status_form.as_p }}
         <button type="submit" id="save_event" onclick="enableInputs();">Save event</button>
     </form>
-    <script src="{% static 'disable_event_inputs.js' %}"></script>
 
 {% endblock content %}
+{% block scripts %}
+<script src="{% static 'disable_event_inputs.js' %}"></script>
+{% endblock scripts %}

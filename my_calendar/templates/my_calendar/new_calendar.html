@@ -32,10 +32,12 @@
         <button type="submit" id="save_calendar">Save calendar</button>
     </form>
 
-    <script src="{% static 'calendar_form_colors.js' %}"></script>
-    <script>
-        colors[0].className += " active";
-        const input = document.getElementById("id_color");
-        input.value = colors[0].getAttribute("name");
-    </script>
 {% endblock content %}
+{% block scripts %}
+<script src="{% static 'calendar_form_colors.js' %}"></script>
+<script>
+    colors[0].className += " active";
+    const input = document.getElementById("id_color");
+    input.value = colors[0].getAttribute("name");
+</script>
+{% endblock scripts %}

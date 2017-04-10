@@ -93,6 +93,11 @@ hr {
     background-color: #fff;
 }
 
+#search-results .tab-pane {
+    background-color: #fff;
+    padding: 20px;
+}
+
 footer {
     padding: 40px 0;
     color: #888;

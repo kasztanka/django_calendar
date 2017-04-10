@@ -78,16 +78,18 @@
         </div>
     </div>
 
-    <script>
-        const outer_height = $("#events").height();
-        let event;
-        {% for dict_ in days %}
-            {% for event in dict_.events %}
-                event = document.getElementById("event-{{ event.pk }}");
-                event.style.top = outer_height * {{ event.top }} + "px";
-            {% endfor %}
-        {% endfor %}
-    </script>
-    <script src="{% static 'display_of_events.js' %}"></script>
 
 {% endblock content %}
+{% block scripts %}
+<script>
+    const outer_height = $("#events").height();
+    let event;
+    {% for dict_ in days %}
+        {% for event in dict_.events %}
+        event = document.getElementById("event-{{ event.pk }}");
+        event.style.top = outer_height * {{ event.top }} + "px";
+        {% endfor %}
+    {% endfor %}
+</script>
+<script src="{% static 'display_of_events.js' %}"></script>
+{% endblock scripts %}
