@@ -1,0 +1,18 @@
+<h4 id="show-by-heading">Show by:</h4>
+<div class="btn-group" role="group">
+    <button type="button" class="btn btn-default dropdown-toggle"
+        data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+        {{ show_by }} <span class="caret"></span>
+    </button>
+    <ul class="dropdown-menu">
+        <li>
+            <a id="month" href="/month/{{ chosen_date|date:'Y-m-d' }}">Month</a>
+        </li>
+        <li>
+            <a id="week" href="/week/{{ chosen_date|date:'Y-m-d' }}">Week</a>
+        </li>
+        <li>
+            <a id="day" href="/day/{{ chosen_date|date:'Y-m-d' }}">Day</a>
+        </li>
+    </ul>
+</div>

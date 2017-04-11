@@ -8,10 +8,7 @@
     {% endif %}
 <div class="row">
     <div class="col-lg-2">
-        <a id="month" href="/month/{{ choosen_date|date:'Y-m-d' }}">Month</a>
-        <a id="week" href="/week/{{ choosen_date|date:'Y-m-d' }}">Week</a>
-        <a id="day" href="/day/{{ choosen_date|date:'Y-m-d' }}">Day</a>
-
+        {% include 'my_calendar/timeline_type.html' %}
         <ul id="calendars">Calendars:
             {% for cal in calendars %}
                 <li>
@@ -52,7 +49,7 @@
                     <tr>
                 {% endif %}
                 <td>
-                    <a href="/month/{{ dict_.day|date:'Y-m-d' }}">
+                    <a href="/day/{{ dict_.day|date:'Y-m-d' }}">
                         {{ dict_.day|date:"d" }}
                     </a>
                 {% for event in dict_.events %}

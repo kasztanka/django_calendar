@@ -6,9 +6,7 @@
         <div>{{ date_errors }}</div>
     {% endif %}
 
-    <a id="month" href="/month/{{ choosen_date|date:'Y-m-d' }}">Month</a>
-    <a id="week" href="/week/{{ choosen_date|date:'Y-m-d' }}">Week</a>
-    <a id="day" href="/day/{{ choosen_date|date:'Y-m-d' }}">Day</a>
+    {% include 'my_calendar/timeline_type.html' %}
 
     <ul id="calendars">Calendars:
         {% for cal in calendars %}
@@ -34,7 +32,7 @@
         <div id="header" style="float:left; width:100%; display:table;">
             <div style="display:table-cell;">Day:</div>
             <div style="display:table-cell;width:91%;">
-                <a href="/day/{{ choosen_date|date:'Y-m-d' }}">{{ choosen_date|date:"l m/d" }}</a>
+                <a href="/day/{{ chosen_date|date:'Y-m-d' }}">{{ chosen_date|date:"l m/d" }}</a>
             </div>
         </div>
         <div id="all_day" style="float:left; width:100%; display:table;">

@@ -4,17 +4,20 @@
     <ul class="nav nav-tabs" role="tablist">
         <li role="presentation" class="active">
             <a href="#users-tab" aria-controls="users-tab" role="tab" data-toggle="tab">
-                Users <span class="badge">{{ users|length }}</span>
+                Users
+                {% if users|length %}<span class="badge">{{ users|length }}</span>{% endif %}
             </a>
         </li>
         <li role="presentation">
             <a href="#calendars-tab" aria-controls="calendars-tab" role="tab" data-toggle="tab">
-                Calendars <span class="badge">{{ calendars|length }}</span>
+                Calendars
+                {% if calendars|length %}<span class="badge">{{ calendars|length }}</span>{% endif %}
             </a>
         </li>
         <li role="presentation">
             <a href="#events-tab" aria-controls="events-tab" role="tab" data-toggle="tab">
-                Events <span class="badge">{{ events|length }}</span>
+                Events
+                {% if events|length %}<span class="badge">{{ events|length }}</span>{% endif %}
             </a>
         </li>
     </ul>

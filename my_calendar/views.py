@@ -103,18 +103,19 @@ def month(request, year, month, day):
         context['days'] = get_events_from_days(days, events, timezone, profile)
         context['calendars'] = (profile.get_calendars_to_modify()
             | profile.get_calendars_to_read()).distinct()
-        context['choosen_date'] = date_
-        choosen_month = date_.month
+        context['chosen_date'] = date_
+        chosen_month = date_.month
         decreasing_date = date_
-        while decreasing_date.month == choosen_month:
+        while decreasing_date.month == chosen_month:
             decreasing_date -= datetime.timedelta(days=1)
         decreasing_date = decreasing_date.replace(day=1)
         context['earlier'] = decreasing_date
         increasing_date = date_
-        while increasing_date.month == choosen_month:
+        while increasing_date.month == chosen_month:
             increasing_date += datetime.timedelta(days=1)
         increasing_date = increasing_date.replace(day=1)
         context['later'] = increasing_date
+        context['show_by'] = 'Month'
     return render(request, 'my_calendar/month.html', context)
 
 def week(request, year, month, day):
@@ -132,10 +133,11 @@ def week(request, year, month, day):
         context['days'] = get_events_from_days(days, events, timezone, profile)
         context['calendars'] = (profile.get_calendars_to_modify()
             | profile.get_calendars_to_read()).distinct()
-        context['choosen_date'] = date_
+        context['chosen_date'] = date_
         context['earlier'] = date_ - datetime.timedelta(days=7)
         context['later'] = date_ + datetime.timedelta(days=7)
         context['range'] = range(24)
+        context['show_by'] = 'Week'
     return render(request, 'my_calendar/week.html', context)
 
 def day(request, year, month, day):
@@ -146,7 +148,7 @@ def day(request, year, month, day):
         except ValueError:
             date_ = datetime.datetime.now().date()
             context['date_errors'] = "You enetered wrong date."
-        context['choosen_date'] = date_
+        context['chosen_date'] = date_
         context['earlier'] = date_ - datetime.timedelta(days=1)
         context['later'] = date_ + datetime.timedelta(days=1)
 
@@ -158,6 +160,7 @@ def day(request, year, month, day):
         context['calendars'] = (profile.get_calendars_to_modify()
             | profile.get_calendars_to_read()).distinct()
         context['range'] = range(24)
+        context['show_by'] = 'Day'
     return render(request, 'my_calendar/day.html', context)
 
 def new_calendar(request):

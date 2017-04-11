@@ -23,7 +23,7 @@ class DayViewTest(BaseViewTest):
             str(self.today.year), str(self.today.month), str(self.today.day))
 
     def passes_days_if_date_is_today(self, response):
-        self.assertEqual(self.today, response.context['choosen_date'])
+        self.assertEqual(self.today, response.context['chosen_date'])
 
     def test_passes_errors_when_incorrect_date(self):
         response = self.client.get(self.base_url + '/2016-13-01')
@@ -35,7 +35,7 @@ class DayViewTest(BaseViewTest):
 
     def test_passes_date(self):
         response = self.client.get(self.url)
-        self.assertIn('choosen_date', response.context)
+        self.assertIn('chosen_date', response.context)
 
     def test_passes_calendars_when_user_logged_in(self):
         self.user_registers()

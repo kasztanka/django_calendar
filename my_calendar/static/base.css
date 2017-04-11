@@ -98,6 +98,10 @@ hr {
     padding: 20px;
 }
 
+#show-by-heading {
+     display: inline;
+}
+
 footer {
     padding: 40px 0;
     color: #888;
