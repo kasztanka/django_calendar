@@ -8,7 +8,7 @@
     {% endif %}
 <div class="row">
     <div class="col-lg-2">
-        {% include 'my_calendar/timeline_type.html' %}
+        {% include 'my_calendar/timeline_type.html' with show_by='Month' %}
         <ul id="calendars">Calendars:
             {% for cal in calendars %}
                 <li>

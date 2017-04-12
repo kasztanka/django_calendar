@@ -115,7 +115,6 @@ def month(request, year, month, day):
             increasing_date += datetime.timedelta(days=1)
         increasing_date = increasing_date.replace(day=1)
         context['later'] = increasing_date
-        context['show_by'] = 'Month'
     return render(request, 'my_calendar/month.html', context)
 
 def week(request, year, month, day):
@@ -137,7 +136,6 @@ def week(request, year, month, day):
         context['earlier'] = date_ - datetime.timedelta(days=7)
         context['later'] = date_ + datetime.timedelta(days=7)
         context['range'] = range(24)
-        context['show_by'] = 'Week'
     return render(request, 'my_calendar/week.html', context)
 
 def day(request, year, month, day):
@@ -160,7 +158,6 @@ def day(request, year, month, day):
         context['calendars'] = (profile.get_calendars_to_modify()
             | profile.get_calendars_to_read()).distinct()
         context['range'] = range(24)
-        context['show_by'] = 'Day'
     return render(request, 'my_calendar/day.html', context)
 
 def new_calendar(request):

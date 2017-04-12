@@ -6,7 +6,7 @@
         <div>{{ date_errors }}</div>
     {% endif %}
 
-    {% include 'my_calendar/timeline_type.html' %}
+    {% include 'my_calendar/timeline_type.html' with show_by='Week' %}
 
     <ul id="calendars">Calendars:
         {% for cal in calendars %}
