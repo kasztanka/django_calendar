@@ -9,9 +9,9 @@
                 <h2 class="form-signin-heading">Sign in</h2>
                 <form method="POST" id="login-form" action="{% url 'my_calendar:user_login' %}">
                     {% csrf_token %}
-                    {% if login_errors %}
-                        <p>{{ login_errors }}</p>
-                    {% endif %}
+                {% if login_errors %}
+                    <p>{{ login_errors }}</p>
+                {% endif %}
                     <input id="id_username" class="form-control" placeholder="Username"
                         maxlength="150" name="username" type="text" required autofocus/>
                     <input id="id_password" class="form-control" placeholder="Password"

@@ -57,7 +57,7 @@
         <div class="col-lg-6">
             <h2>Other calendars</h2>
             {% if other_calendars %}
-                {% include 'my_calendar/calendars_table.html' with calendars=other_calendars only %}
+            {% include 'my_calendar/calendars_table.html' with calendars=other_calendars only %}
             {% else %}
                 <p>You don't take part in other users' calendars. Find some friends using search bar.</p>
             {% endif %}
