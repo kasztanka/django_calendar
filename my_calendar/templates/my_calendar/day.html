@@ -11,8 +11,8 @@
     {% include 'my_calendar/timeline_type.html' with show_by='Day' %}
     {% include 'my_calendar/calendars_switch.html' %}
         <div>
-            <a id="earlier" href="/day/{{ earlier|date:'Y-m-d' }}">Earlier</a>
-            <a id="later" href="/day/{{ later|date:'Y-m-d' }}">Later</a>
+            <a id="earlier" href="/day/{{ earlier|date:'Y-m-d' }}"><i class="fa fa-chevron-left fa-3x" aria-hidden="true"></i></a>
+            <a id="later" href="/day/{{ later|date:'Y-m-d' }}"><i class="fa fa-chevron-right fa-3x" aria-hidden="true"></i></a>
         </div>
     </div>
     <div class="col-lg-9">

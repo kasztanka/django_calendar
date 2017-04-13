@@ -62,7 +62,10 @@
                 {% if guests %}
                     <ul>
                     {% for guest in guests %}
-                        <li>{{ guest.user.user.username }}: {{ guest.get_attending_status_display }}</li>
+                        <li>
+                            <a href="{% url 'my_calendar:profile' username=guest.user.user.username %}" >{{ guest.user }}:</a>
+                            {{ guest.get_attending_status_display }}
+                        </li>
                     {% endfor %}
                     </ul>
                 {% else %}
