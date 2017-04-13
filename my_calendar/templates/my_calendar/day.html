@@ -9,37 +9,7 @@
 <div class="row">
     <div class="col-lg-3">
     {% include 'my_calendar/timeline_type.html' with show_by='Day' %}
-        <h4>Calendars</h4>
-        <ul id="calendars-checkboxes">
-        {% for cal in calendars %}
-            <li>
-                <div id="calendar_{{ cal.pk }}" style="height:20px; width:20px; border:1px solid; background-color:{{ cal.color }}; display:inline-block;"
-                onclick="displayOfEvents('calendar_{{ cal.pk }}', '{{ cal.color }}');return false;"></div>
-                <a href="{% url 'my_calendar:calendar_view' cal_pk=cal.pk %}">
-                  <span>{{ cal.name }}</span></a>
-            </li>
-        {% endfor %}
-            <li>
-                <div id="calendar_other" style="height:20px; width:20px; border:1px solid; background-color:#FECA5C; display:inline-block;"
-                onclick="displayOfEvents('calendar_other', '#FECA5C');return false;"></div>
-                <span>Others</span>
-            </li>
-        </ul>
-        <div class="panel panel-default">
-            <div class="panel-heading">Calendars</div>
-            <ul class="list-group">
-            {% for cal in calendars %}
-                <li class="list-group-item">
-                    {{ cal.name }}
-                    <div class="material-switch pull-right">
-                        <input id="calendar-checkbox-{{ cal.name }}" name="calendar-checkbox-{{ cal.name }}"
-                            type="checkbox"/>
-                        <label for="calendar-checkbox-{{ cal.name }}" style="background-color: {{ cal.color }}"></label>
-                    </div>
-                </li>
-            {% endfor %}
-            </ul>
-        </div>
+    {% include 'my_calendar/calendars_switch.html' %}
         <div>
             <a id="earlier" href="/day/{{ earlier|date:'Y-m-d' }}">Earlier</a>
             <a id="later" href="/day/{{ later|date:'Y-m-d' }}">Later</a>
@@ -60,7 +30,7 @@
                 {% for event in dict_.events %}
                 {% if event.all_day == True %}
                     <a href="{% url 'my_calendar:event_view' event_pk=event.pk %}">
-                        <div class="event calendar_{{ event.class }}"
+                        <div class="event calendar-{{ event.class }}"
                             id="event-{{ event.pk }}-{{ dict_.day|date:'Y/m/d' }}"
                             style="background-color:{{ event.color }};">
                             {{ event.title }}</div>
@@ -81,7 +51,7 @@
                 {% for event in dict_.events %}
                 {% if event.all_day != True %}
                     <a href="{% url 'my_calendar:event_view' event_pk=event.pk %}">
-                        <div class="event calendar_{{ event.class }}" id="event-{{ event.pk }}"
+                        <div class="event calendar-{{ event.class }}" id="event-{{ event.pk }}"
                             style="position:absolute;
                             height:calc({{ event.height }} * 100%);
                             background-color:{{ event.color }};">
@@ -109,5 +79,5 @@
 {% endfor %}
 {% endfor %}
 </script>
-<script src="{% static 'display_of_events.js' %}"></script>
+<script src="{% static 'display_of_events_on_timeline.js' %}"></script>
 {% endblock scripts %}

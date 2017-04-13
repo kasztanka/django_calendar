@@ -1,0 +1,23 @@
+<div class="panel panel-default">
+    <div class="panel-heading">Calendars</div>
+    <ul class="list-group">
+    {% for cal in calendars %}
+        <li class="list-group-item">
+            {{ cal.name }}
+            <div class="material-switch pull-right">
+                <input id="calendar-{{ cal.pk }}" name="calendar-checkbox-{{ cal.name }}"
+                    class="calendar-checkbox" type="checkbox" checked/>
+                <label for="calendar-{{ cal.pk }}" style="background-color: {{ cal.color }}"></label>
+            </div>
+        </li>
+    {% endfor %}
+        <li class="list-group-item">
+            Others
+            <div class="material-switch pull-right">
+                <input id="calendar-other" name="calendar-checkbox-other"
+                    class="calendar-checkbox" type="checkbox" checked/>
+                <label for="calendar-other" style="background-color: #FECA5C"></label>
+            </div>
+        </li>
+    </ul>
+</div>
