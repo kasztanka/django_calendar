@@ -74,7 +74,8 @@ hr {
 }
 
 .well-supersmall {
-    padding: 5px;
+    text-align: center;
+    padding: 4px;
     margin-bottom: 0;
     margin-top: 5px;
 }
@@ -155,6 +156,28 @@ hr {
 .material-switch > input[type="checkbox"]:checked + label::after {
     background: inherit;
     left: 20px;
+}
+
+#timeline-week {
+    background-color: white;
+    width: 100%;
+    float: left;
+    border: 1px solid #ddd;
+    padding: 15px;
+}
+
+.timeline--day-column {
+    display: table-cell;
+    width: 13%;
+    text-align: center;
+}
+
+#timeline--hours {
+    display: table-cell;
+}
+
+#timeline--hours div {
+    margin-top: 4px;
 }
 
 footer {
