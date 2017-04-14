@@ -88,11 +88,11 @@ def user_logout(request):
     logout(request)
     return redirect('my_calendar:index')
 
-def month(request, year, month, day):
+def month(request, date):
     context = {}
     if request.user.is_authenticated():
         try:
-            date_ = datetime.date(int(year), int(month), int(day))
+            date_ = datetime.datetime.strptime(date, "%Y-%m-%d").date()
         except ValueError:
             date_ = datetime.datetime.now().date()
             context['date_errors'] = "You enetered wrong date."
@@ -117,11 +117,11 @@ def month(request, year, month, day):
         context['later'] = increasing_date
     return render(request, 'my_calendar/month.html', context)
 
-def week(request, year, month, day):
+def week(request, date):
     context = {}
     if request.user.is_authenticated():
         try:
-            date_ = datetime.date(int(year), int(month), int(day))
+            date_ = datetime.datetime.strptime(date, "%Y-%m-%d").date()
         except ValueError:
             date_ = datetime.datetime.now().date()
             context['date_errors'] = "You enetered wrong date."
@@ -140,11 +140,11 @@ def week(request, year, month, day):
         context['Sunday'] = context['Monday'] + datetime.timedelta(days=6)
     return render(request, 'my_calendar/week.html', context)
 
-def day(request, year, month, day):
+def day(request, date):
     context = {}
     if request.user.is_authenticated():
         try:
-            date_ = datetime.date(int(year), int(month), int(day))
+            date_ = datetime.datetime.strptime(date, "%Y-%m-%d").date()
         except ValueError:
             date_ = datetime.datetime.now().date()
             context['date_errors'] = "You enetered wrong date."

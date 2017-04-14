@@ -9,10 +9,8 @@
 
         {% if profile.user == request.user %}
             {% timezone profile.get_timezone_display %}
-                {% now "Y" as current_year %}
-                {% now "m" as current_month %}
-                {% now "d" as current_day %}
-                <a id="timeline" href="{% url 'my_calendar:month' year=current_year month=current_month day=current_day %}">
+                {% now "Y-m-d" as current_date %}
+                <a id="timeline" href="{% url 'my_calendar:month' date=current_date %}">
                     Check out you're timeline!
                 </a>
             {% endtimezone %}

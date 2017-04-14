@@ -6,13 +6,13 @@
     </button>
     <ul class="dropdown-menu">
         <li>
-            <a id="month" href="/month/{{ chosen_date|date:'Y-m-d' }}">Month</a>
+            <a id="month" href="{% url 'my_calendar:month' date=chosen_date %}">Month</a>
         </li>
         <li>
-            <a id="week" href="/week/{{ chosen_date|date:'Y-m-d' }}">Week</a>
+            <a id="week" href="{% url 'my_calendar:week' date=chosen_date %}">Week</a>
         </li>
         <li>
-            <a id="day" href="/day/{{ chosen_date|date:'Y-m-d' }}">Day</a>
+            <a id="day" href="{% url 'my_calendar:day' date=chosen_date %}">Day</a>
         </li>
     </ul>
 </div>

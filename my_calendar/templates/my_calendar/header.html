@@ -7,10 +7,8 @@
         <div id="navbar">
             <ul class="nav navbar-nav">
                 <li><a href="{% url 'my_calendar:profile' username=user.username %}">Profile</a></li>
-                {% now "Y" as current_year %}
-                {% now "m" as current_month %}
-                {% now "d" as current_day %}
-                <li><a href="{% url 'my_calendar:month' year=current_year month=current_month day=current_day %}">Timeline</a></li>
+                {% now "Y-m-d" as current_date %}
+                <li><a href="{% url 'my_calendar:month' date=current_date %}">Timeline</a></li>
                 <li><a href="#">Create</a></li>
             </ul>
             <ul class="nav navbar-nav navbar-right">
