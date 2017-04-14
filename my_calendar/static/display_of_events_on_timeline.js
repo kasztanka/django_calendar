@@ -1,17 +1,9 @@
 $(".calendar-checkbox").change(function() {
     const eventsClass = this.id;
-    console.log(eventsClass);
-    let events;
+    let events = $('.' + eventsClass);
     if(this.checked) {
-        events = document.getElementsByClassName(eventsClass);
-        console.log(events);
-        for (let i = 0; i < events.length; i++) {
-            events[i].style.display = 'block';
-        }
+        events.show("scale", duration = "slow");
     } else {
-        events = document.getElementsByClassName(eventsClass);
-        for (let i = 0; i < events.length; i++) {
-            events[i].style.display = 'none';
-        }
+        events.hide("scale", duration = "slow");
     }
 });
