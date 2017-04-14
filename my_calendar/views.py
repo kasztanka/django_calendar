@@ -136,6 +136,8 @@ def week(request, year, month, day):
         context['earlier'] = date_ - datetime.timedelta(days=7)
         context['later'] = date_ + datetime.timedelta(days=7)
         context['range'] = range(24)
+        context['Monday'] = date_ - datetime.timedelta(days=date_.weekday())
+        context['Sunday'] = context['Monday'] + datetime.timedelta(days=6)
     return render(request, 'my_calendar/week.html', context)
 
 def day(request, year, month, day):
