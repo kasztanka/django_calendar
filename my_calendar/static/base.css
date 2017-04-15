@@ -104,11 +104,6 @@ hr {
      display: inline;
 }
 
-.timeline-date-range {
-    margin-top: 0;
-    text-align: center;
-}
-
 #calendars-switch {
     margin-top: 10px;
 }
@@ -136,6 +131,7 @@ hr {
     transition: all 0.4s ease-in-out;
     width: 40px;
 }
+
 .material-switch > label::after {
     background: rgb(255, 255, 255);
     border-radius: 16px;
@@ -149,16 +145,35 @@ hr {
     transition: all 0.3s ease-in-out;
     width: 24px;
 }
+
 .material-switch > input[type="checkbox"]:checked + label::before {
     background: inherit;
     opacity: 0.5;
 }
+
 .material-switch > input[type="checkbox"]:checked + label::after {
     background: inherit;
     left: 20px;
 }
 
-#timeline-week {
+.all-day {
+    float: left;
+    width: 100%;
+    display: table;
+}
+
+.timeline--date-range {
+    margin-top: 0;
+    text-align: center;
+}
+
+.timeline--header {
+    float: left;
+    width: 100%;
+    display: table;
+}
+
+.timeline--days {
     background-color: white;
     width: 100%;
     float: left;
@@ -172,12 +187,25 @@ hr {
     text-align: center;
 }
 
-#timeline--hours {
+.timeline--hours {
     display: table-cell;
 }
 
-#timeline--hours div {
+.timeline--hours div {
     margin-top: 4px;
+}
+
+.timeline--events {
+    position: relative;
+    display: table-cell;
+}
+
+.week-events {
+    width: 13%;
+}
+
+.day-events {
+    width: 91%;
 }
 
 footer {

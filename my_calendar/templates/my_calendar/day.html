@@ -3,7 +3,7 @@
 {% block content %}
 
 {% if date_errors %}
-    <div>{{ date_errors }}</div>
+    <div class="alert alert-danger">{{ date_errors }}</div>
 {% endif %}
 
 <div class="row">
@@ -20,27 +20,20 @@
         </div>
     </div>
     <div class="col-lg-9">
-        <h3 class="timeline-date-range">{{ chosen_date|date:"d F Y" }}</h3>
-        <div id="timeline" style="width:100%">
-            <div id="header" style="float:left; width:100%; display:table;">
-                <div style="display:table-cell;">Day:</div>
-                <div style="display:table-cell;width:91%;">
-                    <a href="{% url 'my_calendar:day' date=chosen_date %}">
-                        {{ chosen_date|date:"l m/d" }}
-                    </a>
-                </div>
-            </div>
-            <div id="all_day" style="float:left; width:100%; display:table;">
+        <h3 class="timeline--date-range">{{ chosen_date|date:"l - d F, Y" }}</h3>
+        <div class="timeline--days">
+            <div class="all-day">
                 <div style="display:table-cell;">All day:</div>
             {% for dict_ in days %}
                 <div style="display:table-cell;width:91%;">
                 {% for event in dict_.events %}
                 {% if event.all_day == True %}
                     <a href="{% url 'my_calendar:event_view' event_pk=event.pk %}">
-                        <div class="event calendar-{{ event.class }}"
+                        <div class="event well well-supersmall calendar-{{ event.class }}"
                             id="event-{{ event.pk }}-{{ dict_.day|date:'Y/m/d' }}"
-                            style="background-color:{{ event.color }};">
-                            {{ event.title }}</div>
+                            style="color:{{ event.color }}">
+                            {{ event.title }}
+                        </div>
                     </a>
                 {% endif %}
                 {% endfor %}
@@ -48,21 +41,23 @@
             {% endfor %}
             </div>
             <div id="bottom" style="float:left; width:100%; display:table;">
-                <div id="hours" style="display:table-cell;">
+                <div class="timeline--hours">
                 {% for i in range %}
                     <div>{{ i }}:00</div>
                 {% endfor %}
                 </div>
-                <div id="events" style="position:relative; display:table-cell;width:91%">
+                <div class="timeline--events day-events" style="width:91%;">
                 {% for dict_ in days %}
                 {% for event in dict_.events %}
                 {% if event.all_day != True %}
                     <a href="{% url 'my_calendar:event_view' event_pk=event.pk %}">
-                        <div class="event calendar-{{ event.class }}" id="event-{{ event.pk }}"
-                            style="position:absolute;
-                            height:calc({{ event.height }} * 100%);
-                            background-color:{{ event.color }};">
-                            {{ event.title }}</div>
+                        <div class="event well well-supersmall calendar-{{ event.class }}"
+                            id="event-{{ event.pk }}"
+                            style="position: absolute;
+                                   height: calc({{ event.height }} * 100%);
+                                   color: {{ event.color }}">
+                            {{ event.title }}
+                        </div>
                     </a>
                 {% endif %}
                 {% endfor %}
