@@ -9,7 +9,15 @@
                 <li><a href="{% url 'my_calendar:profile' username=user.username %}">Profile</a></li>
                 {% now "Y-m-d" as current_date %}
                 <li><a href="{% url 'my_calendar:month' date=current_date %}">Timeline</a></li>
-                <li><a href="#">Create</a></li>
+                <li class="dropdown">
+                    <a class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">
+                        Create <span class="caret"></span>
+                    </a>
+                    <ul class="dropdown-menu">
+                        <li><a href="{% url 'my_calendar:new_calendar' %}">Calendar</a></li>
+                        <li><a href="#">Event</a></li>
+                    </ul>
+                </li>
             </ul>
             <ul class="nav navbar-nav navbar-right">
                 <li><a href="{% url 'my_calendar:user_logout' %}">Logout</a></li>
