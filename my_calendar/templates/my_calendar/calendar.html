@@ -31,13 +31,13 @@
                         <h3 class="panel-title">Readers</h3>
                     </div>
                     <div class="panel-body list-group">
-                        {% for profile in calendar.readers.all %}
-                            <a class="list-group-item" href="{% url 'my_calendar:profile' username=profile.user.username %}">
-                                {{ profile }}
-                            </a>
-                            {% empty %}
-                            <p>No such users.</p>
-                        {% endfor %}
+                    {% for profile in calendar.readers.all %}
+                        <a class="list-group-item" href="{% url 'my_calendar:profile' username=profile.user.username %}">
+                            {{ profile }}
+                        </a>
+                        {% empty %}
+                        <p>No such users.</p>
+                    {% endfor %}
                     </div>
                 </div>
             </div>
@@ -47,12 +47,12 @@
                         <h3 class="panel-title">Modifiers</h3>
                     </div>
                     <div class="panel-body list-group">
-                        {% for profile in calendar.modifiers.all %}
-                            <a class="list-group-item" href="{% url 'my_calendar:profile' username=profile.user.username %}">
-                                {{ profile }}</a>
-                            {% empty %}
-                            <p>No such users.</p>
-                        {% endfor %}
+                    {% for profile in calendar.modifiers.all %}
+                        <a class="list-group-item" href="{% url 'my_calendar:profile' username=profile.user.username %}">
+                            {{ profile }}</a>
+                        {% empty %}
+                        <p>No such users.</p>
+                    {% endfor %}
                     </div>
                 </div>
             </div>
@@ -78,14 +78,14 @@
                     <div style="background-color: #{{ color }}; height:20px; width:20px;" class="colors" name="{{ color }}"></div>
                 {% endfor %}
                 <ul id="readers">Choose users who can read your calendar:
-                    {% for user in calendar_form.readers %}
-                        <li>{{ user }}</li>
-                    {% endfor %}
+                {% for user in calendar_form.readers %}
+                    <li>{{ user }}</li>
+                {% endfor %}
                 </ul>
                 <ul id="modifiers">Choose users who can modify events in your calendar:
-                    {% for user in calendar_form.modifiers %}
-                        <li>{{ user }}</li>
-                    {% endfor %}
+                {% for user in calendar_form.modifiers %}
+                    <li>{{ user }}</li>
+                {% endfor %}
                 </ul>
                 <button type="submit" id="save_calendar">Save calendar</button>
             </form>

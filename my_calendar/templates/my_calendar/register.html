@@ -3,47 +3,50 @@
 <div class="row">
     <div class="col-lg-6">
         <div class="signin-container">
-    {% if user.is_authenticated %}
-        <div>You already have an account. Log out if you want another.</div>
-    {% else %}
+        {% if user.is_authenticated %}
+            <div class="alert alert-danger">
+                You already have an account. Log out if you want another.
+            </div>
+        {% else %}
+            <div class="alert alert-danger">
+                {{ register_form.non_field_errors }}
+                {{ profile_form.non_field_errors }}
+            </div>
+            <h2 class="form-signin-heading">Registration</h2>
+            <form method="POST" id="register-form">
+                {% csrf_token %}
 
-    {{ register_form.non_field_errors }}
-    {{ profile_form.non_field_errors }}
-    <h2 class="form-signin-heading">Registration</h2>
-        <form method="POST" id="register-form">
-            {% csrf_token %}
+                <input id="id_username" class="form-control" placeholder="Username"
+                    maxlength="150" name="username" type="text" required autofocus/>
+                {{ register_form.username.errors }}
 
-            <input id="id_username" class="form-control" placeholder="Username"
-                maxlength="150" name="username" type="text" required autofocus/>
-            {{ register_form.username.errors }}
+                <input id="email" class="form-control" placeholder="Email"
+                    maxlength="150" name="email" type="email" required/>
+                {{ register_form.email.errors }}
 
-            <input id="email" class="form-control" placeholder="Email"
-                maxlength="150" name="email" type="email" required/>
-            {{ register_form.email.errors }}
+                <input id="id_password" class="form-control" placeholder="Password"
+                    name="password" type="password" required />
+                {{ register_form.password.errors }}
 
-            <input id="id_password" class="form-control" placeholder="Password"
-                name="password" type="password" required />
-            {{ register_form.password.errors }}
+                <input id="id_first_name" class="form-control" placeholder="First name"
+                    name="id_first_name" required />
+                {{ register_form.first_name.errors }}
 
-            <input id="id_first_name" class="form-control" placeholder="First name"
-                name="id_first_name" required />
-            {{ register_form.first_name.errors }}
+                <input id="id_last_name" class="form-control" placeholder="Last name"
+                    name="id_last_name" required />
+                {{ register_form.last_name.errors }}
 
-            <input id="id_last_name" class="form-control" placeholder="Last name"
-                name="id_last_name" required />
-            {{ register_form.last_name.errors }}
+                <label for="id_timezone"><h5>Timezone:</h5></label>
+                {{ profile_form.timezone }}
+                {{ profile_form.timezone.errors }}
 
-            <label for="id_timezone"><h5>Timezone:</h5></label>
-            {{ profile_form.timezone }}
-            {{ profile_form.timezone.errors }}
-
-            <button class="btn btn-lg btn-primary btn-block" type="submit">Sign up</button>
-        </form>
-    {% endif %}
+                <button class="btn btn-lg btn-primary btn-block" type="submit">Sign up</button>
+            </form>
+        {% endif %}
+        </div>
     </div>
-</div>
     <div class="col-lg-6">
-        <h1 class="large-title">Stwórz swój kalendarz już dziś</h1>
+        <h1 class="large-title">Create your own calendar</h1>
     </div>
 </div>
 {% endblock content %}

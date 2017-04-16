@@ -208,6 +208,28 @@ hr {
     width: 91%;
 }
 
+#id_name {
+    margin-bottom: 30px;
+}
+
+#calendar_form .list-group-item label {
+    font-weight: 400;
+}
+
+.color-box {
+    display: inline-block;
+    width: 30px;
+    height: 30px;
+    opacity: 0.5;
+    cursor: pointer;
+    margin-right: 5px;
+    margin-bottom: 10px;
+}
+
+.active-color-box {
+    opacity: 1;
+}
+
 footer {
     padding: 40px 0;
     color: #888;

@@ -2,41 +2,59 @@
 {% load staticfiles %}
 {% block content %}
 
-    {% if form_errors %}
-        <p>{{ form_errors }}</p>
-    {% endif %}
-
+{% if form_errors %}
+    <div class="alert alert-danger">{{ form_errors }}</div>
+{% endif %}
+<div class="col-lg-6">
+    <h2 class="form-signin-heading">New calendar</h2>
     <form method="POST" id="calendar_form">
         {% csrf_token %}
-        <div>
-            <label for="id_name">Name:</label>
-            <input id="id_name" maxlength="100" name="name" type="text" required />
+        <input id="id_color" name="color" type="hidden"/>
+    {% for color in colors %}
+        <div style="background-color: {{ color }}; border: 4px solid {{ color }}" class="color-box" name="{{ color }}"></div>
+    {% endfor %}
+        <input id="id_name" class="form-control" placeholder="Calendar name"
+            maxlength="100" name="name" type="text" required/>
+        <div class="row">
+            <div class="col-lg-6">
+                <div class="panel panel-default">
+                    <div class="panel-heading">
+                        <h3 class="panel-title">Readers</h3>
+                    </div>
+                    <div class="panel-body list-group readers">
+                    {% for user in calendar_form.readers %}
+                        <p class="list-group-item">
+                            {{ user }}
+                        </p>
+                    {% endfor %}
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-6">
+                <div class="panel panel-default">
+                    <div class="panel-heading">
+                        <h3 class="panel-title">Modifiers</h3>
+                    </div>
+                    <div class="panel-body list-group modifiers">
+                    {% for user in calendar_form.modifiers %}
+                        <p class="list-group-item">
+                            {{ user }}
+                        </p>
+                    {% endfor %}
+                    </div>
+                </div>
+            </div>
         </div>
-        <div>
-            <label for="id_color">Choose color:</label>
-            <input id="id_color" name="color" type="hidden"/>
-        </div>
-        {% for color in colors %}
-            <div style="background-color: {{ color }}; height:20px; width:20px;" class="colors" name="{{ color }}"></div>
-        {% endfor %}
-        <ul id="readers">Choose users who can read your calendar:
-            {% for user in calendar_form.readers %}
-                <li>{{ user }}</li>
-            {% endfor %}
-        </ul>
-        <ul id="modifiers">Choose users who can modify events in your calendar:
-            {% for user in calendar_form.modifiers %}
-                <li>{{ user }}</li>
-            {% endfor %}
-        </ul>
-        <button type="submit" id="save_calendar">Save calendar</button>
+
+        <button type="submit" class="btn btn-default">Save calendar</button>
     </form>
+</div>
 
 {% endblock content %}
 {% block scripts %}
 <script src="{% static 'calendar_form_colors.js' %}"></script>
 <script>
-    colors[0].className += " active";
+    colors[0].classList.add("active-color-box");
     const input = document.getElementById("id_color");
     input.value = colors[0].getAttribute("name");
 </script>
