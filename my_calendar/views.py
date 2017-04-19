@@ -7,6 +7,7 @@ from django.utils.deprecation import MiddlewareMixin
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.postgres.search import SearchVector
 from django.contrib.auth.models import User
+from django.views import View
 
 from .models import UserProfile, MyCalendar, Event, Guest
 from .forms import (RegisterForm, EventForm, AttendingStatusForm, ProfileForm,
@@ -34,29 +35,37 @@ def index(request):
         return redirect('my_calendar:profile', username=request.user.username)
     return render(request, "my_calendar/index.html")
 
-def register(request):
+class RegisterView(View):
+    template_name  = 'my_calendar/register.html'
     context = {}
-    if request.method == "POST":
-        register_form = RegisterForm(data=request.POST)
-        profile_form = ProfileForm(data=request.POST)
-        if register_form.is_valid() and profile_form.is_valid():
-            user = register_form.save()
+
+    def prepare_forms(self, data=None):
+        self.register_form = RegisterForm(data=data)
+        self.profile_form = ProfileForm(data=data)
+        self.context['register_form'] = self.register_form
+        self.context['profile_form'] = self.profile_form
+
+    def get(self, request):
+        self.prepare_forms()
+        return render(request, self.template_name, self.context)
+
+    def post(self, request):
+        self.prepare_forms(request.POST)
+        if self.register_form.is_valid() and self.profile_form.is_valid():
+            user = self.register_form.save()
             unhashed_password = user.password
             user.set_password(user.password)
             user.save()
-            profile = profile_form.save(commit=False)
+            profile = self.profile_form.save(commit=False)
             profile.user = user
             profile.save()
             user_obj = authenticate(username=user.username,
                 password=unhashed_password)
             login(request, user_obj)
             return redirect('my_calendar:profile', username=user.username)
-    else:
-        register_form = RegisterForm()
-        profile_form = ProfileForm()
-    context['register_form'] = register_form
-    context['profile_form'] = profile_form
-    return render(request, "my_calendar/register.html", context)
+        else:
+            return render(request, self.template_name, self.context)
+
 
 def profile(request, username):
     context = {}

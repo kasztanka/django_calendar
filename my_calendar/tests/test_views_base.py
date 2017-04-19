@@ -11,7 +11,7 @@ class BaseViewTest(TestCase):
         self.template = 'my_calendar/index.html'
         self.function = index
 
-    def test_url_resolves_to_correct_view(self):
+    def test_url_resoves_to_correct_view(self):
         found = resolve(self.url)
         self.assertEqual(found.func, self.function)
 
@@ -36,6 +36,12 @@ class BaseViewTest(TestCase):
         })
         return response
 
+
+class ClassViewTest():
+
+    def test_url_resoves_to_correct_view(self):
+        found = resolve(self.url)
+        self.assertEqual((found.func.__name__), self.view_name)
 
 if __name__ == '__main__':
     unittest.main()

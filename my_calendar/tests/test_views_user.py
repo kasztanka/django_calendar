@@ -2,9 +2,9 @@ from django.contrib.auth.models import User, AnonymousUser
 from django.contrib.auth import get_user
 from django.test import TestCase
 
-from my_calendar.views import register, profile
+from my_calendar.views import RegisterView, profile
 from my_calendar.models import UserProfile
-from .test_views_base import BaseViewTest
+from .test_views_base import BaseViewTest, ClassViewTest
 
 
 class AnonymousUserTest(TestCase):
@@ -16,12 +16,12 @@ class AnonymousUserTest(TestCase):
             self.assertRedirects(response, '/')
 
 
-class RegisterViewTest(BaseViewTest):
+class RegisterViewTest(ClassViewTest, BaseViewTest):
 
     def setUp(self):
         self.url = '/register'
         self.template = 'my_calendar/register.html'
-        self.function = register
+        self.view_name = RegisterView.__name__
 
     def test_register_saves_new_user(self):
         self.user_registers()
