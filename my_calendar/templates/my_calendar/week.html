@@ -65,7 +65,7 @@
                             id="event-{{ event.pk }}-{{ dict_.day|date:'Y/m/d' }}"
                             style="position:absolute;
                                    height:calc({{ event.height }} * 100%);
-                                   color:{{ event.color }}">
+                                   color:{{ event.color }};">
                             {{ event.title }}
                         </div>
                     </a>
@@ -81,7 +81,7 @@
 {% endblock content %}
 {% block scripts %}
 <script>
-    const outer_height = $(".events").height();
+    const outer_height = $("#bottom").height();
     let event;
 {% for dict_ in days %}
 {% for event in dict_.events %}

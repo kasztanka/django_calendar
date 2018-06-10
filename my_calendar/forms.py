@@ -35,7 +35,7 @@ class CalendarForm(forms.ModelForm):
 
     class Meta:
         model = MyCalendar
-        fields = ('readers', 'modifiers')
+        fields = ('name', 'color', 'readers', 'modifiers')
         widgets = {
             'readers': forms.CheckboxSelectMultiple,
             'modifiers': forms.CheckboxSelectMultiple,
@@ -47,9 +47,21 @@ class CalendarForm(forms.ModelForm):
         """
         super(CalendarForm, self).__init__(*args, **kwargs)
         if owner is not None:
+            self.owner = owner
             without_owner = UserProfile.objects.all().exclude(pk=owner.pk)
             self.fields['readers'].queryset = without_owner
             self.fields['modifiers'].queryset = without_owner
+
+    def save(self, commit=True):
+        instance = super(CalendarForm, self).save(commit=False)
+        instance.owner = self.owner
+        if commit:
+            instance.save()
+            instance.readers = self.cleaned_data['readers']
+            instance.readers.add(instance.owner)
+            instance.modifiers = self.cleaned_data['modifiers']
+            instance.modifiers.add(instance.owner)
+        return instance
 
 
 class EventForm(forms.ModelForm):

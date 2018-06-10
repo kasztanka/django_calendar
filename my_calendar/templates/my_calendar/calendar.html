@@ -58,39 +58,56 @@
             </div>
         </div>
         {% if profile == calendar.owner %}
-            <button onclick="formDisplay('calendar_form', 'edit_calendar', 'Edit this calendar');return false;" id="edit_calendar">Edit this calendar</button>
 
-            {% if form_errors %}
-                <div>{{ form_errors }}</div>
-            {% endif %}
+            <div class="col-lg-6">
+                <button onclick="formDisplay('calendar_form', 'edit_calendar', 'Edit this calendar');return false;" class="btn btn-default" id="edit_calendar">
+                    Edit this calendar
+                </button>
+                <a id="add_event" href="{% url 'my_calendar:new_event'%}?cal_pk={{ calendar.pk }}" class="btn btn-default">Add event</a>
 
-            <form method="POST" id="calendar_form">
-                {% csrf_token %}
-                <div>
-                    <label for="id_name">Name:</label>
-                    <input id="id_name" maxlength="100" name="name" type="text" required />
-                </div>
-                <div>
-                    <label for="id_color">Choose color:</label>
+                <form method="POST" id="calendar_form" class="mt">
+                    {% csrf_token %}
                     <input id="id_color" name="color" type="hidden"/>
-                </div>
                 {% for color in colors %}
-                    <div style="background-color: #{{ color }}; height:20px; width:20px;" class="colors" name="{{ color }}"></div>
+                    <div style="background-color: {{ color }}; border: 4px solid {{ color }}" class="color-box" name="{{ color }}"></div>
                 {% endfor %}
-                <ul id="readers">Choose users who can read your calendar:
-                {% for user in calendar_form.readers %}
-                    <li>{{ user }}</li>
-                {% endfor %}
-                </ul>
-                <ul id="modifiers">Choose users who can modify events in your calendar:
-                {% for user in calendar_form.modifiers %}
-                    <li>{{ user }}</li>
-                {% endfor %}
-                </ul>
-                <button type="submit" id="save_calendar">Save calendar</button>
-            </form>
+                    <input id="id_name" class="form-control" placeholder="Calendar name"
+                        maxlength="100" name="name" type="text" value="{{ calendar_form.name.value }}" required/>
+                    <div class="row">
+                        <div class="col-lg-6">
+                            <div class="panel panel-default">
+                                <div class="panel-heading">
+                                    <h3 class="panel-title">Readers</h3>
+                                </div>
+                                <div class="panel-body list-group readers">
+                                {% for user in calendar_form.readers %}
+                                    <p class="list-group-item">
+                                        {{ user }}
+                                    </p>
+                                {% endfor %}
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-lg-6">
+                            <div class="panel panel-default">
+                                <div class="panel-heading">
+                                    <h3 class="panel-title">Modifiers</h3>
+                                </div>
+                                <div class="panel-body list-group modifiers">
+                                {% for user in calendar_form.modifiers %}
+                                    <p class="list-group-item">
+                                        {{ user }}
+                                    </p>
+                                {% endfor %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
 
-            <a id="add_event" href="{% url 'my_calendar:new_event' cal_pk=calendar.pk %}">Add event</a>
+                    <button type="submit" class="btn btn-default">Save calendar</button>
+                </form>
+            </div>
+
         {% endif %}
     {% endif %}
 {% endblock content %}
@@ -98,7 +115,7 @@
 <script src="{% static 'calendar_form_colors.js' %}"></script>
 <script>
     const currentColor = document.getElementsByName("{{ calendar.color }}")[0];
-    currentColor.className += " active";
+    currentColor.classList.add("active-color-box");
     const input = document.getElementById("id_color");
     input.value = currentColor.getAttribute("name");
     const forms = ['calendar_form'];

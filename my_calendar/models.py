@@ -1,6 +1,9 @@
 from pytz import common_timezones_set
 import datetime
+import re
 
+from django.utils.translation import gettext_lazy as _
+from django.core.exceptions import ValidationError
 from django.contrib.auth.models import User
 from django.db import models
 
@@ -63,18 +66,13 @@ class UserProfile(models.Model):
     def __str__(self):
         return self.user.first_name + ' ' + self.user.last_name
 
-
-class MyCalendarManager(models.Manager):
-    """
-    When calendar is created, owner should be added
-    to modifiers and readers fields.
-    """
-    def create(self, *args, **kwargs):
-        calendar_ = super(MyCalendarManager, self).create(*args, **kwargs)
-        calendar_.readers.add(calendar_.owner)
-        calendar_.modifiers.add(calendar_.owner)
-        return calendar_
-
+def validate_color(value):
+    pattern = re.compile("^#[A-Fa-f0-9]{6}$")
+    if not pattern.match(value):
+        raise ValidationError(
+            _('%(value)s is not color - hexadecimal with hash at the beginning'),
+            params={'value': value},
+        )
 
 class MyCalendar(models.Model):
     """
@@ -86,12 +84,11 @@ class MyCalendar(models.Model):
         UserProfile, on_delete=models.CASCADE,
         related_name='owned_calendars')
     name = models.CharField(max_length=100, default="")
-    color = models.CharField(max_length=7)
+    color = models.CharField(max_length=7, validators=[validate_color])
     modifiers = models.ManyToManyField(
         UserProfile, related_name='calendars_to_modify', blank=True)
     readers = models.ManyToManyField(
         UserProfile, related_name='calendars_to_read', blank=True)
-    objects = MyCalendarManager()
 
     def __str__(self):
         return self.name
