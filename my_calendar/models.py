@@ -58,7 +58,8 @@ class UserProfile(models.Model):
         upcoming_events = []
         for event in all_events:
             start = event.start.replace(tzinfo=None)
-            if start >= datetime.datetime.now():
+            now = datetime.datetime.now()
+            if (event.all_day and start.date() >= now.date()) or start >= now:
                 upcoming_events.append(event)
         upcoming_events.sort(key=lambda x: x.start)
         return upcoming_events[-amount:]

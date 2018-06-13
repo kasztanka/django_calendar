@@ -1,0 +1,59 @@
+<form method="POST" id="event_form" class="mt">
+    {% csrf_token %}
+    <div class="form-group">
+        <input id="id_title" class="form-control" placeholder="Event title"
+            maxlength="100" name="title" type="text" value="{{ event_form.title.value }}" required/>
+    </div>
+    <div class="form-group">
+        <textarea class="form-control" rows="3" max_length="1000"
+            id="id_desc" name="desc" placeholder="Event description"
+            value="">{{ event_form.desc.value }}</textarea>
+    </div>
+    <div class="form-group">
+        {% for calendar in event_form.calendar %}
+            {{ calendar }}
+        {% endfor %}
+    </div>
+    <div class="form-group">
+        <label>Timezone</label>
+        {% for timezone in event_form.timezone %}
+            {{ timezone }}
+        {% endfor %}
+        <div class="checkbox">
+          <label>{{ event_form.all_day }}All-day event</label>
+        </div>
+    </div>
+    <div class="form-group row">
+        <div class="col-lg-6">
+            <label>Start</label>
+            <div class='input-group date datetimepicker'>
+                <input type='text' id="id_start" name="start"
+                    value="{{ event_form.start.value|date:"Y-m-d H:i" }}"
+                    class="form-control" required />
+                <span class="input-group-addon">
+                    <span class="glyphicon glyphicon-calendar"></span>
+                </span>
+            </div>
+        </div>
+        <div class="col-lg-6">
+            <label>End</label>
+            <div class='input-group date datetimepicker'>
+                <input type='text' id="id_end" name="end"
+                    value="{{ event_form.end.value|date:"Y-m-d H:i" }}"
+                    class="form-control" required />
+                <span class="input-group-addon">
+                    <span class="glyphicon glyphicon-calendar"></span>
+                </span>
+            </div>
+        </div>
+    </div>
+{% if include_status_form %}
+    <div class="form-group">
+        <label>My attending status</label>
+        {% for status in attending_status_form.attending_status %}
+            {{ status }}
+        {% endfor %}
+    </div>
+{% endif %}
+    <button type="submit" class="btn btn-default">Save event</button>
+</form>

@@ -73,9 +73,6 @@ class EventForm(forms.ModelForm):
         error_messages = {
             'timezone': {'invalid_choice': WRONG_TIMEZONE_ERROR}
         }
-        labels = {
-            'desc': 'Description',
-        }
 
     def __init__(self, user, *args, **kwargs):
         instance = kwargs.get('instance', None)

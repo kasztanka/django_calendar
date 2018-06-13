@@ -26,7 +26,7 @@
                     <ul class="list-group">
                     {% for event in upcoming_events %}
                         <li class="list-group-item">
-                            <dt>{{ event.start|date:"d.m.Y" }}</dt>
+                            <dt>{{ event.start|date:"Y-m-d" }}</dt>
                             <a href="{% url 'my_calendar:event_view' event_pk=event.pk %}">
                                 <dd>{{ event.title}}</dd>
                             </a>
