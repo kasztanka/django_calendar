@@ -63,7 +63,7 @@
                 <button onclick="formDisplay('calendar_form', 'edit_calendar', 'Edit this calendar');return false;" class="btn btn-default" id="edit_calendar">
                     Edit this calendar
                 </button>
-                <a id="add_event" href="{% url 'my_calendar:new_event'%}?cal_pk={{ calendar.pk }}" class="btn btn-default">Add event</a>
+                <a id="add_event" href="{% url 'my_calendar:new_event'%}?cal_pk={{ calendar.pk }}" class="btn btn-default">Add event dla modifiersow!</a>
 
                 <form method="POST" id="calendar_form" class="mt">
                     {% csrf_token %}

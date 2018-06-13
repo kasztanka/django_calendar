@@ -1,61 +1,74 @@
 {% extends 'my_calendar/base.html' %}
 {% load staticfiles %}
 {% block content %}
-
-    <form method="POST" id="event_form">
-        {% csrf_token %}
-        {{ event_form.as_p }}
-        {{ attending_status_form.as_p }}
-        <button type="submit" id="save_event" onclick="enableInputs();">Save event</button>
-    </form>
-
     <div class="col-lg-6">
         <h2 class="form-signin-heading">New event</h2>
-        <form method="POST" id="calendar_form">
+        <form method="POST" id="event_form">
             {% csrf_token %}
-            <input id="id_color" name="color" type="hidden"/>
-        {% for color in colors %}
-            <div style="background-color: {{ color }}; border: 4px solid {{ color }}" class="color-box" name="{{ color }}"></div>
-        {% endfor %}
-            <input id="id_name" class="form-control" placeholder="Calendar name"
-                maxlength="100" name="name" type="text" required/>
-            <div class="row">
+            <div class="form-group">
+                <input id="id_title" class="form-control" placeholder="Event title"
+                    maxlength="100" name="title" type="text" required/>
+            </div>
+            <div class="form-group">
+                <textarea class="form-control" rows="3" max_length="1000"
+                    id="id_desc" name="desc" placeholder="Event description"></textarea>
+            </div>
+            <div class="form-group">
+                {% for calendar in event_form.calendar %}
+                    {{ calendar }}
+                {% endfor %}
+            </div>
+            <div class="form-group">
+                <label>Timezone</label>
+                {% for timezone in event_form.timezone %}
+                    {{ timezone }}
+                {% endfor %}
+                <div class="checkbox">
+                  <label>{{ event_form.all_day }}All-day event</label>
+                </div>
+            </div>
+            <div class="form-group row">
                 <div class="col-lg-6">
-                    <div class="panel panel-default">
-                        <div class="panel-heading">
-                            <h3 class="panel-title">Readers</h3>
-                        </div>
-                        <div class="panel-body list-group readers">
-                        {% for user in calendar_form.readers %}
-                            <p class="list-group-item">
-                                {{ user }}
-                            </p>
-                        {% endfor %}
-                        </div>
+                    <label>Start</label>
+                    <div class='input-group date' id='datetimepicker1'>
+                        <input type='text' id="id_start" name="start"
+                            value="{{ event_form.start.value|date:"Y-m-d H:i" }}"
+                            class="form-control" required />
+                        <span class="input-group-addon">
+                            <span class="glyphicon glyphicon-calendar"></span>
+                        </span>
                     </div>
                 </div>
                 <div class="col-lg-6">
-                    <div class="panel panel-default">
-                        <div class="panel-heading">
-                            <h3 class="panel-title">Modifiers</h3>
-                        </div>
-                        <div class="panel-body list-group modifiers">
-                        {% for user in calendar_form.modifiers %}
-                            <p class="list-group-item">
-                                {{ user }}
-                            </p>
-                        {% endfor %}
-                        </div>
+                    <label>End</label>
+                    <div class='input-group date' id='datetimepicker1'>
+                        <input type='text' id="id_end" name="end"
+                            value="{{ event_form.end.value|date:"Y-m-d H:i" }}"
+                            class="form-control" required />
+                        <span class="input-group-addon">
+                            <span class="glyphicon glyphicon-calendar"></span>
+                        </span>
                     </div>
                 </div>
             </div>
-
-            <button type="submit" class="btn btn-default">Save calendar</button>
+            <div class="form-group">
+                <label>My attending status</label>
+                {% for status in attending_status_form.attending_status %}
+                    {{ status }}
+                {% endfor %}
+            </div>
+            <button type="submit" class="btn btn-default">Save event</button>
         </form>
     </div>
-
-
 {% endblock content %}
 {% block scripts %}
-<script src="{% static 'disable_event_inputs.js' %}"></script>
+<script type="text/javascript">
+    $(function() {
+        const selects = document.getElementsByTagName("select");
+        for (i = 0; i < selects.length; i++) {
+            selects[i].classList.add("form-control");
+        }
+        $('#datetimepicker1').datetimepicker({format: 'YYYY-MM-DD HH:mm'});
+    });
+</script>
 {% endblock scripts %}

@@ -217,16 +217,21 @@ def new_event(request):
         event = Event()
         event.start = pytz.utc.localize(datetime.datetime.utcnow())
         event.end = event.start + datetime.timedelta(minutes=30)
+        if request.GET.get('cal_pk'):
+            cal_pk = request.GET.get('cal_pk')
+            calendar = MyCalendar.objects.filter(pk=cal_pk).first()
+            if calendar and profile in calendar.modifiers.all():
+                event.calendar = calendar
         timezone = get_number_and_name_of_timezone(profile)
-        event_form = EventForm(data=request.POST or None, instance=event,
-            timezone=timezone)
+        event_form = EventForm(data=request.POST or None, user=profile,
+            instance=event, timezone=timezone)
         attending_status_form = AttendingStatusForm(data=request.POST or None)
         if request.method == "POST":
-            if event_form.is_valid() and attending_status_form.is_valid():
+            if event_form.is_valid(user=profile) and attending_status_form.is_valid():
                 event = event_form.save()
                 guest = attending_status_form.save(commit=False)
                 guest.event = event
-                guest.user = calendar_.owner
+                guest.user = profile
                 guest.save()
                 return redirect('my_calendar:event_view', event_pk=event.pk)
         context['event_form'] = event_form
@@ -249,7 +254,7 @@ def event_view(request, event_pk=None):
     if (profile in event.calendar.modifiers.all()):
 
         timezone = get_number_and_name_of_timezone(event)
-        context['event_form'] = EventForm(instance=event, timezone=timezone)
+        context['event_form'] = EventForm(user=profile, instance=event, timezone=timezone)
         context['guest_form'] = GuestForm(event=event)
         context['event'] = event
         context['guests'] = Guest.objects.filter(event=event)
@@ -258,7 +263,7 @@ def event_view(request, event_pk=None):
             form = None
 
             if 'save_event' in request.POST:
-                form = EventForm(data=request.POST, instance=event)
+                form = EventForm(user=profile, data=request.POST, instance=event)
                 form_name = 'event_form'
             elif 'save_guest' in request.POST:
                 form = GuestForm(data=request.POST, event=event)

@@ -9,6 +9,7 @@ from .models import Event, Guest, UserProfile, MyCalendar
 
 WRONG_TIMEZONE_ERROR = "Wrong timezone was chosen."
 END_BEFORE_START_ERROR = "The event must end after its beginning."
+NO_ACCESS_TO_CALENDAR = "You have no access to this calendar."
 DUPLICATE_GUEST_ERROR = "This user is already guest added to this event."
 WRONG_ATTENDING_STATUS_ERROR = "Wrong attending status was chosen."
 
@@ -65,18 +66,10 @@ class CalendarForm(forms.ModelForm):
 
 
 class EventForm(forms.ModelForm):
-    start_date = forms.DateField(label="From", input_formats=['%m/%d/%Y'],
-        widget=forms.DateInput(attrs={'class': 'datepicker'}))
-    start_hour = forms.TimeField(label="", input_formats=['%H:%M'],
-        widget=forms.TimeInput(attrs={'class': 'time'}))
-    end_date = forms.DateField(label="To", input_formats=['%m/%d/%Y'],
-        widget=forms.DateInput(attrs={'class': 'datepicker'}))
-    end_hour = forms.TimeField(label="", input_formats=['%H:%M'],
-        widget=forms.TimeInput(attrs={'class': 'time'}))
 
     class Meta:
         model = Event
-        fields = ('title', 'desc', 'all_day', 'timezone')
+        fields = ('calendar', 'start', 'end', 'title', 'desc', 'all_day', 'timezone')
         error_messages = {
             'timezone': {'invalid_choice': WRONG_TIMEZONE_ERROR}
         }
@@ -84,51 +77,43 @@ class EventForm(forms.ModelForm):
             'desc': 'Description',
         }
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, user, *args, **kwargs):
         instance = kwargs.get('instance', None)
-        if instance != None:
-            start = instance.start
-            end = instance.end
         timezone = kwargs.pop('timezone', None)
         if instance != None and timezone != None:
-            start = start.astimezone(timezone['tz'])
-            end = end.astimezone(timezone['tz'])
             kwargs.update(initial={
-                'start_date': start.strftime('%m/%d/%Y'),
-                'start_hour': start.strftime('%H:%M'),
-                'end_date': end.strftime('%m/%d/%Y'),
-                'end_hour': end.strftime('%H:%M'),
+                'start': instance.start.astimezone(timezone['tz']),
+                'end': instance.end.astimezone(timezone['tz']),
                 'timezone': timezone['number'],
             })
         super(EventForm, self).__init__(*args, **kwargs)
+        self.fields['calendar'].queryset = user.get_calendars_to_modify()
+        self.fields['calendar'].empty_label = 'Select calendar'
 
-    def is_valid(self):
+    def is_valid(self, user):
         valid = super(EventForm, self).is_valid()
-        if not valid:
-            return valid
 
-        start = datetime.datetime.strptime(self.data['start_date']
-            + ' ' + self.data['start_hour'], '%m/%d/%Y %H:%M')
-        end = datetime.datetime.strptime(self.data['end_date']
-            + ' ' + self.data['end_hour'], '%m/%d/%Y %H:%M')
-
-        if self.data.get('all_day', False):
+        start = self.cleaned_data['start']
+        end = self.cleaned_data['end']
+        if self.cleaned_data['all_day']:
             if start.date() > end.date():
                 self.add_error('end_date', END_BEFORE_START_ERROR)
-                return False
+                valid = False
         elif start > end:
             self.add_error('end_date', END_BEFORE_START_ERROR)
-            return False
-        return True
+            valid = False
+
+        if user not in self.cleaned_data['calendar'].modifiers.all():
+            self.add_error('calendar', NO_ACCESS_TO_CALENDAR)
+            valid = False
+        return valid
 
     def save(self, commit=True):
         instance = super(EventForm, self).save(commit=False)
         tz = pytz.timezone(instance.get_timezone_display())
-        start = datetime.datetime.strptime(self.data['start_date']
-            + ' ' + self.data['start_hour'], '%m/%d/%Y %H:%M')
+        start = self.cleaned_data['start'].replace(tzinfo=None)
         instance.start = tz.localize(start).astimezone(pytz.utc)
-        end = datetime.datetime.strptime(self.data['end_date']
-            + ' ' + self.data['end_hour'], '%m/%d/%Y %H:%M')
+        end = self.cleaned_data['end'].replace(tzinfo=None)
         instance.end = tz.localize(end).astimezone(pytz.utc)
 
         if commit:
