@@ -238,10 +238,11 @@ def new_event(request):
         context['attending_status_form'] = attending_status_form
     return render(request, 'my_calendar/new_event.html', context)
 
-def event_view(request, event_pk=None):
+def event_view(request, event_pk, event_form=None):
     context = {}
     if not request.user.is_authenticated():
         return render(request, 'my_calendar/event.html', context)
+
     event = get_object_or_404(Event, pk=event_pk)
     profile = get_object_or_404(UserProfile, user=request.user)
     context['profile'] = profile
@@ -250,58 +251,82 @@ def event_view(request, event_pk=None):
         context['user_is_guest'] = True
         context['attending_status_form'] = AttendingStatusForm(instance=guest)
     except Guest.DoesNotExist:
-        guest = None
-    if (profile in event.calendar.modifiers.all()):
+        pass
 
-        timezone = get_number_and_name_of_timezone(event)
-        context['event_form'] = EventForm(user=profile, instance=event, timezone=timezone)
-        context['guest_form'] = GuestForm(event=event)
+    if 'form_errors' in request.session:
+        context['form_errors'] = request.session.pop('form_errors')
+        context['non_field_errors'] = request.session.pop('non_field_errors')
+        context['invalid_form'] = request.session.pop('invalid_form')
+
+    if event in profile.get_all_events():
         context['event'] = event
         context['guests'] = Guest.objects.filter(event=event)
-
-        if request.method == "POST":
-            form = None
-
-            if 'save_event' in request.POST:
-                form = EventForm(user=profile, data=request.POST, instance=event)
-                form_name = 'event_form'
-            elif 'save_guest' in request.POST:
-                form = GuestForm(data=request.POST, event=event)
-                form_name = 'guest_form'
-            elif 'save_attending_status' in request.POST and guest != None:
-                form = AttendingStatusForm(data=request.POST, instance=guest)
-                form_name = 'attending_status_form'
-
-            if form != None and form.is_valid():
-                form.save()
-                return redirect('my_calendar:event_view', event_pk=event.pk)
-            elif form != None:
-                context[form_name] = form
-
-    elif guest != None:
-        context['event'] = event
-        context['guests'] = Guest.objects.filter(event=event)
-        if request.method == "POST":
-            if 'save_attending_status' in request.POST:
-                form = AttendingStatusForm(data=request.POST, instance=guest)
-                if form.is_valid():
-                    form.save()
-                    return redirect('my_calendar:event_view', event_pk=event.pk)
-                else:
-                    context['attending_status_form'] = form
-            else:
-                context['access_denied'] = ("You don't have access to "
-                        + "edit this event.")
-    elif profile in event.calendar.readers.all():
-        if request.method == "POST":
-            context['access_denied'] = ("You don't have access to "
-                    + "edit this event.")
-        context['event'] = event
-        context['guests'] = Guest.objects.filter(event=event)
-
+        if profile in event.calendar.modifiers.all():
+            timezone = get_number_and_name_of_timezone(event)
+            context['event_form'] = EventForm(user=profile, instance=event, timezone=timezone)
+            context['guest_form'] = GuestForm(event=event)
     else:
         context['access_denied'] = "You don't have access to this event."
     return render(request, 'my_calendar/event.html', context)
+
+def edit_event(request, event_pk):
+    context = {}
+    if request.user.is_authenticated():
+        event = get_object_or_404(Event, pk=event_pk)
+        profile = get_object_or_404(UserProfile, user=request.user)
+        if profile in event.calendar.modifiers.all():
+            if request.method == "POST":
+                form = EventForm(data=request.POST, user=profile, instance=event)
+                if form.is_valid(user=profile):
+                    form.save()
+                else:
+                    request.session['form_errors'] = form.errors
+                    request.session['non_field_errors'] = form.non_field_errors()
+                    request.session['invalid_form'] = 'editing event'
+                return redirect('my_calendar:event_view', event_pk=event.pk)
+        else:
+            context['access_denied'] = "You don't have access to modify this event."
+    return render(request, 'my_calendar/event.html', context)
+
+def add_guest(request, event_pk):
+    context = {}
+    if request.user.is_authenticated():
+        event = get_object_or_404(Event, pk=event_pk)
+        profile = get_object_or_404(UserProfile, user=request.user)
+        if profile in event.calendar.modifiers.all():
+            if request.method == "POST":
+                form = GuestForm(data=request.POST, event=event)
+                if form.is_valid():
+                    form.save()
+                else:
+                    request.session['form_errors'] = form.errors
+                    request.session['non_field_errors'] = form.non_field_errors()
+                    request.session['invalid_form'] = 'editing event'
+                return redirect('my_calendar:event_view', event_pk=event.pk)
+        else:
+            context['access_denied'] = "You don't have access to modify this event."
+    return render(request, 'my_calendar/event.html', context)
+
+def rsvp_to_event(request, event_pk):
+    context = {}
+    if request.user.is_authenticated():
+        event = get_object_or_404(Event, pk=event_pk)
+        profile = get_object_or_404(UserProfile, user=request.user)
+        try:
+            guest = Guest.objects.get(event=event, user=profile)
+            if request.method == "POST":
+                form = AttendingStatusForm(data=request.POST, instance=guest)
+                if form.is_valid():
+                    form.save()
+                else:
+                    request.session['form_errors'] = form.errors
+                    request.session['non_field_errors'] = form.non_field_errors()
+                    request.session['invalid_form'] = 'editing event'
+                return redirect('my_calendar:event_view', event_pk=event.pk)
+        except Guest.DoesNotExist:
+            context['access_denied'] = "You don't have access to modify this event."
+    return render(request, 'my_calendar/event.html', context)
+
 
 def search(request):
     phrase = request.GET.get('phrase')

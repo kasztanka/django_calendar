@@ -2,6 +2,15 @@
 {% load staticfiles %}
 {% block content %}
     <div class="col-lg-6">
+        <div id="errors" class="alert alert-danger">
+    		<p>There were some errors in the information you entered. Please correct the following:</p>
+    		{{ event_form.non_field_errors }}
+    		<ul>
+    			{% for field in event_form %}
+    				{% if field.errors %}<li>{{ field.label }}: {{ field.errors|striptags }}</li>{% endif %}
+    			{% endfor %}
+    		</ul>
+    	</div>
         <h2 class="form-signin-heading">New event</h2>
         {% include 'my_calendar/event_form.html' with include_status_form=True %}
     </div>

@@ -1,4 +1,7 @@
-<form method="POST" id="event_form" class="mt">
+<form method="POST" id="event_form" class="mt"
+{% if edit_event %}
+    action="{% url 'my_calendar:edit_event' event_pk=event.pk %}"
+{% endif %}>
     {% csrf_token %}
     <div class="form-group">
         <input id="id_title" class="form-control" placeholder="Event title"

@@ -19,5 +19,8 @@ urlpatterns = [
         views.calendar_view, name='calendar_view'),
     url(r'^event/new$', views.new_event, name='new_event'),
     url(r'^event/(?P<event_pk>\d+)$', views.event_view, name='event_view'),
+    url(r'^edit_event/(?P<event_pk>\d+)$', views.edit_event, name='edit_event'),
+    url(r'^add_guest/(?P<event_pk>\d+)$', views.add_guest, name='add_guest'),
+    url(r'^rsvp_to_event/(?P<event_pk>\d+)$', views.rsvp_to_event, name='rsvp_to_event'),
     url(r'^search/', views.search, name='search'),
 ]

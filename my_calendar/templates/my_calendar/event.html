@@ -5,16 +5,28 @@
 {% if access_denied %}
     <div>{{ access_denied }}</div>
 {% else %}
+{% if form_errors %}
+	<div id="errors" class="alert alert-danger">
+		<p>There were some errors in the  <strong>{{ invalid_form }}</strong> form. Please correct the following:</p>
+		<ul>
+        {% if non_field_errors %}<li>{{ non_field_errors.0 }}</li>{% endif %}
+		{% for field, error in form_errors.items %}
+			<li>{{ field }}: {{ error.0|striptags }}</li>
+		{% endfor %}
+		</ul>
+	</div>
+{% endif %}
     <div class="row">
         <div class="col-lg-7">
             <h2 id="event_title">{{ event.title }}</h2>
             <hr>
             {% if user_is_guest %}
                 <div class="form-group">
-                    <form method="POST" id="attending_status_form" class="form-inline">
+                    <form method="POST" id="attending_status_form" class="form-inline"
+                        action="{% url 'my_calendar:rsvp_to_event' event_pk=event.pk %}">
                         {% csrf_token %}
                         {{ attending_status_form.attending_status }}
-                        <button type="submit" class="btn btn-default" id="save_attending_status" value="1"name="save_attending_status">
+                        <button type="submit" class="btn btn-default">
                             Save your attending status
                         </button>
                     </form>
@@ -30,7 +42,7 @@
             </div>
             <div class="panel panel-default">
                 <div class="panel-heading">
-                    <h2 class="panel-title">Other details</h2>
+                    <h2 class="panel-title">Details</h2>
                 </div>
                 <div class="panel-body">
                 {% if event.all_day == True %}
@@ -52,7 +64,7 @@
                     Edit this event
                 </button>
                 {% timezone event.get_timezone_display %}
-                {% include 'my_calendar/event_form.html' %}
+                {% include 'my_calendar/event_form.html' with edit_event=True %}
                 {% endtimezone %}
             {% endif %}
         </div><!-- col-lg-7 -->
@@ -77,10 +89,11 @@
                 {% if profile in event.calendar.modifiers.all %}
                     <button onclick="formDisplay('guest_form', 'add_guest', 'Add guest');return false;"
                         id="add_guest" class="btn btn-default">Add guest</button>
-                    <form method="POST" id="guest_form">
+                    <form method="POST" id="guest_form" class="mt"
+                        action="{% url 'my_calendar:add_guest' event_pk=event.pk %}">
                         {% csrf_token %}
                         {{ guest_form.as_p }}
-                        <button type="submit" class="btn btn-default" id="save_guest" value="1" name="save_guest">Save guest</button>
+                        <button type="submit" class="btn btn-default" >Save guest</button>
                     </form>
                 {% endif %}
                 </div><!-- panel-body -->
@@ -90,9 +103,16 @@
 {% endif %}
 {% endblock content %}
 {% block scripts %}
-<script>
+<script type="text/javascript">
+    $(function() {
+        const selects = document.getElementsByTagName("select");
+        for (i = 0; i < selects.length; i++) {
+            selects[i].classList.add("form-control");
+        }
+        $('.datetimepicker').datetimepicker({format: 'YYYY-MM-DD HH:mm'});
+        $('#id_attending_status').addClass("form-control");
+    });
     const forms = ['event_form', 'guest_form'];
-    $('#id_attending_status').addClass("form-control");
 </script>
 <script src="{% static 'form_display.js' %}"></script>
 {% endblock %}

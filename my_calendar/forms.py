@@ -77,7 +77,7 @@ class EventForm(forms.ModelForm):
     def __init__(self, user, *args, **kwargs):
         instance = kwargs.get('instance', None)
         timezone = kwargs.pop('timezone', None)
-        if instance != None and timezone != None:
+        if instance is not None and timezone is not None:
             kwargs.update(initial={
                 'start': instance.start.astimezone(timezone['tz']),
                 'end': instance.end.astimezone(timezone['tz']),
@@ -94,10 +94,10 @@ class EventForm(forms.ModelForm):
         end = self.cleaned_data['end']
         if self.cleaned_data['all_day']:
             if start.date() > end.date():
-                self.add_error('end_date', END_BEFORE_START_ERROR)
+                self.add_error('end', END_BEFORE_START_ERROR)
                 valid = False
         elif start > end:
-            self.add_error('end_date', END_BEFORE_START_ERROR)
+            self.add_error('end', END_BEFORE_START_ERROR)
             valid = False
 
         if user not in self.cleaned_data['calendar'].modifiers.all():
