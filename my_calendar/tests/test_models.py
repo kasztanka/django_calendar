@@ -24,22 +24,6 @@ class UserProfileTest(TestCase):
 
 class MyCalendarTest(TestCase):
 
-    def test_owner_added_to_readers_during_creation(self):
-        user_ = User.objects.create(username="Owner")
-        profile = UserProfile.objects.create(user=user_)
-        calendar_ = MyCalendar.objects.create(owner=profile,
-            name="Cindirella", color="E81AD4")
-        self.assertIn(profile, calendar_.readers.all())
-        self.assertEqual(len(calendar_.readers.all()), 1)
-
-    def test_owner_added_to_modifiers_during_creation(self):
-        user_ = User.objects.create(username="Owner")
-        profile = UserProfile.objects.create(user=user_)
-        calendar_ = MyCalendar.objects.create(owner=profile,
-            name="Cindirella", color="E81AD4")
-        self.assertIn(profile, calendar_.modifiers.all())
-        self.assertEqual(len(calendar_.modifiers.all()), 1)
-
     def test_no_duplicates_in_readers_and_modifiers(self):
         user_ = User.objects.create(username="Owner")
         profile = UserProfile.objects.create(user=user_)

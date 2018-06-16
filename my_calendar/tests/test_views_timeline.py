@@ -45,6 +45,8 @@ class DayViewTest(BaseViewTest):
     def test_passes_dict_with_data_about_events(self):
         profile = UserProfile.objects.get(user=get_user(self.client))
         calendar_ = MyCalendar.objects.create(owner=profile, color="#000FFF")
+        calendar_.readers.add(calendar_.owner)
+        calendar_.modifiers.add(calendar_.owner)
         start = datetime.datetime.combine(self.today, datetime.time(13, 30))
         start = pytz.utc.localize(start)
         end = start + datetime.timedelta(minutes=30)

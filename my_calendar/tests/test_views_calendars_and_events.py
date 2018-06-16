@@ -33,7 +33,7 @@ class NewCalendarViewTest(BaseViewTest):
                 'color': '#FF0000',
         })
         self.assertEqual(MyCalendar.objects.count(), 0)
-        self.assertIn('form_errors', response.context)
+        self.assertTrue(response.context['calendar_form'].errors)
 
     def test_checks_color_regex(self):
         calendars_amount = MyCalendar.objects.count()
@@ -42,19 +42,19 @@ class NewCalendarViewTest(BaseViewTest):
                 'name': 'Name',
                 'color': '#FF000',
         })
-        self.assertIn('form_errors', response.context)
+        self.assertTrue(response.context['calendar_form'].errors)
         response = self.client.post(
             self.url, data={
                 'name': 'Name',
                 'color': '#FF0ZZZ',
         })
-        self.assertIn('form_errors', response.context)
+        self.assertTrue(response.context['calendar_form'].errors)
         response = self.client.post(
             self.url, data={
                 'name': 'Name',
                 'color': '2FFE000',
         })
-        self.assertIn('form_errors', response.context)
+        self.assertTrue(response.context['calendar_form'].errors)
         self.assertEqual(MyCalendar.objects.count(), calendars_amount)
 
     def test_after_saving_calendar_goes_to_its_site(self):
@@ -129,6 +129,8 @@ class CalendarViewTest(NewCalendarViewTest):
         self.profile = UserProfile.objects.get(user=get_user(self.client))
         self.calendar = MyCalendar.objects.create(owner=self.profile,
             name="Cindirella", color="E81AD4")
+        self.calendar.readers.add(self.calendar.owner)
+        self.calendar.modifiers.add(self.calendar.owner)
         self.url = '/calendar/1'
         self.template = 'my_calendar/calendar.html'
         self.function = calendar_view
@@ -143,7 +145,7 @@ class CalendarViewTest(NewCalendarViewTest):
         calendar_ = MyCalendar.objects.first()
         self.assertEqual(calendar_.name, name)
         self.assertEqual(MyCalendar.objects.count(), 1)
-        self.assertIn('form_errors', response.context)
+        self.assertIn('name', response.context['calendar_form'].errors)
 
     def test_after_saving_calendar_goes_to_its_site(self):
         response = self.client.post(
@@ -174,7 +176,9 @@ class NewEventViewTest(BaseViewTest):
         self.profile = UserProfile.objects.get(user=get_user(self.client))
         self.calendar = MyCalendar.objects.create(owner=self.profile,
             name="Cindirella", color="E81AD4")
-        self.url = '/event/new/1'
+        self.calendar.readers.add(self.calendar.owner)
+        self.calendar.modifiers.add(self.calendar.owner)
+        self.url = self.save_event_url = '/event/new'
         self.template = 'my_calendar/new_event.html'
         self.function = new_event
         self.start = pytz.utc.localize(datetime.datetime.utcnow())
@@ -182,15 +186,13 @@ class NewEventViewTest(BaseViewTest):
 
     def test_saves_event(self):
         self.client.post(
-            self.url, data={
-                'save_event':1,
+            self.save_event_url, data={
+                'calendar': self.calendar.pk,
                 'title': 'Episode 9',
                 'desc': 'Silence of slums',
                 'all_day': True,
-                'start_hour': '15:19',
-                'start_date': '12/13/2016',
-                'end_hour': '16:13',
-                'end_date': '12/13/2016',
+                'start': '2016-12-13 15:19',
+                'end': '2016-12-13 16:13',
                 'timezone': '374',
                 'attending_status': '1',
         })
@@ -202,15 +204,13 @@ class NewEventViewTest(BaseViewTest):
 
     def test_redirects_after_saving_event(self):
         response = self.client.post(
-            self.url, data={
-                'save_event':1,
+            self.save_event_url, data={
+                'calendar': self.calendar.pk,
                 'title': 'Episode 9',
                 'desc': 'Silence of slums',
                 'all_day': True,
-                'start_hour': '15:19',
-                'start_date': '12/13/2016',
-                'end_hour': '16:13',
-                'end_date': '12/13/2016',
+                'start': '2016-12-13 15:19',
+                'end': '2016-12-13 16:13',
                 'timezone': '374',
                 'attending_status': '1',
         })
@@ -219,15 +219,13 @@ class NewEventViewTest(BaseViewTest):
 
     def test_saves_correct_date_and_hour(self):
         response = self.client.post(
-            self.url, data={
-                'save_event':1,
+            self.save_event_url, data={
+                'calendar': self.calendar.pk,
                 'title': 'Episode 9',
                 'desc': 'Silence of slums',
-                'all_day': True,
-                'start_hour': '15:19',
-                'start_date': '12/13/2016',
-                'end_hour': '16:13',
-                'end_date': '12/13/2016',
+                'all_day': False,
+                'start': '2016-12-13 15:19',
+                'end': '2016-12-13 16:13',
                 'timezone': '374',
                 'attending_status': '1',
             }, follow=True)
@@ -245,23 +243,20 @@ class NewEventViewTest(BaseViewTest):
 
     def test_cannot_save_event_with_empty_title_or_dates(self):
         response = self.client.post(
-            self.url, data={
+            self.save_event_url, data={
+                'calendar': self.calendar.pk,
                 'title': '',
                 'desc': 'Silence of slums',
                 'all_day': True,
-                'start_hour': '',
-                'start_date': '',
-                'end_hour': '',
-                'end_date': '',
+                'start': '',
+                'end': '',
                 'timezone': '374',
                 'attending_status': '1',
         })
         self.assertEqual(Event.objects.count(), 0)
         self.assertIn('title', response.context['event_form'].errors)
-        self.assertIn('start_hour', response.context['event_form'].errors)
-        self.assertIn('start_date', response.context['event_form'].errors)
-        self.assertIn('end_hour', response.context['event_form'].errors)
-        self.assertIn('end_date', response.context['event_form'].errors)
+        self.assertIn('start', response.context['event_form'].errors)
+        self.assertIn('end', response.context['event_form'].errors)
 
     def test_passes_correct_initial_timezone_and_datetime(self):
         response = self.client.get(self.url)
@@ -269,10 +264,10 @@ class NewEventViewTest(BaseViewTest):
         user_timezone = self.profile.get_timezone_display()
         start = self.start.astimezone(pytz.timezone(user_timezone))
         end = self.end.astimezone(pytz.timezone(user_timezone))
-        self.assertEqual(form.initial['start_date'], start.strftime('%m/%d/%Y'))
-        self.assertEqual(form.initial['start_hour'], start.strftime('%H:%M'))
-        self.assertEqual(form.initial['end_date'], end.strftime('%m/%d/%Y'))
-        self.assertEqual(form.initial['end_hour'], end.strftime('%H:%M'))
+        self.assertAlmostEqual(form.initial['start'], start,
+            delta=datetime.timedelta(seconds=1))
+        self.assertAlmostEqual(form.initial['end'], end,
+            delta=datetime.timedelta(seconds=1))
         event = Event(timezone=form.initial['timezone'])
         self.assertEqual(user_timezone, event.get_timezone_display())
 
@@ -281,15 +276,13 @@ class NewEventViewTest(BaseViewTest):
         response = self.client.get('/logout')
         self.user_registers(username="Other")
         response = self.client.post(
-            self.url, data={
-                'save_event':1,
+            self.save_event_url, data={
+                'calendar': self.calendar.pk,
                 'title': 'Episode 9',
                 'desc': 'Silence of slums',
                 'all_day': True,
-                'start_hour': '15:19',
-                'start_date': '12/13/2016',
-                'end_hour': '16:13',
-                'end_date': '12/13/2016',
+                'start': '2016-12-13 15:19',
+                'end': '2016-12-13 16:13',
                 'timezone': '374',
                 'attending_status': '1',
         })
@@ -297,22 +290,19 @@ class NewEventViewTest(BaseViewTest):
         if amount:
             event = Event.objects.first()
             self.assertEqual(event.title, 'Radio Gaga')
-            self.assertEqual(response.context['access_denied'],
-                "You don't have access to this event.")
+            self.assertIn('access_denied', response.context)
         not_owner_profile = UserProfile.objects.get(user=get_user(self.client))
         # users that can read others calendars_amount
         # also shouldn't have access to modifications of events
         self.calendar.readers.add(not_owner_profile)
         response = self.client.post(
-            self.url, data={
-                'save_event':1,
+            self.save_event_url, data={
+                'calendar': self.calendar.pk,
                 'title': 'Episode 9',
                 'desc': 'Silence of slums',
                 'all_day': True,
-                'start_hour': '15:19',
-                'start_date': '12/13/2016',
-                'end_hour': '16:13',
-                'end_date': '12/13/2016',
+                'start': '2016-12-13 15:19',
+                'end': '2016-12-13 16:13',
                 'timezone': '374',
                 'attending_status': '1',
         })
@@ -320,38 +310,30 @@ class NewEventViewTest(BaseViewTest):
         if amount:
             event = Event.objects.first()
             self.assertEqual(event.title, 'Radio Gaga')
-            self.assertEqual(response.context['access_denied'],
-                "You don't have access to edit this event.")
+            self.assertIn('access_denied', response.context)
         else:
-            self.assertEqual(response.context['access_denied'],
-                "You don't have access to add events to this calendar.")
+            self.assertIn('calendar', response.context['event_form'].errors)
 
-    def test_user_with_modify_can_edit_but_not_create_event(self):
-        amount = Event.objects.count()
+    def test_user_with_modify_can_save_event(self):
         response = self.client.get('/logout')
         self.user_registers(username="Other")
         profile = UserProfile.objects.get(user=get_user(self.client))
         self.calendar.modifiers.add(profile)
         response = self.client.post(
-            self.url, data={
-                'save_event':1,
+            self.save_event_url, data={
+                'calendar': self.calendar.pk,
                 'title': 'Episode 9',
                 'desc': 'Silence of slums',
                 'all_day': True,
-                'start_hour': '15:19',
-                'start_date': '12/13/2016',
-                'end_hour': '16:13',
-                'end_date': '12/13/2016',
+                'start': '2016-12-13 15:19',
+                'end': '2016-12-13 16:13',
                 'timezone': '374',
                 'attending_status': '1',
         })
-        self.assertEqual(amount, Event.objects.count())
-        if amount:
-            event = Event.objects.first()
-            self.assertEqual(event.title, 'Episode 9')
-        else:
-            self.assertEqual(response.context['access_denied'],
-                "You don't have access to add events to this calendar.")
+        self.assertEqual(Event.objects.count(), 1)
+        event = Event.objects.first()
+        self.assertEqual(event.title, 'Episode 9')
+
 
 
 class EventViewTest(NewEventViewTest):
@@ -361,6 +343,8 @@ class EventViewTest(NewEventViewTest):
         profile = UserProfile.objects.get(user=get_user(self.client))
         self.calendar = MyCalendar.objects.create(owner=profile,
             name="Cindirella", color="E81AD4")
+        self.calendar.readers.add(self.calendar.owner)
+        self.calendar.modifiers.add(self.calendar.owner)
         self.start = pytz.utc.localize(datetime.datetime.utcnow())
         self.end = self.start + datetime.timedelta(minutes=30)
         self.event = Event.objects.create(calendar=self.calendar,
@@ -369,20 +353,21 @@ class EventViewTest(NewEventViewTest):
         self.guest = Guest.objects.create(event=self.event, user=profile,
             attending_status=Guest.MAYBE)
         self.url = '/event/1'
+        self.save_event_url = '/edit_event/1'
+        self.add_guest_url = '/add_guest/1'
+        self.rsvp_url = '/rsvp_to_event/1'
         self.template = 'my_calendar/event.html'
         self.function = event_view
 
     def test_saves_event(self):
         self.client.post(
-            self.url, data={
-                'save_event':1,
+            self.save_event_url, data={
+                'calendar': self.calendar.pk,
                 'title': 'Episode 9',
                 'desc': 'Silence of slums',
                 'all_day': True,
-                'start_hour': '15:19',
-                'start_date': '12/13/2016',
-                'end_hour': '16:13',
-                'end_date': '12/13/2016',
+                'start': '2016-12-13 15:19',
+                'end': '2016-12-13 16:13',
                 'timezone': '374',
                 'attending_status': '1',
         })
@@ -395,26 +380,22 @@ class EventViewTest(NewEventViewTest):
     def test_cannot_save_event_with_empty_title_or_dates(self):
         title = Event.objects.first().title
         response = self.client.post(
-            self.url, data={
-                'save_event':1,
+            self.save_event_url, data={
+                'calendar': self.calendar.pk,
                 'title': '',
                 'desc': '',
                 'all_day': True,
-                'start_hour': '',
-                'start_date': '',
-                'end_hour': '',
-                'end_date': '',
+                'start': '',
+                'end': '',
                 'timezone': '374',
                 'attending_status': '1',
-        })
+        }, follow=True)
         event = Event.objects.first()
         self.assertEqual(event.title, title)
         self.assertEqual(Event.objects.count(), 1)
-        self.assertIn('title', response.context['event_form'].errors)
-        self.assertIn('start_hour', response.context['event_form'].errors)
-        self.assertIn('start_date', response.context['event_form'].errors)
-        self.assertIn('end_hour', response.context['event_form'].errors)
-        self.assertIn('end_date', response.context['event_form'].errors)
+        self.assertIn('title', response.context['form_errors'])
+        self.assertIn('start', response.context['form_errors'])
+        self.assertIn('end', response.context['form_errors'])
 
     def test_passes_correct_initial_timezone_and_datetime(self):
         response = self.client.get(self.url)
@@ -422,10 +403,10 @@ class EventViewTest(NewEventViewTest):
         timezone = pytz.timezone(self.event.get_timezone_display())
         start = self.start.astimezone(timezone)
         end = self.end.astimezone(timezone)
-        self.assertEqual(form.initial['start_date'], start.strftime('%m/%d/%Y'))
-        self.assertEqual(form.initial['start_hour'], start.strftime('%H:%M'))
-        self.assertEqual(form.initial['end_date'], end.strftime('%m/%d/%Y'))
-        self.assertEqual(form.initial['end_hour'], end.strftime('%H:%M'))
+        self.assertAlmostEqual(form.initial['start'], start,
+            delta=datetime.timedelta(seconds=1))
+        self.assertAlmostEqual(form.initial['end'], end,
+            delta=datetime.timedelta(seconds=1))
         self.assertEqual(self.event.timezone, form.initial['timezone'])
 
     def test_saves_guest(self):
@@ -437,8 +418,7 @@ class EventViewTest(NewEventViewTest):
             'username': 'John123',
             'password': 'password'
             })
-        self.client.post(self.url, data={
-            'save_guest': 1,
+        self.client.post(self.add_guest_url, data={
             'user': 2,
         })
         self.assertEqual(Guest.objects.count(), 2)
@@ -456,12 +436,11 @@ class EventViewTest(NewEventViewTest):
             'username': 'John123',
             'password': 'password'
             })
-        response = self.client.post(self.url, data={
-            'save_guest': 1,
+        response = self.client.post(self.add_guest_url, data={
             'user': 1,
-        })
+        }, follow=True)
         self.assertEqual(Guest.objects.count(), 1)
-        self.assertEqual(response.context['guest_form'].errors['user'],
+        self.assertEqual(response.context['form_errors']['user'],
             ["This user is already guest added to this event."])
 
     def test_attending_status_form_in_context_when_guest(self):
@@ -493,8 +472,7 @@ class EventViewTest(NewEventViewTest):
 
     def test_saves_attending_status(self):
         response = self.client.post(
-            self.url, data={
-                'save_attending_status':1,
+            self.rsvp_url, data={
                 'attending_status': '1',
         })
         self.assertEqual(Guest.objects.first().attending_status, 1)
@@ -505,8 +483,7 @@ class EventViewTest(NewEventViewTest):
         Guest.objects.create(user=profile, event=self.event)
 
         response = self.client.post(
-            self.url, data={
-                'save_attending_status':1,
+            self.rsvp_url, data={
                 'attending_status': '4',
         })
         guest = Guest.objects.get(user=profile, event=self.event)

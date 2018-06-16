@@ -8,7 +8,6 @@ from django import forms
 from .models import Event, Guest, UserProfile, MyCalendar
 
 WRONG_TIMEZONE_ERROR = "Wrong timezone was chosen."
-END_BEFORE_START_ERROR = "The event must end after its beginning."
 NO_ACCESS_TO_CALENDAR = "You have no access to this calendar."
 DUPLICATE_GUEST_ERROR = "This user is already guest added to this event."
 WRONG_ATTENDING_STATUS_ERROR = "Wrong attending status was chosen."
@@ -90,17 +89,8 @@ class EventForm(forms.ModelForm):
     def is_valid(self, user):
         valid = super(EventForm, self).is_valid()
 
-        start = self.cleaned_data['start']
-        end = self.cleaned_data['end']
-        if self.cleaned_data['all_day']:
-            if start.date() > end.date():
-                self.add_error('end', END_BEFORE_START_ERROR)
-                valid = False
-        elif start > end:
-            self.add_error('end', END_BEFORE_START_ERROR)
-            valid = False
-
-        if user not in self.cleaned_data['calendar'].modifiers.all():
+        if ('calendar' in self.cleaned_data and
+                user not in self.cleaned_data['calendar'].modifiers.all()):
             self.add_error('calendar', NO_ACCESS_TO_CALENDAR)
             valid = False
         return valid

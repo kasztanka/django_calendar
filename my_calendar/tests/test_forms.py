@@ -2,13 +2,15 @@ import datetime
 import pytz
 
 from django.contrib.auth.models import User
+from django.contrib.auth import get_user
 from django.test import TestCase
 
-from my_calendar.models import (UserProfile, MyCalendar, Event, Guest)
+from my_calendar.models import (UserProfile, MyCalendar, Event, Guest,
+    END_BEFORE_START_ERROR)
 from my_calendar.forms import (
     RegisterForm, EventForm, GuestForm, ProfileForm, CalendarForm,
     AttendingStatusForm,
-    WRONG_TIMEZONE_ERROR, END_BEFORE_START_ERROR, DUPLICATE_GUEST_ERROR,
+    WRONG_TIMEZONE_ERROR, DUPLICATE_GUEST_ERROR,
     WRONG_ATTENDING_STATUS_ERROR,
 )
 
@@ -58,9 +60,15 @@ class ProfileFormTest(TestCase):
 
 class CalendarFormTest(TestCase):
 
-    def test_blank_data_ok(self):
+    def test_name_and_color_required(self):
         form = CalendarForm(data={})
-        self.assertTrue(form.is_valid())
+        self.assertFalse(form.is_valid())
+        fields = ['name', 'color']
+        for field in fields:
+            self.assertIn(
+                "This field is required.",
+                form.errors[field]
+            )
 
     def test_owner_is_not_choice_for_modifiers_or_readers_when_given(self):
         profiles = []
@@ -75,29 +83,38 @@ class CalendarFormTest(TestCase):
 
 class EventFormTest(TestCase):
 
-    def test_datetime_inputs_have_css_classes(self):
-        form = EventForm()
-        self.assertEqual(form.as_p().count('class="datepicker"'), 2)
-        self.assertEqual(form.as_p().count('class="time"'), 2)
+    def setUp(self):
+        self.client.post(
+            '/register', data={
+                'username': 'John123',
+                'password': 'password',
+                'email': 'example@email.com',
+                'first_name': 'John',
+                'last_name': 'Doe',
+                'timezone': '374',
+        })
+        self.profile = UserProfile.objects.get(user=get_user(self.client))
+        calendar = MyCalendar.objects.create(owner=self.profile,
+            name="Cindirella", color="E81AD4")
+        calendar.readers.add(calendar.owner)
+        calendar.modifiers.add(calendar.owner)
 
     def test_valid_data(self):
-        form = EventForm({
+        form = EventForm(data={
+            'calendar': 1,
             'title': 'Episode 9',
             'desc': 'Silence of slums',
             'all_day': True,
-            'start_hour': '15:19',
-            'start_date': '12/13/2016',
-            'end_hour': '16:13',
-            'end_date': '12/13/2016',
+            'start': '2016-12-13 15:19',
+            'end': '2016-12-13 16:13',
             'timezone': '374',
-        })
-        self.assertTrue(form.is_valid())
+        }, user=self.profile)
+        self.assertTrue(form.is_valid(user=self.profile))
 
     def test_blank_data(self):
-        form = EventForm(data={})
-        self.assertFalse(form.is_valid())
-        fields = ['title', 'start_hour', 'start_date', 'end_hour', 'end_date',
-            'timezone']
+        form = EventForm(user=self.profile, data={})
+        self.assertFalse(form.is_valid(user=self.profile))
+        fields = ['title', 'start', 'end', 'timezone', 'calendar']
         for field in fields:
             self.assertIn(
                 "This field is required.",
@@ -105,57 +122,54 @@ class EventFormTest(TestCase):
             )
 
     def test_no_description_is_valid(self):
-        form = EventForm({
+        form = EventForm(data={
+            'calendar': 1,
             'title': 'Episode 9',
             'desc': '',
             'all_day': True,
-            'start_hour': '15:19',
-            'start_date': '12/13/2016',
-            'end_hour': '16:13',
-            'end_date': '12/13/2016',
+            'start': '2016-12-13 15:19',
+            'end': '2016-12-13 16:13',
             'timezone': '374'
-        })
-        self.assertTrue(form.is_valid())
+        }, user=self.profile)
+        self.assertTrue(form.is_valid(user=self.profile))
 
     def test_end_before_start_not_valid(self):
-        form = EventForm({
+        form = EventForm(data={
+            'calendar': 1,
             'title': 'Episode 9',
             'desc': 'Bla',
-            'start_hour': '16:19',
-            'start_date': '12/13/2016',
-            'end_hour': '16:13',
-            'end_date': '12/13/2016',
+            'all_day': False,
+            'start': '2016-12-13 15:19',
+            'end': '2016-12-11 16:13',
             'timezone': '374'
-        })
-        self.assertFalse(form.is_valid())
-        self.assertIn(END_BEFORE_START_ERROR, form.errors['end_date'])
+        }, user=self.profile)
+        self.assertFalse(form.is_valid(user=self.profile))
+        self.assertIn(END_BEFORE_START_ERROR, form.non_field_errors())
 
     def test_hours_skipped_in_validation_when_all_day_event(self):
-        form = EventForm({
+        form = EventForm(data={
+            'calendar': 1,
             'title': 'Episode 9',
             'desc': 'Bla',
             'all_day': True,
-            'start_hour': '16:19',
-            'start_date': '12/13/2016',
-            'end_hour': '16:13',
-            'end_date': '12/13/2016',
+            'start': '2016-12-13 15:19',
+            'end': '2016-12-13 14:13',
             'timezone': '374'
-        })
-        self.assertTrue(form.is_valid())
+        }, user=self.profile)
+        self.assertTrue(form.is_valid(user=self.profile))
 
     def test_validation_works_when_hours_skipped(self):
-        form = EventForm({
+        form = EventForm(data={
+            'calendar': 1,
             'title': 'Episode 9',
             'desc': 'Bla',
             'all_day': True,
-            'start_hour': '16:19',
-            'start_date': '12/13/2016',
-            'end_hour': '16:13',
-            'end_date': '12/11/2016',
+            'start': '2016-12-13 15:19',
+            'end': '2016-12-12 16:13',
             'timezone': '374'
-        })
-        self.assertFalse(form.is_valid())
-        self.assertIn(END_BEFORE_START_ERROR, form.errors['end_date'])
+        }, user=self.profile)
+        self.assertFalse(form.is_valid(user=self.profile))
+        self.assertIn(END_BEFORE_START_ERROR, form.non_field_errors())
 
     def test_inital_datetime_correct_when_timezone_given(self):
         europe = pytz.timezone('Europe/Warsaw')
@@ -167,26 +181,25 @@ class EventFormTest(TestCase):
         end = europe.localize(datetime.datetime.now()
             + datetime.timedelta(minutes=30))
         event = Event(start=start, end=end)
-        form = EventForm(instance=event, timezone=timezone)
-        self.assertEqual(form.initial['start_date'], start.strftime('%m/%d/%Y'))
-        self.assertEqual(form.initial['start_hour'], start.strftime('%H:%M'))
-        self.assertEqual(form.initial['end_date'], end.strftime('%m/%d/%Y'))
-        self.assertEqual(form.initial['end_hour'], end.strftime('%H:%M'))
+        form = EventForm(instance=event, timezone=timezone, user=self.profile)
+        self.assertAlmostEqual(form.initial['start'], start,
+            delta=datetime.timedelta(seconds=1))
+        self.assertAlmostEqual(form.initial['end'], end,
+            delta=datetime.timedelta(seconds=1))
         self.assertEqual(form.initial['timezone'], timezone['number'])
 
     def test_checks_timezone(self):
         tz_len = len(pytz.common_timezones_set)
-        form = EventForm({
+        form = EventForm(data={
+            'calendar': 1,
             'title': 'Episode 9',
             'desc': 'Bla',
             'all_day': True,
-            'start_hour': '16:19',
-            'start_date': '12/13/2016',
-            'end_hour': '16:13',
-            'end_date': '12/14/2016',
+            'start': '2016-12-13 15:19',
+            'end': '2016-12-12 16:13',
             'timezone': str(tz_len + 10),
-        })
-        self.assertFalse(form.is_valid())
+        }, user=self.profile)
+        self.assertFalse(form.is_valid(user=self.profile))
         self.assertIn(WRONG_TIMEZONE_ERROR, form.errors['timezone'])
 
 

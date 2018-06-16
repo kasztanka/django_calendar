@@ -8,6 +8,8 @@ from django.contrib.auth.models import User
 from django.db import models
 
 
+END_BEFORE_START_ERROR = "The event must end after its beginning."
+
 class UserProfile(models.Model):
     """
     Extension of the User class.
@@ -113,6 +115,14 @@ class Event(models.Model):
     start = models.DateTimeField()
     end = models.DateTimeField()
     all_day = models.BooleanField(default=False)
+
+    def clean(self):
+        if self.start and self.end:
+            if self.all_day:
+                if self.start.date() > self.end.date():
+                    raise ValidationError(_(END_BEFORE_START_ERROR))
+            elif self.start > self.end:
+                raise ValidationError(_(END_BEFORE_START_ERROR))
 
     def __str__(self):
         return self.title
