@@ -14,8 +14,6 @@
                     Check out you're timeline!
                 </a>
             {% endtimezone %}
-
-            <a id="add_calendar" href="{% url 'my_calendar:new_calendar' %}">Add new calendar</a>
         {% endif %}
     </div>
     {% if profile.user == request.user %}
